@@ -7,6 +7,5 @@ import parser;
 
 void main () {
     LispParser parser = new LispParser();
-    parser.parse();
-    writef("You said: %s", parser.nextToken.toString());
+    writef("You said: %s", parser.parse().toString());
 }

@@ -66,7 +66,31 @@ class LispParser {
         }
     }
 
-    void parse () {
+    Node parseList () {
+        return null;
+    }
+
+    Node parse () {
         getToken();
+
+        if (nextToken.type == TokenType.leftParen) {
+            return parseList();
+        } else if (nextToken.type == TokenType.rightParen) {
+           return null; 
+        } else {
+            switch (nextToken.type) {
+                case TokenType.string:
+                    return new StringNode(nextToken.stringValue);
+
+                case TokenType.identifier:
+                    return new IdentifierNode(nextToken.stringValue);
+
+                case TokenType.integer:
+                    return new IntegerNode(nextToken.intValue);
+
+                default:
+                    return null;
+            }
+        }
     }
 }
