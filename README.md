@@ -1,1 +1,1 @@
-A Lisp parser in D. Also an exercise in learning D.
+A Lisp interpreter in D. Also an exercise in learning D.
