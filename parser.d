@@ -8,8 +8,8 @@ import std.stdio;
 import token;
 import node;
 
-char getc () {
-    return cast(char)cstdio.fgetc(cstdio.stdin);
+char getc (File stream) {
+    return cast(char)cstdio.fgetc(stream.getFP());
 }
 
 class LispParser {
@@ -28,7 +28,7 @@ class LispParser {
         char c;
 
         do {
-            c = getc();
+            c = getc(stream);
         } while (isWhite(c));
 
         if (c == '(') {
@@ -41,19 +41,19 @@ class LispParser {
             nextToken = Token(TokenType.dot);
 
         } else if (isDigit(c)) {
-            cstdio.ungetc(cast(int)c, cstdio.stdin);
+            cstdio.ungetc(cast(int)c, stream.getFP());
 
             int intValue;
-            stdin.readf("%d", &intValue);
+            stream.readf("%d", &intValue);
             nextToken = Token(TokenType.integer, intValue);
 
         } else if (c == '\"') {
             string stringValue;
-            c = getc();
+            c = getc(stream);
 
             do {
                 stringValue ~= c;
-                c = getc();
+                c = getc(stream);
             } while (c != '\"');
 
             nextToken = Token(TokenType.string, stringValue);
@@ -63,7 +63,7 @@ class LispParser {
 
             do {
                 stringValue ~= c;
-                c = getc();
+                c = getc(stream);
             } while (!isWhite(c) && c != '(' && c != ')');
 
             nextToken = Token(TokenType.identifier, stringValue);
