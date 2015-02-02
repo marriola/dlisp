@@ -1,11 +1,17 @@
 import std.stdio;
 
-import token;
+import node;
 import parser;
-
-///////////////////////////////////////////////////////////////////////////////
 
 void main () {
     LispParser parser = new LispParser();
-    writef("You said: %s", parser.parse().toString());
+
+    stdout.write("> "); stdout.flush();
+    Node tree = parser.parse();
+
+    if (tree) {
+        writef("You said: %s", tree.toString());
+    } else {
+        writeln("Syntax error");
+    }
 }

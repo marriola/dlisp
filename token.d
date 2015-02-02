@@ -2,7 +2,7 @@ module token;
 
 import std.conv;
 
-enum TokenType { leftParen, rightParen, integer, identifier, string }
+enum TokenType { leftParen, rightParen, dot, integer, identifier, string }
 
 struct Token {
     TokenType type;
@@ -28,6 +28,15 @@ struct Token {
 
     string toString () {
         switch (type) {
+            case TokenType.leftParen:
+                return "(";
+
+            case TokenType.rightParen:
+                return ")";
+
+            case TokenType.dot:
+                return ".";
+
             case TokenType.integer:
                 return to!string(intValue);
 

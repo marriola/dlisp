@@ -2,9 +2,9 @@ module node;
 
 import std.conv;
 
-enum NodeType { reference, identifier, integer, string }
+enum NodeType { none, boolean, reference, identifier, integer, string }
 
-abstract class Node {
+class Node {
     Node car;
     Node cdr;
 
@@ -12,7 +12,50 @@ abstract class Node {
         car = cdr = null;
     }
 
-    NodeType type ();
+    this (Node car, Node cdr = null) {
+        this.car = car;
+
+        if (cdr is null) {
+            this.cdr = new BooleanNode(false);
+        }
+    }
+
+    NodeType type () { return NodeType.none; }
+
+    override string toString () {
+        string builder;
+
+        if (car !is null && cdr !is null) {
+            builder ~= "(" ~ car.toString() ~ " ";
+
+            if (cdr.cdr !is null) {
+                builder ~= ". " ~ cdr.toString();
+            } else {
+                builder ~= cdr.toString();
+            }
+
+            builder ~= ")";
+
+        } else {
+            builder ~= car.toString() ~ " . " ~ cdr.toString();
+        }
+
+        return builder;
+    }
+}
+
+class BooleanNode : Node {
+    bool value;
+
+    this (bool value) {
+        this.value = value;
+    }
+
+    override NodeType type () { return NodeType.boolean; }
+
+    override string toString () {
+        return value ? "T" : "NIL";
+    }
 }
 
 class ReferenceNode : Node {
