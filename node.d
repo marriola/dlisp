@@ -30,20 +30,15 @@ class Node {
     override string toString () {
         string builder;
 
-        if (isNil(cdr)) {
-            builder ~= "(" ~ car.toString() ~ " ";
+        builder ~= "(" ~ car.toString() ~ " ";
 
-            if (cdr.type == ValueType.reference && isNil((cast(ReferenceValue)cdr).reference.cdr)) {
-                builder ~= ". " ~ cdr.toString();
-            } else {
-                builder ~= cdr.toString();
-            }
-
-            builder ~= ")";
-
+        if (cdr.type != ValueType.reference) {
+            builder ~= ". " ~ cdr.toString();
         } else {
-            builder ~= car.toString() ~ " . " ~ cdr.toString();
+            builder ~= cdr.toString();
         }
+
+        builder ~= ")";
 
         return builder;
     }
