@@ -5,8 +5,9 @@ import std.ascii;
 import std.file;
 import std.stdio;
 
-import token;
 import node;
+import token;
+import value;
 
 char getc (File stream) {
     return cast(char)cstdio.fgetc(stream.getFP());
@@ -70,24 +71,6 @@ class LispParser {
         }
     }
 
-    private Node makeNode (Token token) {
-        writeln("new node from ", token);
-
-        switch (token.type) {
-            case TokenType.string:
-                return new StringNode(token.stringValue);
-
-            case TokenType.identifier:
-                return new IdentifierNode(token.stringValue);
-
-            case TokenType.integer:
-                return new IntegerNode(token.intValue);
-
-            default:
-                return null;
-        }
-    }
-
     private bool matchToken (TokenType type) {
         if (nextToken.type != type) {
             writeln("mismatched token, expected ", Token(type), " got ", nextToken);
@@ -99,18 +82,18 @@ class LispParser {
         return true;
     }
 
-    private Node parseList () {
-        Node root, node;
+    private Value parseList () {
+        ReferenceValue root, node;
 
         writeln("{ parseList");
 
         matchToken(TokenType.leftParen);
-        root = node = new Node(makeNode(nextToken));
+        root = node = Value.makeReference(Value.fromToken(nextToken));
         getToken();
 
         if (nextToken.type == TokenType.dot) {
             matchToken(TokenType.dot);
-            root.cdr = makeNode(nextToken);
+            root.reference.cdr = Value.fromToken(nextToken);
             getToken();
             if (!matchToken(TokenType.rightParen)) {
                 return null;
@@ -121,8 +104,9 @@ class LispParser {
             while (true) {
                 switch (nextToken.type) {
                     case TokenType.leftParen:
-                        node.cdr = parseList();
-                        node = node.cdr;
+                        ReferenceValue newReference = Value.makeReference(parseList());
+                        node.reference.cdr = newReference;
+                        node = newReference;
                         break;
 
                     case TokenType.rightParen:
@@ -132,8 +116,9 @@ class LispParser {
                     default:
                         writeln("got token ", nextToken);
 
-                        node.cdr = new Node(makeNode(nextToken));
-                        node = node.cdr;
+                        ReferenceValue newReference = Value.makeReference(Value.fromToken(nextToken));
+                        node.reference.cdr = newReference;
+                        node = newReference;
 
                 }
 
@@ -142,7 +127,7 @@ class LispParser {
         }
     }
 
-    Node parse () {
+    Value parse () {
         getToken();
 
         writeln("parse token ", nextToken.type);
@@ -155,7 +140,7 @@ class LispParser {
             return null;
 
         } else {
-            return makeNode(nextToken);
+            return Value.fromToken(nextToken);
         }
     }
 }

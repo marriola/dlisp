@@ -2,18 +2,24 @@ module token;
 
 import std.conv;
 
-enum TokenType { leftParen, rightParen, dot, integer, identifier, string }
+enum TokenType { leftParen, rightParen, dot, boolean, integer, identifier, string }
 
 struct Token {
     TokenType type;
 
     union {
+        bool boolValue;
         int intValue;
         string stringValue;
     }
 
     this (TokenType type) {
         this.type = type;
+    }
+
+    this (TokenType type, bool value) {
+        this.type = type;
+        this.boolValue = value;
     }
 
     this (TokenType type, int value) {
