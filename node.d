@@ -13,33 +13,42 @@ class Node {
         cdr = new BooleanValue(false);
     }
 
-    this (Value car, Value cdr = null) {
-        this.car = car;
-
-        if (cdr is null) {
-            this.cdr = new BooleanValue(false);
-        } else {
-            this.cdr = cdr;
-        }
+    this (Value car = null, Value cdr = null) {
+        this.car = car is null ? new BooleanValue(false) : car;
+        this.cdr = cdr is null ? new BooleanValue(false) : cdr;
     }
 
     static bool isNil (Value value) {
         return value.type == ValueType.boolean && (cast(BooleanValue)value).boolValue == false;
     }
 
+    static string listToString (Node root) {
+        Node node = root;
+        string builder = "(";
+
+        while (true) {
+            builder ~= node.car.toString();
+            if (isNil(node.cdr)) {
+                break;
+            } else {
+                builder ~= " ";
+                node = (cast(ReferenceValue)node.cdr).reference;
+            }
+        }
+
+        return builder ~ ")";
+    }
+
     override string toString () {
         string builder;
 
-        builder ~= "(" ~ car.toString() ~ " ";
-
-        if (cdr.type != ValueType.reference) {
-            builder ~= ". " ~ cdr.toString();
+        if (cdr.type == ValueType.reference) {
+            return listToString(this);
         } else {
-            builder ~= cdr.toString();
+            return "(" ~ car.toString() ~ " . " ~ cdr.toString() ~ ")";
         }
-
-        builder ~= ")";
 
         return builder;
     }
+
 }
