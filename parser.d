@@ -9,6 +9,10 @@ import node;
 import token;
 import value;
 
+/**
+ * @param a file stream to read from.
+ * @return a single character.
+ */
 char getc (File stream) {
     return cast(char)cstdio.fgetc(stream.getFP());
 }
@@ -17,14 +21,24 @@ class LispParser {
     private Token nextToken;
     private File stream;
 
+    /**
+     * @return a LispParser object that reads from standard input.
+     */
     this () {
         stream = stdin;
     }
 
+    /**
+     * @param an input stream to read Lisp code from.
+     * @return a LispParser object that reads from the given stream.
+     */
     this (File stream) {
         this.stream = stream;
     }
 
+    /**
+     * Reads a token from the input stream. The token is placed in member variable nextToken.
+     */
     private void getToken () {
         char c;
 
@@ -71,6 +85,12 @@ class LispParser {
         }
     }
 
+    /**
+     * Tries to match a token from the next token from the input stream.
+     *
+     * @param a token to match.
+     * @return true if the token matches the next token from input, false otherwise.
+     */
     private bool matchToken (TokenType type) {
         if (nextToken.type != type) {
             writeln("mismatched token, expected ", Token(type), " got ", nextToken);
@@ -82,7 +102,12 @@ class LispParser {
         return true;
     }
 
-    private Value parseList () {
+    /**
+     * Parses a Lisp list.
+     *
+     * @return a ReferenceValue object containing a reference to the first node of a list.
+     */
+    private ReferenceValue parseList () {
         ReferenceValue root, node;
 
         writeln("{ parseList");
@@ -127,6 +152,9 @@ class LispParser {
         }
     }
 
+    /**
+     * @return a Value object containing the next whole Lisp object from input.
+     */
     Value parse () {
         getToken();
 
