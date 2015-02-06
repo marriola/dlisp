@@ -79,7 +79,12 @@ class LispParser {
             do {
                 stringValue ~= c;
                 c = getc(stream);
-            } while (!isWhite(c) && c != '(' && c != ')');
+
+                if (c == '(' || c == ')') {
+                    cstdio.ungetc(cast(int)c, stream.getFP());;
+                    break;
+                }
+            } while (!isWhite(c));
 
             nextToken = Token(TokenType.identifier, stringValue);
         }
@@ -97,7 +102,6 @@ class LispParser {
             return false;
         }
 
-        writeln("matched ", nextToken);
         getToken();
         return true;
     }
@@ -109,8 +113,6 @@ class LispParser {
      */
     private ReferenceValue parseList () {
         ReferenceValue root, node;
-
-        writeln("{ parseList");
 
         matchToken(TokenType.leftParen);
         root = node = Value.makeReference(Value.fromToken(nextToken));
@@ -135,12 +137,9 @@ class LispParser {
                         break;
 
                     case TokenType.rightParen:
-                        writeln("} parseList");
                         return root;
 
                     default:
-                        writeln("got token ", nextToken);
-
                         ReferenceValue newReference = Value.makeReference(Value.fromToken(nextToken));
                         node.reference.cdr = newReference;
                         node = newReference;
@@ -157,8 +156,6 @@ class LispParser {
      */
     Value parse () {
         getToken();
-
-        writeln("parse token ", nextToken.type);
 
         if (nextToken.type == TokenType.leftParen) {
             return parseList();
