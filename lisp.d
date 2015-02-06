@@ -2,7 +2,7 @@ import std.stdio;
 
 import node;
 import parser;
-import value;
+import token;
 
 void main (string args[]) {
     File input;
@@ -21,7 +21,7 @@ void main (string args[]) {
     LispParser parser = new LispParser(input);
 
     stdout.write("> "); stdout.flush();
-    Value tree = parser.parse();
+    Token tree = parser.parse();
 
     if (tree) {
         writef("You said: %s", tree.toString());

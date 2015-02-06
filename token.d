@@ -1,38 +1,28 @@
 module token;
 
+import node;
+import token;
+
 import std.conv;
 
-enum TokenType { leftParen, rightParen, dot, boolean, integer, identifier, string }
+enum TokenType { leftParen, rightParen, dot, boolean, reference, integer, identifier, string };
 
-struct Token {
+abstract class Token {
     TokenType type;
 
-    union {
-        bool boolValue;
-        int intValue;
-        string stringValue;
-    }
+    override string toString();
 
+    static ReferenceToken makeReference (Token token) {
+        return new ReferenceToken(new Node(token));
+    }
+}
+
+class LexicalToken : Token {
     this (TokenType type) {
         this.type = type;
     }
 
-    this (TokenType type, bool value) {
-        this.type = type;
-        this.boolValue = value;
-    }
-
-    this (TokenType type, int value) {
-        this.type = type;
-        this.intValue = value;
-    }
-
-    this (TokenType type, string value) {
-        this.type = type;
-        this.stringValue = value;
-    }
-
-    string toString () {
+    override string toString () {
         switch (type) {
             case TokenType.leftParen:
                 return "(";
@@ -43,18 +33,73 @@ struct Token {
             case TokenType.dot:
                 return ".";
 
-            case TokenType.integer:
-                return to!string(intValue);
-
-            case TokenType.string:
-                return "\"" ~ stringValue ~ "\"";
-
-            case TokenType.identifier:
-                return stringValue;
-
             default:
                 return "???";
         }
     }
 }
 
+class BooleanToken : Token {
+    bool boolValue;
+
+    this (bool boolValue) {
+        type = TokenType.boolean;
+        this.boolValue = boolValue;
+    }
+
+    override string toString () {
+        return boolValue ? "T" : "NIL";
+    }
+}
+
+class StringToken : Token {
+    string stringValue;
+
+    this (string stringValue) {
+        type = TokenType.string;
+        this.stringValue = stringValue;
+    }
+
+    override string toString () {
+        return "\"" ~ stringValue ~ "\"";
+    }
+}
+
+class IdentifierToken : Token {
+    string stringValue;
+
+    this (string stringValue) {
+        type = TokenType.identifier;
+        this.stringValue = stringValue;
+    }
+
+    override string toString () {
+        return stringValue;
+    }
+}
+
+class IntegerToken : Token {
+    int intValue;
+
+    this (int intValue) {
+        type = TokenType.integer;
+        this.intValue = intValue;
+    }
+
+    override string toString () {
+        return to!string(intValue);
+    }
+}
+
+class ReferenceToken : Token {
+    Node reference;
+
+    this (Node reference) {
+        type = TokenType.reference;
+        this.reference = reference;
+    }
+
+    override string toString () {
+        return reference.toString();
+    }
+}

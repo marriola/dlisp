@@ -1,29 +1,29 @@
 module node;
 
-import value;
+import token;
 
 import std.conv;
 
 class Node {
-    Value car;
-    Value cdr;
+    Token car;
+    Token cdr;
 
     /**
      * @param car the CAR of the new Node.
      * @param cdr the CDR of the new Node.
-     * @return a Node object initialized with the given CAR and CDR. If null is passed for either argument, that part of the Node is initalized to the BooleanValue NIL.
+     * @return a Node object initialized with the given CAR and CDR. If null is passed for either argument, that part of the Node is initalized to the BooleanToken NIL.
      */
-    this (Value car = null, Value cdr = null) {
-        this.car = car is null ? new BooleanValue(false) : car;
-        this.cdr = cdr is null ? new BooleanValue(false) : cdr;
+    this (Token car = null, Token cdr = null) {
+        this.car = car is null ? new BooleanToken(false) : car;
+        this.cdr = cdr is null ? new BooleanToken(false) : cdr;
     }
 
     /**
-     * @param value a Value object to test.
-     * @return true if the Value object is a BooleanValue representing the value NIL.
+     * @param value a Token object to test.
+     * @return true if the Token object is a BooleanToken representing the value NIL.
      */
-    static bool isNil (Value value) {
-        return value.type == ValueType.boolean && (cast(BooleanValue)value).boolValue == false;
+    static bool isNil (Token value) {
+        return value.type == TokenType.boolean && (cast(BooleanToken)value).boolValue == false;
     }
 
     /**
@@ -44,7 +44,7 @@ class Node {
 
             } else {
                 builder ~= " ";
-                node = (cast(ReferenceValue)node.cdr).reference;
+                node = (cast(ReferenceToken)node.cdr).reference;
             }
         }
 
@@ -58,7 +58,7 @@ class Node {
         string builder;
 
         // If the CDR is a reference-type value or NIL, this is a list.
-        if (cdr.type == ValueType.reference || isNil(cdr)) {
+        if (cdr.type == TokenType.reference || isNil(cdr)) {
             return listToString(this);
             
         } else {

@@ -7,7 +7,6 @@ import std.stdio;
 
 import node;
 import token;
-import value;
 
 /**
  * @param a file stream to read from.
@@ -47,20 +46,20 @@ class LispParser {
         } while (isWhite(c));
 
         if (c == '(') {
-            nextToken = Token(TokenType.leftParen);
+            nextToken = new LexicalToken(TokenType.leftParen);
 
         } else if (c == ')') {
-            nextToken = Token(TokenType.rightParen);
+            nextToken = new LexicalToken(TokenType.rightParen);
 
         } else if (c == '.') {
-            nextToken = Token(TokenType.dot);
+            nextToken = new LexicalToken(TokenType.dot);
 
         } else if (isDigit(c)) {
             cstdio.ungetc(cast(int)c, stream.getFP());
 
             int intValue;
             stream.readf("%d", &intValue);
-            nextToken = Token(TokenType.integer, intValue);
+            nextToken = new IntegerToken(intValue);
 
         } else if (c == '\"') {
             string stringValue;
@@ -71,7 +70,7 @@ class LispParser {
                 c = getc(stream);
             } while (c != '\"');
 
-            nextToken = Token(TokenType.string, stringValue);
+            nextToken = new StringToken(stringValue);
 
        } else {
             string stringValue;
@@ -86,7 +85,7 @@ class LispParser {
                 }
             } while (!isWhite(c));
 
-            nextToken = Token(TokenType.identifier, stringValue);
+            nextToken = new IdentifierToken(stringValue);
         }
     }
 
@@ -98,7 +97,7 @@ class LispParser {
      */
     private bool matchToken (TokenType type) {
         if (nextToken.type != type) {
-            writeln("mismatched token, expected ", Token(type), " got ", nextToken);
+            writeln("mismatched token, expected ", type, " got ", nextToken);
             return false;
         }
 
@@ -109,18 +108,18 @@ class LispParser {
     /**
      * Parses a Lisp list.
      *
-     * @return a ReferenceValue object containing a reference to the first node of a list.
+     * @return a ReferenceToken object containing a reference to the first node of a list.
      */
-    private ReferenceValue parseList () {
-        ReferenceValue root, node;
+    private ReferenceToken parseList () {
+        ReferenceToken root, node;
 
         matchToken(TokenType.leftParen);
-        root = node = Value.makeReference(Value.fromToken(nextToken));
+        root = node = Token.makeReference(nextToken);
         getToken();
 
         if (nextToken.type == TokenType.dot) {
             matchToken(TokenType.dot);
-            root.reference.cdr = Value.fromToken(nextToken);
+            root.reference.cdr = nextToken;
             getToken();
             if (!matchToken(TokenType.rightParen)) {
                 return null;
@@ -131,7 +130,7 @@ class LispParser {
             while (true) {
                 switch (nextToken.type) {
                     case TokenType.leftParen:
-                        ReferenceValue newReference = Value.makeReference(parseList());
+                        ReferenceToken newReference = Token.makeReference(parseList());
                         node.reference.cdr = newReference;
                         node = newReference;
                         break;
@@ -140,7 +139,7 @@ class LispParser {
                         return root;
 
                     default:
-                        ReferenceValue newReference = Value.makeReference(Value.fromToken(nextToken));
+                        ReferenceToken newReference = Token.makeReference(nextToken);
                         node.reference.cdr = newReference;
                         node = newReference;
 
@@ -152,9 +151,9 @@ class LispParser {
     }
 
     /**
-     * @return a Value object containing the next whole Lisp object from input.
+     * @return a Token object containing the next whole Lisp object from input.
      */
-    Value parse () {
+    Token parse () {
         getToken();
 
         if (nextToken.type == TokenType.leftParen) {
@@ -165,7 +164,7 @@ class LispParser {
             return null;
 
         } else {
-            return Value.fromToken(nextToken);
+            return nextToken;
         }
     }
 }
