@@ -25,7 +25,7 @@ void main (string args[]) {
         Token tree = lisp.read();
 
         if (tree) {
-            writeln(tree);
+            writef("%s\n\n", tree);
         } else {
             writeln("Syntax error");
         }

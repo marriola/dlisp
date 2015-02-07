@@ -2,6 +2,7 @@ module parser;
 
 import cstdio = core.stdc.stdio;
 import std.ascii;
+import std.conv;
 import std.file;
 import std.stdio;
 
@@ -55,11 +56,27 @@ class LispParser {
             nextToken = new LexicalToken(TokenType.dot);
 
         } else if (isDigit(c)) {
-            cstdio.ungetc(cast(int)c, stream.getFP());
+            bool isFloat = false;
+            string literal;
 
-            int intValue;
-            stream.readf("%d", &intValue);
-            nextToken = new IntegerToken(intValue);
+            do {
+                literal ~= c;
+                c = getc(stream);
+
+                if (c == '.' || c == 'e' || c == 'E') {
+                    isFloat = true;
+
+                } else if (c == '(' || c == ')') {
+                    cstdio.ungetc(cast(int)c, stream.getFP());;
+                    break;
+                }
+            } while (!isWhite(c));
+
+            if (isFloat) {
+                nextToken = new FloatToken(to!double(literal));
+            } else {
+                nextToken = new IntegerToken(to!int(literal));
+            }
 
         } else if (c == '\"') {
             string stringValue;
@@ -100,7 +117,7 @@ class LispParser {
             writeln("mismatched token, expected ", type, " got ", nextToken);
             return false;
         }
-
+ 
         getToken();
         return true;
     }

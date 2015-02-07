@@ -5,7 +5,7 @@ import token;
 
 import std.conv;
 
-enum TokenType { leftParen, rightParen, dot, boolean, reference, integer, identifier, string };
+enum TokenType { leftParen, rightParen, dot, boolean, reference, integer, floating, identifier, string };
 
 abstract class Token {
     TokenType type;
@@ -88,6 +88,19 @@ class IntegerToken : Token {
 
     override string toString () {
         return to!string(intValue);
+    }
+}
+
+class FloatToken : Token {
+    double floatValue;
+
+    this (double floatValue) {
+        type = TokenType.floating;
+        this.floatValue = floatValue;
+    }
+
+    override string toString () {
+        return to!string(floatValue);
     }
 }
 
