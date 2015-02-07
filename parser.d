@@ -153,7 +153,7 @@ class LispParser {
     /**
      * @return a Token object containing the next whole Lisp object from input.
      */
-    Token parse () {
+    Token read () {
         getToken();
 
         if (nextToken.type == TokenType.leftParen) {

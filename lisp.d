@@ -18,14 +18,16 @@ void main (string args[]) {
         }
     }
 
-    LispParser parser = new LispParser(input);
+    LispParser lisp = new LispParser(input);
 
-    stdout.write("> "); stdout.flush();
-    Token tree = parser.parse();
+    while (true) {
+        stdout.write("> "); stdout.flush();
+        Token tree = lisp.read();
 
-    if (tree) {
-        writef("You said: %s", tree.toString());
-    } else {
-        writeln("Syntax error");
+        if (tree) {
+            writeln(tree);
+        } else {
+            writeln("Syntax error");
+        }
     }
 }
