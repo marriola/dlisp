@@ -70,8 +70,7 @@ class LispParser {
 
             IdentifierToken quoteItem = new IdentifierToken("QUOTE");
             ReferenceToken tokenItem = Token.makeReference(nextToken);
-            Node quoteNode = new Node(quoteItem, tokenItem);
-            nextToken = new ReferenceToken(quoteNode);
+            nextToken = Token.makeReference(quoteItem, tokenItem);
 
         } else if (isDigit(c)) {
             bool isFloat = false;

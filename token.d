@@ -12,8 +12,8 @@ abstract class Token {
 
     override string toString();
 
-    static ReferenceToken makeReference (Token token) {
-        return new ReferenceToken(new Node(token));
+    static ReferenceToken makeReference (Token car, Token cdr = null) {
+        return new ReferenceToken(new Node(car, cdr));
     }
 }
 
