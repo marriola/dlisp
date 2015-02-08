@@ -5,6 +5,7 @@ import std.ascii;
 import std.conv;
 import std.file;
 import std.stdio;
+import std.string;
 
 import node;
 import token;
@@ -102,7 +103,15 @@ class LispParser {
                 }
             } while (!isWhite(c));
 
-            nextToken = new IdentifierToken(stringValue);
+            if (icmp(stringValue, "nil") == 0) {
+                nextToken = new BooleanToken(false);
+
+            } else if (icmp(stringValue, "t") == 0) {
+                nextToken = new BooleanToken(true);
+
+            } else {
+                nextToken = new IdentifierToken(stringValue);
+            }
         }
     }
 
