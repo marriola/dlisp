@@ -9,6 +9,12 @@ import std.string;
 import node;
 import token;
 
+class SyntaxErrorException : Exception {
+    this (string msg) {
+        super(msg);
+    }
+}
+
 /**
  * @param a file stream to read from.
  * @return a single character.
@@ -65,12 +71,22 @@ class LispParser {
             nextToken = new LexicalToken(TokenType.dot);
 
         } else if (c == '\'') {
-            // encapsulate the next token in a quote
+            // Encapsulate the next token in a quote.
+            // We grab the next token, and throw it in a new list with the identifier QUOTE as the first item, and it as the second.
             getToken();
 
-            IdentifierToken quoteItem = new IdentifierToken("QUOTE");
-            ReferenceToken tokenItem = Token.makeReference(nextToken);
-            nextToken = Token.makeReference(quoteItem, tokenItem);
+            Token quotedItem;
+            if (nextToken.isLexicalToken()) {
+                if (nextToken.type != TokenType.leftParen) {
+                    throw new SyntaxErrorException("Expected non-lexical token or left paren, got " ~ nextToken.toString());
+                } else {
+                    quotedItem = parseList();
+                }
+            } else {
+                quotedItem = nextToken;
+            }
+
+            nextToken = Token.makeReference(new IdentifierToken("QUOTE"), Token.makeReference(quotedItem));
 
         } else if (isDigit(c)) {
             bool isFloat = false;
@@ -137,14 +153,11 @@ class LispParser {
      * @param a token to match.
      * @return true if the token matches the next token from input, false otherwise.
      */
-    private bool matchToken (TokenType type) {
+    private void matchToken (TokenType type) {
         if (nextToken.type != type) {
-            writeln("mismatched token, expected ", type, " got ", nextToken);
-            return false;
+            throw new SyntaxErrorException("mismatched token, expected " ~ tokenTypeName(type) ~ ", got " ~ nextToken.toString());
         }
- 
         getToken();
-        return true;
     }
 
     /**
@@ -152,10 +165,14 @@ class LispParser {
      *
      * @return a ReferenceToken object containing a reference to the first node of a list.
      */
-    private ReferenceToken parseList () {
+    private Token parseList () {
         ReferenceToken root, node;
 
         matchToken(TokenType.leftParen);
+        if (nextToken.type == TokenType.rightParen) {
+            return new BooleanToken(false);
+        }
+
         root = node = Token.makeReference(nextToken);
         getToken();
 
@@ -163,9 +180,7 @@ class LispParser {
             matchToken(TokenType.dot);
             root.reference.cdr = nextToken;
             getToken();
-            if (!matchToken(TokenType.rightParen)) {
-                return null;
-            }
+            matchToken(TokenType.rightParen);
             return root;
 
         } else {
@@ -202,8 +217,7 @@ class LispParser {
             return parseList();
 
         } else if (nextToken.type == TokenType.rightParen) {
-            // syntax error
-            return null;
+            throw new SyntaxErrorException("Expected left paren or non-lexical token");
 
         } else {
             return nextToken;

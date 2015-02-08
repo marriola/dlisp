@@ -22,12 +22,16 @@ void main (string args[]) {
 
     while (true) {
         stdout.write("> "); stdout.flush();
-        Token tree = lisp.read();
+        try {
+            Token tree = lisp.read();
 
-        if (tree) {
-            writef("%s\n\n", tree);
-        } else {
-            writeln("Syntax error");
+            if (tree) {
+                writef("%s\n\n", tree);
+            } else {
+                writeln("Syntax error");
+            }
+        } catch (SyntaxErrorException e) {
+            writef("Syntax error: %s\n\n", e.msg);
         }
     }
 }

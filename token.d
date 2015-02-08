@@ -7,11 +7,30 @@ import std.conv;
 
 enum TokenType { leftParen, rightParen, dot, boolean, reference, integer, floating, identifier, string };
 
+string tokenTypeName (TokenType type) {
+    static string typeNames[] = [ "left paren", "right paren", "dot", "boolean", "reference", "integer", "floating point", "identifier", "string" ];
+    return typeNames[cast(int)type];
+}
+
 abstract class Token {
     TokenType type;
 
+    /**
+     * @return a string representation of this token
+     */
     override string toString();
 
+    /**
+     * @return true if this is a lexical token, false otherwise. 
+     */
+    bool isLexicalToken () { return false; }
+
+    /**
+     * Constructs a reference token encapsulating a new Node object.
+     * @param car the CAR of the new node
+     * @param cdr the CDR of the new node
+     * @return a reference token
+     */
     static ReferenceToken makeReference (Token car, Token cdr = null) {
         return new ReferenceToken(new Node(car, cdr));
     }
@@ -21,6 +40,8 @@ class LexicalToken : Token {
     this (TokenType type) {
         this.type = type;
     }
+
+    override bool isLexicalToken () { return true; }
 
     override string toString () {
         switch (type) {
