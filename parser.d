@@ -1,6 +1,5 @@
 module parser;
 
-import cstdio = core.stdc.stdio;
 import std.ascii;
 import std.conv;
 import std.file;
@@ -15,7 +14,16 @@ import token;
  * @return a single character.
  */
 char getc (File stream) {
-    return cast(char)cstdio.fgetc(stream.getFP());
+    return cast(char)core.stdc.stdio.fgetc(stream.getFP());
+}
+
+/**
+ * Puts a character back into the input stream.
+ * @param c
+ * @param stream
+ */
+void ungetc (char c, File stream) {
+    core.stdc.stdio.ungetc(cast(int)c, stream.getFP());
 }
 
 class LispParser {
@@ -56,6 +64,15 @@ class LispParser {
         } else if (c == '.') {
             nextToken = new LexicalToken(TokenType.dot);
 
+        } else if (c == '\'') {
+            // encapsulate the next token in a quote
+            getToken();
+
+            IdentifierToken quoteItem = new IdentifierToken("QUOTE");
+            ReferenceToken tokenItem = Token.makeReference(nextToken);
+            Node quoteNode = new Node(quoteItem, tokenItem);
+            nextToken = new ReferenceToken(quoteNode);
+
         } else if (isDigit(c)) {
             bool isFloat = false;
             string literal;
@@ -68,7 +85,7 @@ class LispParser {
                     isFloat = true;
 
                 } else if (c == '(' || c == ')') {
-                    cstdio.ungetc(cast(int)c, stream.getFP());;
+                    ungetc(c, stream);
                     break;
                 }
             } while (!isWhite(c));
@@ -98,7 +115,7 @@ class LispParser {
                 c = getc(stream);
 
                 if (c == '(' || c == ')') {
-                    cstdio.ungetc(cast(int)c, stream.getFP());;
+                    ungetc(c, stream);
                     break;
                 }
             } while (!isWhite(c));
