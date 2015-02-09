@@ -105,10 +105,14 @@ class LispParser {
                 }
             } while (!isWhite(c));
 
-            if (isFloat) {
-                nextToken = new FloatToken(to!double(literal));
-            } else {
-                nextToken = new IntegerToken(to!int(literal));
+            try {
+                if (isFloat) {
+                    nextToken = new FloatToken(to!double(literal));
+                } else {
+                    nextToken = new IntegerToken(to!int(literal));
+                }
+            } catch (ConvException e) {
+                throw new SyntaxErrorException("malformed number literal");
             }
 
         } else if (c == '\"') {
@@ -153,11 +157,14 @@ class LispParser {
      * @param a token to match.
      * @return true if the token matches the next token from input, false otherwise.
      */
-    private void matchToken (TokenType type) {
+    private void matchToken (TokenType type, bool readNext = true) {
         if (nextToken.type != type) {
-            throw new SyntaxErrorException("mismatched token, expected " ~ tokenTypeName(type) ~ ", got " ~ nextToken.toString());
+            throw new SyntaxErrorException("expected " ~ tokenTypeName(type) ~ ", got " ~ nextToken.toString());
         }
-        getToken();
+
+        if (readNext) {
+            getToken();
+        }
     }
 
     /**
@@ -180,7 +187,7 @@ class LispParser {
             matchToken(TokenType.dot);
             root.reference.cdr = nextToken;
             getToken();
-            matchToken(TokenType.rightParen);
+            matchToken(TokenType.rightParen, false);
             return root;
 
         } else {
@@ -193,6 +200,7 @@ class LispParser {
                         break;
 
                     case TokenType.rightParen:
+                        matchToken(TokenType.rightParen, false);
                         return root;
 
                     default:

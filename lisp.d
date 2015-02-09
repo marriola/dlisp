@@ -24,12 +24,7 @@ void main (string args[]) {
         stdout.write("> "); stdout.flush();
         try {
             Token tree = lisp.read();
-
-            if (tree) {
-                writef("%s\n\n", tree);
-            } else {
-                writeln("Syntax error");
-            }
+            writef("%s\n\n", tree);
         } catch (SyntaxErrorException e) {
             writef("Syntax error: %s\n\n", e.msg);
         }
