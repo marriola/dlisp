@@ -1,7 +1,6 @@
 module token;
 
 import node;
-import token;
 
 import std.conv;
 

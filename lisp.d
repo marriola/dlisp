@@ -1,8 +1,10 @@
 import std.stdio;
 
+import functions;
 import node;
 import parser;
 import token;
+import variables;
 
 void main (string args[]) {
     File input;
@@ -27,6 +29,10 @@ void main (string args[]) {
             writef("%s\n\n", tree);
         } catch (SyntaxErrorException e) {
             writef("Syntax error: %s\n\n", e.msg);
+        } catch (UndefinedFunctionException e) {
+            writef("Undefined function: %s\n\n", e.msg);
+        } catch (UndefinedVariableException e) {
+            writef("Undefined variable: %s\n\n", e.msg);
         }
     }
 }
