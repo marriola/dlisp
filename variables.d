@@ -21,8 +21,9 @@ void leaveScope () {
 }
 
 void initializeScopeTable () {
-    scopeTable = *(new Array!(Token[string]));
     enterScope();
+    addVariable("E", new FloatToken(std.math.E));
+    addVariable("PI", new FloatToken(std.math.PI));
 }
 
 Token getVariable (string name) {
@@ -40,7 +41,7 @@ void addVariable (string name, Token token) {
 }
 
 unittest {
-    initializeScopeTable();
+    enterScope();
 
     addVariable("foo", new StringToken("bar"));
     assert((cast(StringToken)getVariable("foo")).stringValue == "bar");
@@ -52,4 +53,6 @@ unittest {
     leaveScope();
     addVariable("foo", new StringToken("bar"));
     assert((cast(StringToken)getVariable("foo")).stringValue == "bar");
+
+    leaveScope();
 }

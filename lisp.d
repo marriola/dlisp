@@ -1,5 +1,6 @@
 import std.stdio;
 
+import evaluator;
 import functions;
 import node;
 import parser;
@@ -20,13 +21,14 @@ void main (string args[]) {
         }
     }
 
+    initializeScopeTable();
     LispParser lisp = new LispParser(input);
 
     while (true) {
         stdout.write("> "); stdout.flush();
         try {
             Token tree = lisp.read();
-            writef("%s\n\n", tree);
+            writef("%s\n\n", evaluate(tree));
         } catch (SyntaxErrorException e) {
             writef("Syntax error: %s\n\n", e.msg);
         } catch (UndefinedFunctionException e) {

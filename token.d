@@ -3,6 +3,7 @@ module token;
 import node;
 
 import std.conv;
+import std.string;
 
 enum TokenType { leftParen, rightParen, dot, boolean, reference, integer, floating, identifier, string };
 
@@ -90,7 +91,7 @@ class IdentifierToken : Token {
 
     this (string stringValue) {
         type = TokenType.identifier;
-        this.stringValue = stringValue;
+        this.stringValue = toUpper(stringValue);
     }
 
     override string toString () {
