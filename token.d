@@ -5,10 +5,10 @@ import node;
 import std.conv;
 import std.string;
 
-enum TokenType { leftParen, rightParen, dot, boolean, reference, integer, floating, identifier, string };
+enum TokenType { leftParen, rightParen, dot, boolean, reference, integer, floating, identifier, string, constant };
 
 string tokenTypeName (TokenType type) {
-    static string typeNames[] = [ "left paren", "right paren", "dot", "boolean", "reference", "integer", "floating point", "identifier", "string" ];
+    static string typeNames[] = [ "left paren", "right paren", "dot", "boolean", "reference", "integer", "floating point", "identifier", "string", "constant" ];
     return typeNames[cast(int)type];
 }
 
@@ -33,6 +33,14 @@ abstract class Token {
      */
     static ReferenceToken makeReference (Token car, Token cdr = null) {
         return new ReferenceToken(new Node(car, cdr));
+    }
+
+    /**
+     * @param value a Token object to test.
+     * @return true if the Token object is a BooleanToken representing the value NIL.
+     */
+    static bool isNil (Token value) {
+        return value.type == TokenType.boolean && (cast(BooleanToken)value).boolValue == false;
     }
 }
 
@@ -109,6 +117,19 @@ class IntegerToken : Token {
 
     override string toString () {
         return to!string(intValue);
+    }
+}
+
+class ConstantToken : Token {
+    string stringValue;
+
+    this (string stringValue) {
+        type = TokenType.string;
+        this.stringValue = toUpper(stringValue);
+    }
+
+    override string toString () {
+        return ":" ~ stringValue;
     }
 }
 

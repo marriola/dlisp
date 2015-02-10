@@ -139,7 +139,10 @@ class LispParser {
                 }
             } while (!isWhite(c));
 
-            if (icmp(stringValue, "nil") == 0) {
+            if (stringValue[0] == ':') {
+                nextToken = new ConstantToken(stringValue[1..$]);
+
+            } else if (icmp(stringValue, "nil") == 0) {
                 nextToken = new BooleanToken(false);
 
             } else if (icmp(stringValue, "t") == 0) {
