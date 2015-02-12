@@ -19,14 +19,6 @@ class Node {
     }
 
     /**
-     * @param value a Token object to test.
-     * @return true if the Token object is a BooleanToken representing the value NIL.
-     */
-    static bool isNil (Token value) {
-        return value.type == TokenType.boolean && (cast(BooleanToken)value).boolValue == false;
-    }
-
-    /**
      * @param root the root of a list.
      * @return the string representation of the list.
      */
@@ -39,7 +31,7 @@ class Node {
             builder ~= node.car.toString();
 
             // If the CDR is NIL, this is the last element of the list.
-            if (isNil(node.cdr)) {
+            if (Token.isNil(node.cdr)) {
                 break;
 
             } else {
@@ -58,7 +50,7 @@ class Node {
         string builder;
 
         // If the CDR is a reference-type value or NIL, this is a list.
-        if (cdr.type == TokenType.reference || isNil(cdr)) {
+        if (cdr.type == TokenType.reference || Token.isNil(cdr)) {
             return listToString(this);
             
         } else {

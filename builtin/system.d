@@ -5,11 +5,11 @@ import std.c.stdlib;
 import functions;
 import token;
 
-BooleanToken builtinExit (string name, Token args) {
+BooleanToken builtinExit (string name, ReferenceToken args) {
     int exitCode = 0;
 
     if (args.type == TokenType.reference) {
-        Token exitCodeToken = (cast(ReferenceToken)args).reference.car;
+        Token exitCodeToken = args.reference.car;
         if (exitCodeToken.type != TokenType.integer) {
             throw new Exception("Exit code must be an integer");
         } else {
@@ -21,6 +21,7 @@ BooleanToken builtinExit (string name, Token args) {
     return null;
 }
 
-void addBuiltins (out BuiltinFunction[string] builtinTable) {
+BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["EXIT"] = &builtinExit;
+    return builtinTable;
 }

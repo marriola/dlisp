@@ -12,7 +12,7 @@ struct LispFunction {
     ReferenceToken commands;
 }
 
-alias BuiltinFunction = Token function(string, Token);
+alias BuiltinFunction = Token function(string, ReferenceToken);
 
 LispFunction[string] lispFunctions;
 BuiltinFunction[string] builtinFunctions;
@@ -24,8 +24,8 @@ class UndefinedFunctionException : Exception {
 }
 
 void initializeBuiltins () {
-    builtin.math.addBuiltins(builtinFunctions);
-    builtin.system.addBuiltins(builtinFunctions);
+    builtinFunctions = builtin.math.addBuiltins(builtinFunctions);
+    builtinFunctions = builtin.system.addBuiltins(builtinFunctions);
 }
 
 void addFunction (string name, Token parameters, ReferenceToken commands) {
@@ -34,7 +34,7 @@ void addFunction (string name, Token parameters, ReferenceToken commands) {
 
 Token evaluateFunction (string name, Token parameters) {
     if (name in builtinFunctions) {
-        return builtinFunctions[name](name, parameters);
+        return builtinFunctions[name](name, cast(ReferenceToken)parameters);
     }
 
     if (name !in lispFunctions) {

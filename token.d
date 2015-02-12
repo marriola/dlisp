@@ -158,3 +158,19 @@ class ReferenceToken : Token {
         return reference.toString();
     }
 }
+
+ReferenceToken toReference (Token token) {
+    return (cast(ReferenceToken)token);
+}
+
+IntegerToken toInteger (Token token) {
+    return (cast(IntegerToken)token);   
+}
+
+FloatToken toFloat (Token token) {
+    return (cast(FloatToken)token);   
+}
+
+IdentifierToken toIdentifier (Token token) {
+    return (cast(IdentifierToken)token);
+}
