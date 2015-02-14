@@ -3,13 +3,14 @@ module builtin.system;
 import std.c.stdlib;
 
 import functions;
+import list;
 import token;
 
-BooleanToken builtinExit (string name, ReferenceToken args) {
+Token builtinExit (string name, ReferenceToken args) {
     int exitCode = 0;
 
-    if (args.type == TokenType.reference) {
-        Token exitCodeToken = args.reference.car;
+    if (hasMore(args)) {
+        Token exitCodeToken = getFirst(args);
         if (exitCodeToken.type != TokenType.integer) {
             throw new Exception("Exit code must be an integer");
         } else {

@@ -4,6 +4,7 @@ import evaluator;
 import token;
 import variables;
 
+import builtin.list;
 import builtin.math;
 import builtin.system;
 
@@ -23,7 +24,14 @@ class UndefinedFunctionException : Exception {
     }
 }
 
+class NotEnoughArgumentsException : Exception {
+    this (string msg) {
+        super(msg ~ ": Not enough arguments");
+    }
+}
+
 void initializeBuiltins () {
+    builtinFunctions = builtin.list.addBuiltins(builtinFunctions);
     builtinFunctions = builtin.math.addBuiltins(builtinFunctions);
     builtinFunctions = builtin.system.addBuiltins(builtinFunctions);
 }
@@ -34,6 +42,9 @@ void addFunction (string name, Token parameters, ReferenceToken commands) {
 
 Token evaluateFunction (string name, Token parameters) {
     if (name in builtinFunctions) {
+        if (Token.isNil(parameters)) {
+            parameters = null;
+        }
         return builtinFunctions[name](name, cast(ReferenceToken)parameters);
     }
 

@@ -149,7 +149,7 @@ Token builtinDivide (string name, ReferenceToken args) {
 
 Token builtinSqrt (string name, ReferenceToken args) {
     if (!hasMore(args)) {
-        throw new Exception("sqrt: not enough arguments");
+        throw new NotEnoughArgumentsException(name);
     } else {
         Token operand = getFirst(args);
         float value = (operand.type == TokenType.floating) ? (cast(FloatToken)operand).floatValue : (cast(IntegerToken)operand).intValue;
