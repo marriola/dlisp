@@ -5,7 +5,7 @@ import node;
 import std.conv;
 import std.string;
 
-enum TokenType { leftParen, rightParen, dot, boolean, reference, integer, floating, identifier, string, constant };
+enum TokenType { leftParen, rightParen, leftBrack, rightBrack, dot, boolean, reference, integer, floating, identifier, string, constant };
 
 string tokenTypeName (TokenType type) {
     static string typeNames[] = [ "left paren", "right paren", "dot", "boolean", "reference", "integer", "floating point", "identifier", "string", "constant" ];
@@ -52,19 +52,14 @@ class LexicalToken : Token {
     override bool isLexicalToken () { return true; }
 
     override string toString () {
-        switch (type) {
-            case TokenType.leftParen:
-                return "(";
+        static enum string[TokenType] lexicalTokens =
+            [ TokenType.leftParen : "(",
+              TokenType.rightParen : ")",
+              TokenType.leftBrack : "[",
+              TokenType.rightParen : "]",
+              TokenType.dot : "." ];
 
-            case TokenType.rightParen:
-                return ")";
-
-            case TokenType.dot:
-                return ".";
-
-            default:
-                return "???";
-        }
+        return lexicalTokens[type];
     }
 }
 

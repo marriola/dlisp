@@ -35,6 +35,7 @@ void ungetc (char c, File stream) {
 class LispParser {
     private Token nextToken;
     private File stream;
+    private bool grabNext = true;
 
     /**
      * @return a LispParser object that reads from standard input.
@@ -57,6 +58,12 @@ class LispParser {
     private void getToken () {
         char c;
 
+        if (!grabNext) {
+            // If we checked that the current token began an m-expression, but it didn't, then we want to keep it.
+            grabNext = true;
+            return;
+        }
+
         do {
             c = getc(stream);
         } while (isWhite(c));
@@ -66,6 +73,12 @@ class LispParser {
 
         } else if (c == ')') {
             nextToken = new LexicalToken(TokenType.rightParen);
+
+        } else if (c == '[') {
+            nextToken = new LexicalToken(TokenType.leftBrack);
+
+        } else if (c == ']') {
+            nextToken = new LexicalToken(TokenType.rightBrack);
 
         } else if (c == '.') {
             nextToken = new LexicalToken(TokenType.dot);
@@ -80,7 +93,7 @@ class LispParser {
                 if (nextToken.type != TokenType.leftParen) {
                     throw new SyntaxErrorException("Expected non-lexical token or left paren, got " ~ nextToken.toString());
                 } else {
-                    quotedItem = parseList();
+                    quotedItem = parseList(false);
                 }
             } else {
                 quotedItem = nextToken;
@@ -99,7 +112,7 @@ class LispParser {
                 if (c == '.' || c == 'e' || c == 'E') {
                     isFloat = true;
 
-                } else if (c == '(' || c == ')') {
+                } else if (c == '(' || c == ')' || c == '[' || c == ']') {
                     ungetc(c, stream);
                     break;
                 }
@@ -133,7 +146,7 @@ class LispParser {
                 stringValue ~= c;
                 c = getc(stream);
 
-                if (c == '(' || c == ')') {
+                if (c == '(' || c == ')' || c == '[' || c == ']') {
                     ungetc(c, stream);
                     break;
                 }
@@ -175,18 +188,21 @@ class LispParser {
      *
      * @return a ReferenceToken object containing a reference to the first node of a list.
      */
-    private Token parseList () {
+    private Token parseList (bool mExpression, Token identifier = null) {
         ReferenceToken root, node;
 
-        matchToken(TokenType.leftParen);
-        if (nextToken.type == TokenType.rightParen) {
+        matchToken(mExpression ? TokenType.leftBrack : TokenType.leftParen);
+        if ((mExpression && nextToken.type == TokenType.rightBrack) ||
+            nextToken.type == TokenType.rightParen) {
             return new BooleanToken(false);
         }
 
-        root = node = Token.makeReference(nextToken);
-        getToken();
+        root = node = Token.makeReference(mExpression ? identifier : nextToken);
+        if (!mExpression) {
+            getToken();
+        }
 
-        if (nextToken.type == TokenType.dot) {
+        if (!mExpression && nextToken.type == TokenType.dot) {
             matchToken(TokenType.dot);
             root.reference.cdr = nextToken;
             getToken();
@@ -197,12 +213,24 @@ class LispParser {
             while (true) {
                 switch (nextToken.type) {
                     case TokenType.leftParen:
-                        ReferenceToken newReference = Token.makeReference(parseList());
+                        ReferenceToken newReference = Token.makeReference(parseList(false));
                         node.reference.cdr = newReference;
                         node = newReference;
                         break;
 
+                    case TokenType.rightBrack:
+                        if (!mExpression) {
+                            throw new SyntaxErrorException("Expected right paren");
+                        }
+
+                        matchToken(TokenType.rightBrack, false);
+                        return root;
+
                     case TokenType.rightParen:
+                        if (mExpression) {
+                            throw new SyntaxErrorException("Expected right bracket");
+                        }
+
                         matchToken(TokenType.rightParen, false);
                         return root;
 
@@ -225,10 +253,26 @@ class LispParser {
         getToken();
 
         if (nextToken.type == TokenType.leftParen) {
-            return parseList();
+            return parseList(false);
+
 
         } else if (nextToken.type == TokenType.rightParen) {
             throw new SyntaxErrorException("Expected left paren or non-lexical token");
+
+        } else if (nextToken.type == TokenType.identifier) {
+            // check if this is an m-expression
+            Token identifier = nextToken;
+            getToken();
+
+            if (nextToken.type == TokenType.leftBrack) {
+                // yes, parse m-expression
+                return parseList(true, identifier);
+
+            } else {
+                // no, return the identifier we grabbed and leave the next token queued up
+                grabNext = false;
+                return identifier;
+            }
 
         } else {
             return nextToken;
