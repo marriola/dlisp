@@ -4,8 +4,213 @@ import std.math;
 
 import evaluator;
 import functions;
-import list;
+import lispObject;
 import token;
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Token builtinGreaterOrEqual (string name, ReferenceToken args) {
+    bool result = true;
+    float lastValue = float.min_normal;
+
+    if (!hasMore(args)) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Token current = evaluate(getFirst(args));
+    if (current.type == TokenType.floating) {
+        lastValue = (cast(FloatToken)current).floatValue;
+    } else if (current.type == TokenType.integer) {
+        lastValue = (cast(IntegerToken)current).intValue;
+    } else {
+        throw new TypeMismatchException(name, current, "integer or floating point");
+    }
+    args = getRest(args);
+
+    while (hasMore(args)) {
+        current = evaluate(getFirst(args));
+        float currentValue;
+        if (current.type == TokenType.floating) {
+            currentValue = (cast(FloatToken)current).floatValue;
+        } else if (current.type == TokenType.integer) {
+            currentValue = (cast(IntegerToken)current).intValue;
+        } else {
+            throw new TypeMismatchException(name, current, "integer or floating point");
+        }
+
+        result = currentValue >= lastValue;
+        lastValue = currentValue;
+
+        args = getRest(args);
+    }
+
+    return new BooleanToken(result);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Token builtinGreater (string name, ReferenceToken args) {
+    bool result = true;
+    float lastValue = float.min_normal;
+
+    if (!hasMore(args)) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Token current = evaluate(getFirst(args));
+    if (current.type == TokenType.floating) {
+        lastValue = (cast(FloatToken)current).floatValue;
+    } else if (current.type == TokenType.integer) {
+        lastValue = (cast(IntegerToken)current).intValue;
+    } else {
+        throw new TypeMismatchException(name, current, "integer or floating point");
+    }
+    args = getRest(args);
+
+    while (hasMore(args)) {
+        current = evaluate(getFirst(args));
+        float currentValue;
+        if (current.type == TokenType.floating) {
+            currentValue = (cast(FloatToken)current).floatValue;
+        } else if (current.type == TokenType.integer) {
+            currentValue = (cast(IntegerToken)current).intValue;
+        } else {
+            throw new TypeMismatchException(name, current, "integer or floating point");
+        }
+
+        result = currentValue > lastValue;
+        lastValue = currentValue;
+
+        args = getRest(args);
+    }
+
+    return new BooleanToken(result);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Token builtinEqual (string name, ReferenceToken args) {
+    bool result = true;
+    float lastValue = float.max;
+
+    if (!hasMore(args)) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Token current = evaluate(getFirst(args));
+    if (current.type == TokenType.floating) {
+        lastValue = (cast(FloatToken)current).floatValue;
+    } else if (current.type == TokenType.integer) {
+        lastValue = (cast(IntegerToken)current).intValue;
+    } else {
+        throw new TypeMismatchException(name, current, "integer or floating point");
+    }
+    args = getRest(args);
+
+    while (hasMore(args)) {
+        current = evaluate(getFirst(args));
+        float currentValue;
+        if (current.type == TokenType.floating) {
+            currentValue = (cast(FloatToken)current).floatValue;
+        } else if (current.type == TokenType.integer) {
+            currentValue = (cast(IntegerToken)current).intValue;
+        } else {
+            throw new TypeMismatchException(name, current, "integer or floating point");
+        }
+
+        result = currentValue == lastValue;
+        lastValue = currentValue;
+
+        args = getRest(args);
+    }
+
+    return new BooleanToken(result);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Token builtinLesser (string name, ReferenceToken args) {
+    bool result = true;
+    float lastValue = float.max;
+
+    if (!hasMore(args)) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Token current = evaluate(getFirst(args));
+    if (current.type == TokenType.floating) {
+        lastValue = (cast(FloatToken)current).floatValue;
+    } else if (current.type == TokenType.integer) {
+        lastValue = (cast(IntegerToken)current).intValue;
+    } else {
+        throw new TypeMismatchException(name, current, "integer or floating point");
+    }
+    args = getRest(args);
+
+    while (hasMore(args)) {
+        current = evaluate(getFirst(args));
+        float currentValue;
+        if (current.type == TokenType.floating) {
+            currentValue = (cast(FloatToken)current).floatValue;
+        } else if (current.type == TokenType.integer) {
+            currentValue = (cast(IntegerToken)current).intValue;
+        } else {
+            throw new TypeMismatchException(name, current, "integer or floating point");
+        }
+
+        result = currentValue < lastValue;
+        lastValue = currentValue;
+
+        args = getRest(args);
+    }
+
+    return new BooleanToken(result);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Token builtinLesserOrEqual (string name, ReferenceToken args) {
+    bool result = true;
+    float lastValue = float.max;
+
+    if (!hasMore(args)) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Token current = evaluate(getFirst(args));
+    if (current.type == TokenType.floating) {
+        lastValue = (cast(FloatToken)current).floatValue;
+    } else if (current.type == TokenType.integer) {
+        lastValue = (cast(IntegerToken)current).intValue;
+    } else {
+        throw new TypeMismatchException(name, current, "integer or floating point");
+    }
+    args = getRest(args);
+
+    while (hasMore(args)) {
+        current = evaluate(getFirst(args));
+        float currentValue;
+        if (current.type == TokenType.floating) {
+            currentValue = (cast(FloatToken)current).floatValue;
+        } else if (current.type == TokenType.integer) {
+            currentValue = (cast(IntegerToken)current).intValue;
+        } else {
+            throw new TypeMismatchException(name, current, "integer or floating point");
+        }
+
+        result = currentValue <= lastValue;
+        lastValue = currentValue;
+
+        args = getRest(args);
+    }
+
+    return new BooleanToken(result);
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -177,6 +382,11 @@ Token builtinSqrt (string name, ReferenceToken args) {
 ///////////////////////////////////////////////////////////////////////////////
 
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
+    builtinTable["<="] = &builtinGreaterOrEqual;
+    builtinTable["<"] = &builtinGreater;
+    builtinTable["="] = &builtinEqual;
+    builtinTable[">"] = &builtinLesser;
+    builtinTable[">="] = &builtinLesserOrEqual;
     builtinTable["+"] = &builtinPlus;
     builtinTable["-"] = &builtinMinus;
     builtinTable["*"] = &builtinTimes;

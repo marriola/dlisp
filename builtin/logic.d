@@ -94,10 +94,42 @@ Token builtinNot (string name, ReferenceToken args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Token builtinEq (string name, ReferenceToken args) {
+    if (listLength(args) < 2) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Token obj1 = evaluate(getFirst(args));
+    args = getRest(args);
+    Token obj2 = evaluate(getFirst(args));
+
+    return new BooleanToken(objectsEqual(obj1, obj2));
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Token builtinNeq (string name, ReferenceToken args) {
+    if (listLength(args) < 2) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Token obj1 = evaluate(getFirst(args));
+    args = getRest(args);
+    Token obj2 = evaluate(getFirst(args));
+
+    return new BooleanToken(!objectsEqual(obj1, obj2));
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["IF"] = &builtinIf;
     builtinTable["AND"] = &builtinAnd;
     builtinTable["OR"] = &builtinOr;
     builtinTable["NOT"] = &builtinNot;
+    builtinTable["EQ"] = &builtinEq;
+    builtinTable["NEQ"] = &builtinNeq;
     return builtinTable;
 }
