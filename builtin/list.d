@@ -1,5 +1,6 @@
 module builtin.list;
 
+import evaluator;
 import functions;
 import list;
 import token;
@@ -23,8 +24,8 @@ Token builtinCons (string name, ReferenceToken args) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Token car = getFirst(args);
-    Token cdr = getFirst(getRest(args));
+    Token car = evaluate(getFirst(args));
+    Token cdr = evaluate(getFirst(getRest(args)));
     return Token.makeReference(car, cdr);
 }
 
