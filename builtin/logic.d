@@ -8,6 +8,34 @@ import token;
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Token builtinIf (string name, ReferenceToken args) {
+    if (!hasMore(args)) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    bool condition;
+    Token current = getFirst(args);
+
+    if (current.type != TokenType.boolean) {
+        throw new TypeMismatchException(name, current, "boolean");
+    } else {
+        condition = (cast(BooleanToken)evaluate(current)).boolValue;
+        args = getRest(args);
+    }
+
+    if (listLength(args) < 2) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Token thenClause = getFirst(args);
+    args = getRest(args);
+    Token elseClause = getFirst(args);
+    return condition ? evaluate(thenClause) : evaluate(elseClause);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 Token builtinAnd (string name, ReferenceToken args) {
     bool result = true;
 
@@ -67,6 +95,7 @@ Token builtinNot (string name, ReferenceToken args) {
 ///////////////////////////////////////////////////////////////////////////////
 
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
+    builtinTable["IF"] = &builtinIf;
     builtinTable["AND"] = &builtinAnd;
     builtinTable["OR"] = &builtinOr;
     builtinTable["NOT"] = &builtinNot;
