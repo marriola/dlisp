@@ -2,9 +2,13 @@ module builtin.math;
 
 import std.math;
 
+import evaluator;
 import functions;
 import list;
 import token;
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 Token builtinPlus (string name, ReferenceToken args) {
     bool isFloat = false;
@@ -12,7 +16,7 @@ Token builtinPlus (string name, ReferenceToken args) {
     double floatTotal = 0;
 
     while (hasMore(args)) {
-        Token current = getFirst(args);
+        Token current = evaluate(getFirst(args));
 
         if (!isFloat && current.type == TokenType.floating) {
             isFloat = true;
@@ -32,13 +36,16 @@ Token builtinPlus (string name, ReferenceToken args) {
     return isFloat ? new FloatToken(floatTotal + intTotal) : new IntegerToken(intTotal);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+
 Token builtinMinus (string name, ReferenceToken args) {
     bool isFloat = false;
     int intTotal = 0;
     double floatTotal = 0;
 
     if (hasMore(args)) {
-        Token current = getFirst(args);
+        Token current = evaluate(getFirst(args));
 
         if (current.type == TokenType.integer) {
             intTotal = (cast(IntegerToken)current).intValue;
@@ -56,7 +63,7 @@ Token builtinMinus (string name, ReferenceToken args) {
             }
         } else {
             while (hasMore(args)) {
-                current = getFirst(args);
+                current = evaluate(getFirst(args));
                 if (!isFloat && current.type == TokenType.floating) {
                     isFloat = true;
                 } else if (current.type != TokenType.floating && current.type != TokenType.integer) {
@@ -77,13 +84,16 @@ Token builtinMinus (string name, ReferenceToken args) {
     return isFloat ? new FloatToken(floatTotal + intTotal) : new IntegerToken(intTotal);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+
 Token builtinTimes (string name, ReferenceToken args) {
     bool isFloat = false;
     int intTotal = 1;
     double floatTotal = 0;
 
     if (hasMore(args)) {
-        Token current = getFirst(args);
+        Token current = evaluate(getFirst(args));
         if (current.type == TokenType.integer) {
             intTotal = (cast(IntegerToken)current).intValue;
         } else if (current.type == TokenType.floating) {
@@ -93,7 +103,7 @@ Token builtinTimes (string name, ReferenceToken args) {
 
         args = getRest(args);
         while (hasMore(args)) {
-            current = getFirst(args);
+            current = evaluate(getFirst(args));
 
             if (!isFloat && current.type == TokenType.floating) {
                 isFloat = true;
@@ -114,13 +124,16 @@ Token builtinTimes (string name, ReferenceToken args) {
     return isFloat ? new FloatToken(floatTotal + intTotal) : new IntegerToken(intTotal);    
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+
 Token builtinDivide (string name, ReferenceToken args) {
     bool isFloat = false;
     int intTotal = 0;
     double floatTotal = 0;
 
     if (hasMore(args)) {
-        Token current = getFirst(args);
+        Token current = evaluate(getFirst(args));
 
         if (current.type == TokenType.integer) {
             floatTotal = (cast(IntegerToken)current).intValue;
@@ -133,7 +146,7 @@ Token builtinDivide (string name, ReferenceToken args) {
             floatTotal = 1 / floatTotal;
         } else {
             while (hasMore(args)) {
-                current = getFirst(args);
+                current = evaluate(getFirst(args));
                 if (current.type != TokenType.floating && current.type != TokenType.integer) {
                     throw new Exception(current.toString() ~ " is not a number");
                 }
@@ -147,6 +160,9 @@ Token builtinDivide (string name, ReferenceToken args) {
     return new FloatToken(floatTotal);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+
 Token builtinSqrt (string name, ReferenceToken args) {
     if (!hasMore(args)) {
         throw new NotEnoughArgumentsException(name);
@@ -156,6 +172,9 @@ Token builtinSqrt (string name, ReferenceToken args) {
         return new FloatToken(sqrt(value));
     }
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["+"] = &builtinPlus;

@@ -5,6 +5,7 @@ import token;
 import variables;
 
 import builtin.list;
+import builtin.logic;
 import builtin.math;
 import builtin.system;
 
@@ -18,6 +19,12 @@ alias BuiltinFunction = Token function(string, ReferenceToken);
 LispFunction[string] lispFunctions;
 BuiltinFunction[string] builtinFunctions;
 
+class BuiltinException : Exception {
+    this (string caller, string msg) {
+        super(caller ~ ": " ~ msg);
+    }
+}
+
 class UndefinedFunctionException : Exception {
     this (string msg) {
         super(msg);
@@ -25,13 +32,20 @@ class UndefinedFunctionException : Exception {
 }
 
 class NotEnoughArgumentsException : Exception {
-    this (string msg) {
-        super(msg ~ ": Not enough arguments");
+    this (string caller) {
+        super(caller ~ ": Not enough arguments");
+    }
+}
+
+class TypeMismatchException : Exception {
+    this (string caller, Token token, string expectedType) {
+        super(caller ~ ": " ~ token.toString() ~ " is not " ~ expectedType);
     }
 }
 
 void initializeBuiltins () {
     builtinFunctions = builtin.list.addBuiltins(builtinFunctions);
+    builtinFunctions = builtin.logic.addBuiltins(builtinFunctions);
     builtinFunctions = builtin.math.addBuiltins(builtinFunctions);
     builtinFunctions = builtin.system.addBuiltins(builtinFunctions);
 }

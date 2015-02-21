@@ -4,6 +4,9 @@ import functions;
 import list;
 import token;
 
+
+///////////////////////////////////////////////////////////////////////////////
+
 Token builtinQuote (string name, ReferenceToken args) {
     if (!hasMore(args)) {
         throw new NotEnoughArgumentsException(name);
@@ -11,6 +14,9 @@ Token builtinQuote (string name, ReferenceToken args) {
 
     return getFirst(args);
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 Token builtinCons (string name, ReferenceToken args) {
     if (listLength(args) < 2) {
@@ -22,6 +28,9 @@ Token builtinCons (string name, ReferenceToken args) {
     return Token.makeReference(car, cdr);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+
 Token builtinCar (string name, ReferenceToken args) {
     if (!hasMore(args)) {
         throw new NotEnoughArgumentsException(name);
@@ -30,6 +39,9 @@ Token builtinCar (string name, ReferenceToken args) {
     return getFirst(getFirst(args));
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+
 Token builtinCdr (string name, ReferenceToken args) {
     if (!hasMore(args)) {
         throw new NotEnoughArgumentsException(name);
@@ -37,6 +49,9 @@ Token builtinCdr (string name, ReferenceToken args) {
 
     return getRest(getFirst(args));
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["QUOTE"] = &builtinQuote;
