@@ -3,7 +3,7 @@ module builtin.system;
 import std.c.stdlib;
 
 import functions;
-import list;
+import lispObject;
 import token;
 
 Token builtinExit (string name, ReferenceToken args) {

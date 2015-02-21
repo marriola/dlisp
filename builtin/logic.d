@@ -2,7 +2,7 @@ module builtin.logic;
 
 import evaluator;
 import functions;
-import list;
+import lispObject;
 import token;
 
 

@@ -2,7 +2,7 @@ module builtin.list;
 
 import evaluator;
 import functions;
-import list;
+import lispObject;
 import token;
 
 
