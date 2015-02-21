@@ -30,7 +30,7 @@ Token builtinAnd (string name, ReferenceToken args) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Token builtinOr (string name, ReferenceToken args) {
-    bool result = true;
+    bool result = false;
 
     while (hasMore(args)) {
         Token current = evaluate(getFirst(args));
