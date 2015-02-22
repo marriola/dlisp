@@ -29,7 +29,7 @@ void main (string args[]) {
         stdout.write("> "); stdout.flush();
         try {
             Token tree = lisp.read();
-            writef("%s\n\n", evaluate(tree));
+            writef("%s\n\n", evaluateOnce(tree));
         } catch (SyntaxErrorException e) {
             writef("Syntax error: %s\n\n", e.msg);
         } catch (UndefinedFunctionException e) {

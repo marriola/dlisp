@@ -12,6 +12,7 @@ import variables;
 ///////////////////////////////////////////////////////////////////////////////
 
 import builtin.definition;
+import builtin.io;
 import builtin.list;
 import builtin.logic;
 import builtin.math;
@@ -71,6 +72,7 @@ class TypeMismatchException : Exception {
 
 void initializeBuiltins () {
     builtinFunctions = builtin.definition.addBuiltins(builtinFunctions);
+    builtinFunctions = builtin.io.addBuiltins(builtinFunctions);
     builtinFunctions = builtin.list.addBuiltins(builtinFunctions);
     builtinFunctions = builtin.logic.addBuiltins(builtinFunctions);
     builtinFunctions = builtin.math.addBuiltins(builtinFunctions);

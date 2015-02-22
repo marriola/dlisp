@@ -11,7 +11,7 @@ class EvaluationException : Exception {
     }
 }
 
-Token evaluate (Token token) {
+Token evaluateOnce (Token token) {
     switch (token.type) {
         case TokenType.identifier:
             return getVariable((cast(IdentifierToken)token).stringValue);
@@ -36,4 +36,15 @@ Token evaluate (Token token) {
         default:
             return new BooleanToken(false);
     }
+}
+
+Token evaluate (Token token) {
+    Token lastToken;
+
+    do {
+        lastToken = token;
+        token = evaluateOnce(token);
+    } while (lastToken != token);
+
+    return token;
 }

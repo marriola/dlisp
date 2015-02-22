@@ -14,12 +14,12 @@ Token builtinIf (string name, ReferenceToken args) {
     }
 
     bool condition;
-    Token current = getFirst(args);
+    Token current = evaluate(getFirst(args));
 
     if (current.type != TokenType.boolean) {
         throw new TypeMismatchException(name, current, "boolean");
     } else {
-        condition = (cast(BooleanToken)evaluate(current)).boolValue;
+        condition = (cast(BooleanToken)current).boolValue;
         args = getRest(args);
     }
 
