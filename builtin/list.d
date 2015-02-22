@@ -54,6 +54,20 @@ Token builtinCdr (string name, ReferenceToken args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Token builtinElt (string name, ReferenceToken args) {
+    Token obj = evaluate(getFirst(args));
+    args = getRest(args);
+    Token index = evaluate(getFirst(args));
+    if (index.type != TokenType.integer) {
+        throw new TypeMismatchException(name, index, "integer");
+    }
+
+    return getItem(obj, (cast(IntegerToken)index).intValue);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["QUOTE"] = &builtinQuote;
     builtinTable["CONS"] = &builtinCons;
@@ -61,5 +75,6 @@ BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["FIRST"] = &builtinCar;
     builtinTable["CDR"] = &builtinCdr;
     builtinTable["REST"] = &builtinCdr;
+    builtinTable["ELT"] = &builtinElt;
     return builtinTable;
 }

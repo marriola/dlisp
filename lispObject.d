@@ -1,6 +1,10 @@
 module lispObject;
 
+import std.conv;
+
 import token;
+
+// TODO: add indexed get function
 
 size_t listLength (ReferenceToken list) {
     size_t count = 0;
@@ -15,6 +19,18 @@ size_t listLength (ReferenceToken list) {
 
 bool hasMore (Token head) {
     return head !is null && !Token.isNil(head);
+}
+
+Token getItem (Token head, int index) {
+    for (int i = 0; i < index; i++) {
+        head = getRest(head);
+    }
+
+    if (!hasMore(head)) {
+        throw new Exception("Index " ~ to!string(index) ~ " is out of bounds");
+    }
+
+    return getFirst(head);
 }
 
 Token getFirst (Token head) {
