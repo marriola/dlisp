@@ -21,8 +21,11 @@ bool hasMore (Token head) {
     return head !is null && !Token.isNil(head);
 }
 
-Token getItem (Token head, int index) {
+ReferenceToken getItemReference (ReferenceToken head, int index) {
     for (int i = 0; i < index; i++) {
+        if (!hasMore(head)) {
+            throw new Exception("Index " ~ to!string(index) ~ " is out of bounds");
+        }
         head = getRest(head);
     }
 
@@ -30,7 +33,11 @@ Token getItem (Token head, int index) {
         throw new Exception("Index " ~ to!string(index) ~ " is out of bounds");
     }
 
-    return getFirst(head);
+    return head;
+}
+
+Token getItem (ReferenceToken head, int index) {
+    return getFirst(getItemReference(head, index));
 }
 
 Token getFirst (Token head) {

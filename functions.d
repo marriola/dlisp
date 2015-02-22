@@ -1,17 +1,28 @@
 module functions;
 
+
+///////////////////////////////////////////////////////////////////////////////
+
 import evaluator;
+import lispObject;
 import token;
 import variables;
 
+
+///////////////////////////////////////////////////////////////////////////////
+
+import builtin.definition;
 import builtin.list;
 import builtin.logic;
 import builtin.math;
 import builtin.system;
 
+
+///////////////////////////////////////////////////////////////////////////////
+
 struct LispFunction {
     Token parameters;
-    ReferenceToken commands;
+    ReferenceToken forms;
 }
 
 alias BuiltinFunction = Token function(string, ReferenceToken);
@@ -19,11 +30,17 @@ alias BuiltinFunction = Token function(string, ReferenceToken);
 LispFunction[string] lispFunctions;
 BuiltinFunction[string] builtinFunctions;
 
+
+///////////////////////////////////////////////////////////////////////////////
+
 class BuiltinException : Exception {
     this (string caller, string msg) {
         super(caller ~ ": " ~ msg);
     }
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 class UndefinedFunctionException : Exception {
     this (string msg) {
@@ -31,11 +48,17 @@ class UndefinedFunctionException : Exception {
     }
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+
 class NotEnoughArgumentsException : Exception {
     this (string caller) {
         super(caller ~ ": Not enough arguments");
     }
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 class TypeMismatchException : Exception {
     this (string caller, Token token, string expectedType) {
@@ -43,20 +66,29 @@ class TypeMismatchException : Exception {
     }
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+
 void initializeBuiltins () {
+    builtinFunctions = builtin.definition.addBuiltins(builtinFunctions);
     builtinFunctions = builtin.list.addBuiltins(builtinFunctions);
     builtinFunctions = builtin.logic.addBuiltins(builtinFunctions);
     builtinFunctions = builtin.math.addBuiltins(builtinFunctions);
     builtinFunctions = builtin.system.addBuiltins(builtinFunctions);
 }
 
-void addFunction (string name, Token parameters, ReferenceToken commands) {
-    lispFunctions[name] = LispFunction(parameters, commands);
+///////////////////////////////////////////////////////////////////////////////
+
+void addFunction (string name, Token parameters, ReferenceToken forms) {
+    lispFunctions[name] = LispFunction(parameters, forms);
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 Token evaluateFunction (string name, Token parameters) {
     if (name in builtinFunctions) {
-        if (Token.isNil(parameters)) {
+        if (!hasMore(parameters)) {
             parameters = null;
         }
         return builtinFunctions[name](name, cast(ReferenceToken)parameters);
@@ -68,23 +100,23 @@ Token evaluateFunction (string name, Token parameters) {
 
     LispFunction fun = lispFunctions[name];
     Token funParameters = fun.parameters;
-    ReferenceToken funCommands = fun.commands;
+    ReferenceToken forms = fun.forms;
     Token returnValue;
 
     enterScope();
-    while (!Token.isNil(funParameters)) {
-        if (Token.isNil(parameters)) {
+    while (hasMore(funParameters)) {
+        if (!hasMore(parameters)) {
             throw new EvaluationException("Not enough parameters");
         }
 
-        addVariable((cast(IdentifierToken)(cast(ReferenceToken)parameters).reference.car).stringValue, (cast(ReferenceToken)parameters).reference.car);
-        funParameters = (cast(ReferenceToken)funParameters).reference.cdr;
-        parameters = (cast(ReferenceToken)parameters).reference.cdr;
+        addVariable((cast(IdentifierToken)getFirst(funParameters)).stringValue, getFirst(parameters));
+        funParameters = getRest(funParameters);
+        parameters = getRest(parameters);
     }
 
-    while (!Token.isNil(funCommands)) { 
-        returnValue = evaluate(funCommands.reference.car);
-        funCommands = cast(ReferenceToken)(funCommands.reference.cdr);
+    while (hasMore(forms)) {
+        returnValue = evaluate(getFirst(forms));
+        forms = getRest(forms);
     }
     leaveScope();
 

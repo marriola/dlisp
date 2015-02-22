@@ -56,13 +56,17 @@ Token builtinCdr (string name, ReferenceToken args) {
 
 Token builtinElt (string name, ReferenceToken args) {
     Token obj = evaluate(getFirst(args));
+    if (obj.type != TokenType.reference) {
+        throw new TypeMismatchException(name, obj, "reference");
+    }
+
     args = getRest(args);
     Token index = evaluate(getFirst(args));
     if (index.type != TokenType.integer) {
         throw new TypeMismatchException(name, index, "integer");
     }
 
-    return getItem(obj, (cast(IntegerToken)index).intValue);
+    return getItem(cast(ReferenceToken)obj, (cast(IntegerToken)index).intValue);
 }
 
 

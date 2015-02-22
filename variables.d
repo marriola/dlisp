@@ -3,6 +3,8 @@ module variables;
 import std.container;
 import token;
 
+enum VariableType { lexical, dynamic };
+
 class UndefinedVariableException : Exception {
     this (string msg) {
         super(msg);
