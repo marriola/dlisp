@@ -259,20 +259,20 @@ class LispParser {
         } else if (nextToken.type == TokenType.rightParen) {
             throw new SyntaxErrorException("Expected left paren or non-lexical token");
 
-        } else if (nextToken.type == TokenType.identifier) {
-            // check if this is an m-expression
-            Token identifier = nextToken;
-            getToken();
+        //} else if (nextToken.type == TokenType.identifier) {
+        //    // check if this is an m-expression
+        //    Token identifier = nextToken;
+        //    getToken();
 
-            if (nextToken.type == TokenType.leftBrack) {
-                // yes, parse m-expression
-                return parseList(true, identifier);
+        //    if (nextToken.type == TokenType.leftBrack) {
+        //        // yes, parse m-expression
+        //        return parseList(true, identifier);
 
-            } else {
-                // no, return the identifier we grabbed and leave the next token queued up
-                grabNext = false;
-                return identifier;
-            }
+        //    } else {
+        //        // no, return the identifier we grabbed and leave the next token queued up
+        //        grabNext = false;
+        //        return identifier;
+        //    }
 
         } else {
             return nextToken;
