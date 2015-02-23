@@ -2,13 +2,14 @@ module token;
 
 import node;
 
+import std.stdio;
 import std.conv;
 import std.string;
 
-enum TokenType { leftParen, rightParen, leftBrack, rightBrack, dot, boolean, reference, integer, floating, identifier, string, constant };
+enum TokenType { leftParen, rightParen, leftBrack, rightBrack, dot, boolean, reference, integer, floating, identifier, string, constant, fileStream };
 
 string tokenTypeName (TokenType type) {
-    static string typeNames[] = [ "left paren", "right paren", "dot", "boolean", "reference", "integer", "floating point", "identifier", "string", "constant" ];
+    static string typeNames[] = [ "left paren", "right paren", "dot", "boolean", "reference", "integer", "floating point", "identifier", "string", "constant", "file stream" ];
     return typeNames[cast(int)type];
 }
 
@@ -119,7 +120,7 @@ class ConstantToken : Token {
     string stringValue;
 
     this (string stringValue) {
-        type = TokenType.string;
+        type = TokenType.constant;
         this.stringValue = toUpper(stringValue);
     }
 
@@ -151,6 +152,33 @@ class ReferenceToken : Token {
 
     override string toString () {
         return reference.toString();
+    }
+}
+
+class FileStreamToken : Token {
+    string direction;
+    string fileSpec;
+    File stream;
+    bool isOpen;
+
+    this (string fileSpec, ConstantToken direction) {
+        static enum char[][string] openModes = [ "input" : cast(char[])"r", "output" : cast(char[])"w", "io" : cast(char[])"rw" ];
+
+        type = TokenType.fileStream;
+        this.direction = direction is null ? "input" : direction.stringValue;
+        stream = File(fileSpec, openModes[this.direction]);
+        this.fileSpec = fileSpec;
+        isOpen = true;
+    }
+
+    bool close () {
+        bool wasOpen = isOpen;
+        stream.close();
+        return wasOpen;
+    }
+
+    override string toString () {
+        return "#<" ~ direction ~ " file stream \"" ~ fileSpec ~ (isOpen ? "" : " (closed)") ~ "\">";
     }
 }
 

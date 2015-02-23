@@ -21,6 +21,7 @@ Token evaluateOnce (Token token) {
         case TokenType.floating:
         case TokenType.string:
         case TokenType.constant:
+        case TokenType.fileStream:
             return token;
 
         case TokenType.reference:
