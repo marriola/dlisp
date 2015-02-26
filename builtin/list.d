@@ -8,6 +8,20 @@ import token;
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Token builtinDo (string name, ReferenceToken args) {
+    Token lastResult = new BooleanToken(false);
+
+    while (hasMore(args)) {
+        lastResult = evaluate(getFirst(args));
+        args = getRest(args);
+    }
+
+    return lastResult;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 Token builtinQuote (string name, ReferenceToken args) {
     if (!hasMore(args)) {
         throw new NotEnoughArgumentsException(name);
@@ -73,6 +87,7 @@ Token builtinElt (string name, ReferenceToken args) {
 ///////////////////////////////////////////////////////////////////////////////
 
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
+    builtinTable["DO"] = &builtinDo;
     builtinTable["QUOTE"] = &builtinQuote;
     builtinTable["CONS"] = &builtinCons;
     builtinTable["CAR"] = &builtinCar;
