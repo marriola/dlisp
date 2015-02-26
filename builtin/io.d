@@ -49,6 +49,7 @@ Token builtinLoad (string name, ReferenceToken args) {
             Token form = parser.read();
             evaluateOnce(form);
         } catch (EndOfFile eof) {
+            source.close();
             return new BooleanToken(true);
         }
     }
