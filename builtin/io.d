@@ -1,5 +1,7 @@
 module builtin.io;
 
+import std.stdio;
+
 import evaluator;
 import functions;
 import lispObject;
@@ -19,6 +21,37 @@ Token builtinPrint (string name, ReferenceToken args) {
     }
 
     return lastResult;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Token builtinLoad (string name, ReferenceToken args) {
+    if (!hasMore(args)) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Token sourceFileToken = getFirst(args);
+    string sourceFile;
+    if (sourceFileToken.type == TokenType.constant) {
+        sourceFile = (cast(ConstantToken)sourceFileToken).stringValue;
+    } else if (sourceFileToken.type == TokenType.string) {
+        sourceFile = (cast(StringToken)sourceFileToken).stringValue;
+    } else {
+        throw new TypeMismatchException(name, args, "string or constant");
+    }
+
+    File source = File(sourceFile, "r");
+    LispParser parser = new LispParser(source);
+    Token form;
+
+    while (true) {
+        try {
+            evaluate(parser.read());
+        } catch (EndOfFile eof) {
+            return new BooleanToken(true);
+        }
+    }
 }
 
 
@@ -89,6 +122,7 @@ Token builtinRead (string name, ReferenceToken args) {
 ///////////////////////////////////////////////////////////////////////////////
 
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
+    builtinTable["LOAD"] = &builtinLoad;
     builtinTable["OPEN"] = &builtinOpen;
     builtinTable["CLOSE"] = &builtinClose;
     builtinTable["READ"] = &builtinRead;
