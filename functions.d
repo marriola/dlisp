@@ -55,9 +55,6 @@ void addFunction (string name, Token[] parameters, Token[] forms) {
 
 Token evaluateFunction (string name, Token[] parameters) {
     if (name in builtinFunctions) {
-        //if (!hasMore(parameters)) {
-        //    parameters = null;
-        //}
         return builtinFunctions[name](name, parameters);
     }
 
@@ -75,34 +72,17 @@ Token evaluateFunction (string name, Token[] parameters) {
     }
 
     enterScope();
+
     for (int i = 0; i < funParameters.length; i++) {
         string funParameter = (cast(IdentifierToken)funParameters[i]).stringValue;
         Token parameter = evaluate(parameters[i]);
         addVariable(funParameter, parameter);
     }
 
-    //while (hasMore(funParameters)) {
-    //    if (!hasMore(parameters)) {
-    //        throw new EvaluationException("Not enough parameters");
-    //    }
-
-    //    string funParameter = (cast(IdentifierToken)getFirst(funParameters)).stringValue;
-    //    Token parameter = evaluate(getFirst(parameters));
-
-    //    addVariable(funParameter, parameter);
-    //    funParameters = getRest(funParameters);
-    //    parameters = getRest(parameters);
-    //}
-
-    //while (hasMore(forms)) {
-    //    Token form = getFirst(forms);
-    //    returnValue = evaluate(form);
-    //    forms = getRest(forms);
-    //}
-
     for (int i = 0; i < forms.length; i++) {
         returnValue = evaluate(forms[i]);
     }
+
     leaveScope();
 
     return returnValue;

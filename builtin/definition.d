@@ -11,7 +11,20 @@ import variables;
 ///////////////////////////////////////////////////////////////////////////////
 
 Token builtinSetq (string name, Token[] args) {
-    return null;
+    if (args.length < 2) {
+        return NotEnoughArgumentsException(name);
+    }
+
+    string identifier;
+    if (args[0].type != TokenType.string) {
+        identifier = (cast(StringToken)args[0]).stringValue;
+    } else {
+        throw new TypeMismatchException(name, args[0], "string");
+    }
+
+    Token 
+
+    return value;
 }
 
 
@@ -31,13 +44,9 @@ Token builtinDefun (string name, Token[] args) {
     } else if (!Token.isNil(lambdaListToken) && lambdaListToken.type != TokenType.reference) {
         throw new TypeMismatchException(name, lambdaListToken, "reference");
     }
-    //else if (formsToken.type != TokenType.reference) {
-    //    throw new TypeMismatchException(name, formsToken, "reference");
-    //}
 
     string identifier = (cast(IdentifierToken)identifierToken).stringValue;
     Token[] lambdaList = toArray(lambdaListToken);
-    //Token[] forms = toArray(formsToken);
 
     addFunction(identifier, lambdaList, forms);
 
