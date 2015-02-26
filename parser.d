@@ -9,6 +9,12 @@ import std.string;
 import node;
 import token;
 
+class EndOfFile : Exception {
+    this () {
+        super("");
+    }
+}
+
 class SyntaxErrorException : Exception {
     this (string msg) {
         super(msg);
@@ -20,7 +26,11 @@ class SyntaxErrorException : Exception {
  * @return a single character.
  */
 char getc (File stream) {
-    return cast(char)core.stdc.stdio.fgetc(stream.getFP());
+    char c = cast(char)core.stdc.stdio.fgetc(stream.getFP());
+    if (c == 255) {
+        throw new EndOfFile();
+    }
+    return c;
 }
 
 /**
