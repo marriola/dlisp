@@ -43,11 +43,11 @@ Token builtinLoad (string name, ReferenceToken args) {
 
     File source = File(sourceFile, "r");
     LispParser parser = new LispParser(source);
-    Token form;
 
     while (true) {
         try {
-            evaluate(parser.read());
+            Token form = parser.read();
+            evaluateOnce(form);
         } catch (EndOfFile eof) {
             return new BooleanToken(true);
         }
