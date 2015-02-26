@@ -111,13 +111,17 @@ Token evaluateFunction (string name, Token parameters) {
             throw new EvaluationException("Not enough parameters");
         }
 
-        addVariable((cast(IdentifierToken)getFirst(funParameters)).stringValue, getFirst(parameters));
+        string funParameter = (cast(IdentifierToken)getFirst(funParameters)).stringValue;
+        Token parameter = evaluate(getFirst(parameters));
+
+        addVariable(funParameter, parameter);
         funParameters = getRest(funParameters);
         parameters = getRest(parameters);
     }
 
     while (hasMore(forms)) {
-        returnValue = evaluate(getFirst(forms));
+        Token form = getFirst(forms);
+        returnValue = evaluate(form);
         forms = getRest(forms);
     }
     leaveScope();
