@@ -4,7 +4,8 @@ import std.conv;
 
 import token;
 
-// TODO: add indexed get function
+
+///////////////////////////////////////////////////////////////////////////////
 
 size_t listLength (ReferenceToken list) {
     size_t count = 0;
@@ -17,9 +18,15 @@ size_t listLength (ReferenceToken list) {
     return count;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+
 bool hasMore (Token head) {
     return head !is null && !Token.isNil(head);
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 ReferenceToken getItemReference (ReferenceToken head, int index) {
     for (int i = 0; i < index; i++) {
@@ -36,13 +43,22 @@ ReferenceToken getItemReference (ReferenceToken head, int index) {
     return head;
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+
 Token getItem (ReferenceToken head, int index) {
     return getFirst(getItemReference(head, index));
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+
 Token getFirst (Token head) {
     return (head.type == TokenType.reference) ? (cast(ReferenceToken)head).reference.car : null;
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 ReferenceToken getRest (Token head) {
     //return cast(ReferenceToken) ((head.type == TokenType.reference) ? (cast(ReferenceToken)head).reference.cdr : null);
@@ -52,6 +68,33 @@ ReferenceToken getRest (Token head) {
         return null;
     }
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Token[] toArray (Token token) {
+    if (!hasMore(token)) {
+        return null;
+    }
+
+    ReferenceToken head = cast(ReferenceToken)token;
+    if (head.type != TokenType.reference) {
+        throw new TypeMismatchException("toArray", head, "reference");
+    }
+
+    int length = listLength(head);
+    Token[] array = new Token[length];
+
+    for (int i = 0; i < length; i++) {
+        array[i] = getFirst(head);
+        head = getRest(head);
+    }
+
+    return array;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 bool objectsEqual (Token obj1, Token obj2) {
     if (obj1.type != obj2.type) {
