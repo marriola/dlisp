@@ -1,0 +1,1 @@
+(defun times2 (n) (* n 2))
