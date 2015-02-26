@@ -57,7 +57,7 @@ class LexicalToken : Token {
             [ TokenType.leftParen : "(",
               TokenType.rightParen : ")",
               TokenType.leftBrack : "[",
-              TokenType.rightParen : "]",
+              TokenType.rightBrack : "]",
               TokenType.dot : "." ];
 
         return lexicalTokens[type];
