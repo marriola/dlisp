@@ -1,6 +1,7 @@
 module builtin.logic;
 
 import evaluator;
+import exceptions;
 import functions;
 import lispObject;
 import token;
@@ -8,47 +9,46 @@ import token;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinIf (string name, ReferenceToken args) {
-    if (!hasMore(args)) {
+Token builtinIf (string name, Token[] args) {
+    if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
 
     bool condition;
-    Token current = evaluate(getFirst(args));
+    Token current = evaluate(args[0]);
 
     if (current.type != TokenType.boolean) {
         throw new TypeMismatchException(name, current, "boolean");
     } else {
         condition = (cast(BooleanToken)current).boolValue;
-        args = getRest(args);
     }
 
-    if (listLength(args) < 2) {
+    if (args.length < 3) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Token thenClause = getFirst(args);
-    args = getRest(args);
-    Token elseClause = getFirst(args);
+    Token thenClause = args[1];
+    Token elseClause = args[2];
     return condition ? evaluate(thenClause) : evaluate(elseClause);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinAnd (string name, ReferenceToken args) {
+Token builtinAnd (string name, Token[] args) {
     bool result = true;
 
-    while (result && hasMore(args)) {
-        Token current = evaluate(getFirst(args));
+    for (int i = 0; i < args.length; i++) {
+        if (!result) {
+            break;
+        }
 
+        Token current = evaluate(args[i]);
         if (current.type != TokenType.boolean) {
             throw new TypeMismatchException(name, current, "boolean");
         } else {
             result &= (cast(BooleanToken)current).boolValue;
         }
-
-        args = getRest(args);
     }
 
     return new BooleanToken(result);
@@ -57,19 +57,16 @@ Token builtinAnd (string name, ReferenceToken args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinOr (string name, ReferenceToken args) {
+Token builtinOr (string name, Token[] args) {
     bool result = false;
 
-    while (hasMore(args)) {
-        Token current = evaluate(getFirst(args));
-
+    for (int i = 0; i < args.length; i++) {
+        Token current = evaluate(args[i]);
         if (current.type != TokenType.boolean) {
             throw new TypeMismatchException(name, current, "boolean");
         } else {
             result |= (cast(BooleanToken)current).boolValue;
         }
-
-        args = getRest(args);
     }
 
     return new BooleanToken(result);
@@ -78,12 +75,12 @@ Token builtinOr (string name, ReferenceToken args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinNot (string name, ReferenceToken args) {
-    if (!hasMore(args)) {
+Token builtinNot (string name, Token[] args) {
+    if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Token current = evaluate(getFirst(args));
+    Token current = evaluate(args[0]);
     if (current.type != TokenType.boolean) {
         throw new TypeMismatchException(name, current, "boolean");
     }
@@ -94,14 +91,13 @@ Token builtinNot (string name, ReferenceToken args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinEq (string name, ReferenceToken args) {
-    if (listLength(args) < 2) {
+Token builtinEq (string name, Token[] args) {
+    if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Token obj1 = evaluate(getFirst(args));
-    args = getRest(args);
-    Token obj2 = evaluate(getFirst(args));
+    Token obj1 = evaluate(args[0]);
+    Token obj2 = evaluate(args[1]);
 
     return new BooleanToken(objectsEqual(obj1, obj2));
 }
@@ -109,14 +105,13 @@ Token builtinEq (string name, ReferenceToken args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinNeq (string name, ReferenceToken args) {
-    if (listLength(args) < 2) {
+Token builtinNeq (string name, Token[] args) {
+    if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Token obj1 = evaluate(getFirst(args));
-    args = getRest(args);
-    Token obj2 = evaluate(getFirst(args));
+    Token obj1 = evaluate(args[0]);
+    Token obj2 = evaluate(args[1]);
 
     return new BooleanToken(!objectsEqual(obj1, obj2));
 }

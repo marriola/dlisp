@@ -6,12 +6,23 @@ import std.stdio;
 import std.conv;
 import std.string;
 
-enum TokenType { leftParen, rightParen, leftBrack, rightBrack, dot, boolean, reference, integer, floating, identifier, string, constant, fileStream };
+
+///////////////////////////////////////////////////////////////////////////////
+
+enum TokenType { leftParen, rightParen, leftBrack, rightBrack, dot, boolean, reference, integer, floating, identifier, string, constant, fileStream, vector };
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 
 string tokenTypeName (TokenType type) {
-    static string typeNames[] = [ "left paren", "right paren", "dot", "boolean", "reference", "integer", "floating point", "identifier", "string", "constant", "file stream" ];
+    static string typeNames[] = [ "left paren", "right paren", "left bracket", "right bracket", "dot", "boolean", "reference", "integer", "floating point", "identifier", "string", "constant", "file stream", "vector" ];
     return typeNames[cast(int)type];
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 
 abstract class Token {
     TokenType type;
@@ -19,7 +30,7 @@ abstract class Token {
     /**
      * @return a string representation of this token
      */
-    override string toString();
+    //override string toString();
 
     /**
      * @return true if this is a lexical token, false otherwise. 
@@ -45,6 +56,9 @@ abstract class Token {
     }
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+
 class LexicalToken : Token {
     this (TokenType type) {
         this.type = type;
@@ -64,6 +78,9 @@ class LexicalToken : Token {
     }
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+
 class BooleanToken : Token {
     bool boolValue;
 
@@ -76,6 +93,9 @@ class BooleanToken : Token {
         return boolValue ? "T" : "NIL";
     }
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 class StringToken : Token {
     string stringValue;
@@ -90,6 +110,9 @@ class StringToken : Token {
     }
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+
 class IdentifierToken : Token {
     string stringValue;
 
@@ -102,6 +125,9 @@ class IdentifierToken : Token {
         return stringValue;
     }
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 class IntegerToken : Token {
     int intValue;
@@ -116,6 +142,9 @@ class IntegerToken : Token {
     }
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+
 class ConstantToken : Token {
     string stringValue;
 
@@ -128,6 +157,9 @@ class ConstantToken : Token {
         return ":" ~ stringValue;
     }
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 class FloatToken : Token {
     double floatValue;
@@ -142,6 +174,9 @@ class FloatToken : Token {
     }
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+
 class ReferenceToken : Token {
     Node reference;
 
@@ -154,6 +189,9 @@ class ReferenceToken : Token {
         return reference.toString();
     }
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 class FileStreamToken : Token {
     string direction;
@@ -182,17 +220,36 @@ class FileStreamToken : Token {
     }
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+
+class VectorToken : Token {
+
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 ReferenceToken toReference (Token token) {
     return (cast(ReferenceToken)token);
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 IntegerToken toInteger (Token token) {
     return (cast(IntegerToken)token);   
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+
 FloatToken toFloat (Token token) {
     return (cast(FloatToken)token);   
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 IdentifierToken toIdentifier (Token token) {
     return (cast(IdentifierToken)token);

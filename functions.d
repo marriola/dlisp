@@ -4,6 +4,7 @@ module functions;
 ///////////////////////////////////////////////////////////////////////////////
 
 import evaluator;
+import exceptions;
 import lispObject;
 import token;
 import variables;
@@ -22,50 +23,14 @@ import builtin.system;
 ///////////////////////////////////////////////////////////////////////////////
 
 struct LispFunction {
-    Token parameters;
-    ReferenceToken forms;
+    Token[] parameters;
+    Token[] forms;
 }
 
-alias BuiltinFunction = Token function(string, ReferenceToken);
+alias BuiltinFunction = Token function(string, Token[]);
 
 LispFunction[string] lispFunctions;
 BuiltinFunction[string] builtinFunctions;
-
-
-///////////////////////////////////////////////////////////////////////////////
-
-class BuiltinException : Exception {
-    this (string caller, string msg) {
-        super(caller ~ ": " ~ msg);
-    }
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-
-class UndefinedFunctionException : Exception {
-    this (string msg) {
-        super(msg);
-    }
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-
-class NotEnoughArgumentsException : Exception {
-    this (string caller) {
-        super(caller ~ ": Not enough arguments");
-    }
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-
-class TypeMismatchException : Exception {
-    this (string caller, Token token, string expectedType) {
-        super(caller ~ ": " ~ token.toString() ~ " is not " ~ expectedType);
-    }
-}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -81,19 +46,19 @@ void initializeBuiltins () {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void addFunction (string name, Token parameters, ReferenceToken forms) {
+void addFunction (string name, Token[] parameters, Token[] forms) {
     lispFunctions[name] = LispFunction(parameters, forms);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token evaluateFunction (string name, Token parameters) {
+Token evaluateFunction (string name, Token[] parameters) {
     if (name in builtinFunctions) {
-        if (!hasMore(parameters)) {
-            parameters = null;
-        }
-        return builtinFunctions[name](name, cast(ReferenceToken)parameters);
+        //if (!hasMore(parameters)) {
+        //    parameters = null;
+        //}
+        return builtinFunctions[name](name, parameters);
     }
 
     if (name !in lispFunctions) {
@@ -101,28 +66,42 @@ Token evaluateFunction (string name, Token parameters) {
     }
 
     LispFunction fun = lispFunctions[name];
-    Token funParameters = fun.parameters;
-    ReferenceToken forms = fun.forms;
+    Token[] funParameters = fun.parameters;
+    Token[] forms = fun.forms;
     Token returnValue;
 
-    enterScope();
-    while (hasMore(funParameters)) {
-        if (!hasMore(parameters)) {
-            throw new EvaluationException("Not enough parameters");
-        }
-
-        string funParameter = (cast(IdentifierToken)getFirst(funParameters)).stringValue;
-        Token parameter = evaluate(getFirst(parameters));
-
-        addVariable(funParameter, parameter);
-        funParameters = getRest(funParameters);
-        parameters = getRest(parameters);
+    if (funParameters.length > parameters.length) {
+        throw new EvaluationException("Not enough arguments");
     }
 
-    while (hasMore(forms)) {
-        Token form = getFirst(forms);
-        returnValue = evaluate(form);
-        forms = getRest(forms);
+    enterScope();
+    for (int i = 0; i < funParameters.length; i++) {
+        string funParameter = (cast(IdentifierToken)funParameters[i]).stringValue;
+        Token parameter = evaluate(parameters[i]);
+        addVariable(funParameter, parameter);
+    }
+
+    //while (hasMore(funParameters)) {
+    //    if (!hasMore(parameters)) {
+    //        throw new EvaluationException("Not enough parameters");
+    //    }
+
+    //    string funParameter = (cast(IdentifierToken)getFirst(funParameters)).stringValue;
+    //    Token parameter = evaluate(getFirst(parameters));
+
+    //    addVariable(funParameter, parameter);
+    //    funParameters = getRest(funParameters);
+    //    parameters = getRest(parameters);
+    //}
+
+    //while (hasMore(forms)) {
+    //    Token form = getFirst(forms);
+    //    returnValue = evaluate(form);
+    //    forms = getRest(forms);
+    //}
+
+    for (int i = 0; i < forms.length; i++) {
+        returnValue = evaluate(forms[i]);
     }
     leaveScope();
 

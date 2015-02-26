@@ -1,6 +1,7 @@
 module builtin.definition;
 
 import evaluator;
+import exceptions;
 import functions;
 import lispObject;
 import token;
@@ -9,22 +10,38 @@ import variables;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinDefun (string name, ReferenceToken args) {
-    if (listLength(args) < 3) {
+Token builtinSetq (string name, Token[] args) {
+    return null;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Token builtinDefun (string name, Token[] args) {
+    if (args.length < 3) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Token identifier = getItem(args, 0);
-    Token lambdaList = getItem(args, 1);
-    Token forms = getItemReference(args, 2);
+    Token identifierToken = args[0];
+    Token lambdaListToken = args[1];
+    Token[] forms = args[2 .. args.length];
 
-    if (identifier.type != TokenType.identifier) {
-        throw new TypeMismatchException(name, identifier, "identifier");
+    if (identifierToken.type != TokenType.identifier) {
+        throw new TypeMismatchException(name, identifierToken, "identifier");
+    } else if (!Token.isNil(lambdaListToken) && lambdaListToken.type != TokenType.reference) {
+        throw new TypeMismatchException(name, lambdaListToken, "reference");
     }
+    //else if (formsToken.type != TokenType.reference) {
+    //    throw new TypeMismatchException(name, formsToken, "reference");
+    //}
 
-    addFunction((cast(IdentifierToken)identifier).stringValue, lambdaList, cast(ReferenceToken)forms);
+    string identifier = (cast(IdentifierToken)identifierToken).stringValue;
+    Token[] lambdaList = toArray(lambdaListToken);
+    //Token[] forms = toArray(formsToken);
 
-    return identifier;
+    addFunction(identifier, lambdaList, forms);
+
+    return identifierToken;
 }
 
 
@@ -32,5 +49,6 @@ Token builtinDefun (string name, ReferenceToken args) {
 
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["DEFUN"] = &builtinDefun;
+    builtinTable["SETQ"] = &builtinSetq;
     return builtinTable;
 }

@@ -1,6 +1,7 @@
 import std.stdio;
 
 import evaluator;
+import exceptions;
 import functions;
 import node;
 import parser;

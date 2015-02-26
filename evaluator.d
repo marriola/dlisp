@@ -1,15 +1,10 @@
 module evaluator;
 
+import exceptions;
 import functions;
 import lispObject;
 import token;
 import variables;
-
-class EvaluationException : Exception {
-    this (string msg) {
-        super(msg);
-    }
-}
 
 Token evaluateOnce (Token token) {
     switch (token.type) {
@@ -31,7 +26,7 @@ Token evaluateOnce (Token token) {
                 throw new EvaluationException(refToken.reference.car.toString() ~ " is not a function name");
             }
 
-            return evaluateFunction((cast(IdentifierToken)getFirst(refToken)).stringValue, (cast(ReferenceToken)getRest(refToken)));
+            return evaluateFunction((cast(IdentifierToken)getFirst(refToken)).stringValue, toArray(getRest(refToken))); //(cast(ReferenceToken)getRest(refToken)));
                 //(cast(IdentifierToken)(refToken.reference.car)).stringValue, (cast(ReferenceToken)refToken).reference.cdr);
 
         default:

@@ -1,6 +1,7 @@
 module builtin.list;
 
 import evaluator;
+import exceptions;
 import functions;
 import lispObject;
 import token;
@@ -8,12 +9,11 @@ import token;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinDo (string name, ReferenceToken args) {
+Token builtinDo (string name, Token[] args) {
     Token lastResult = new BooleanToken(false);
 
-    while (hasMore(args)) {
-        lastResult = evaluate(getFirst(args));
-        args = getRest(args);
+    for (int i = 0; i < args.length; i++) {
+        lastResult = evaluate(args[i]);
     }
 
     return lastResult;
@@ -22,60 +22,59 @@ Token builtinDo (string name, ReferenceToken args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinQuote (string name, ReferenceToken args) {
-    if (!hasMore(args)) {
+Token builtinQuote (string name, Token[] args) {
+    if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    return getFirst(args);
+    return args[0];
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinCons (string name, ReferenceToken args) {
-    if (listLength(args) < 2) {
+Token builtinCons (string name, Token[] args) {
+    if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Token car = evaluate(getFirst(args));
-    Token cdr = evaluate(getFirst(getRest(args)));
+    Token car = evaluate(args[0]);
+    Token cdr = evaluate(args[1]);
     return Token.makeReference(car, cdr);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinCar (string name, ReferenceToken args) {
-    if (!hasMore(args)) {
+Token builtinCar (string name, Token[] args) {
+    if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    return getFirst(getFirst(args));
+    return getFirst(args[0]);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinCdr (string name, ReferenceToken args) {
-    if (!hasMore(args)) {
+Token builtinCdr (string name, Token[] args) {
+    if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    return getRest(getFirst(args));
+    return getRest(args[0]);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinElt (string name, ReferenceToken args) {
-    Token obj = evaluate(getFirst(args));
+Token builtinElt (string name, Token[] args) {
+    Token obj = evaluate(args[0]);
     if (obj.type != TokenType.reference) {
         throw new TypeMismatchException(name, obj, "reference");
     }
 
-    args = getRest(args);
-    Token index = evaluate(getFirst(args));
+    Token index = evaluate(args[1]);
     if (index.type != TokenType.integer) {
         throw new TypeMismatchException(name, index, "integer");
     }

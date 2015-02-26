@@ -2,6 +2,7 @@ module lispObject;
 
 import std.conv;
 
+import exceptions;
 import token;
 
 

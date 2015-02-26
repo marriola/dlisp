@@ -1,32 +1,43 @@
 module variables;
 
 import std.container;
+
+import exceptions;
 import token;
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 enum VariableType { lexical, dynamic };
 
-class UndefinedVariableException : Exception {
-    this (string msg) {
-        super(msg);
-    }
-}
-
 Array!(Token[string]) scopeTable;
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 void enterScope () {
     Token[string] newScope;
     scopeTable.insertBack(newScope);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+
 void leaveScope () {
     scopeTable.removeBack();
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 void initializeScopeTable () {
     enterScope();
     addVariable("E", new FloatToken(std.math.E));
     addVariable("PI", new FloatToken(std.math.PI));
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 Token getVariable (string name) {
     foreach_reverse (Token[string] table; scopeTable) {
@@ -38,9 +49,15 @@ Token getVariable (string name) {
     throw new UndefinedVariableException(name);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+
 void addVariable (string name, Token token) {
     scopeTable.back()[name] = token;
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
 
 unittest {
     enterScope();

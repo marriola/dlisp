@@ -3,6 +3,7 @@ module builtin.io;
 import std.stdio;
 
 import evaluator;
+import exceptions;
 import functions;
 import lispObject;
 import parser;
@@ -11,13 +12,12 @@ import token;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinPrint (string name, ReferenceToken args) {
+Token builtinPrint (string name, Token[] args) {
     Token lastResult;
 
-    while (hasMore(args)) {
-        lastResult = evaluate(getFirst(args));
+    for (int i = 0; i < args.length; i++) {
+        lastResult = evaluate(args[i]);
         std.stdio.writeln(lastResult);
-        args = getRest(args);
     }
 
     return lastResult;
@@ -26,19 +26,19 @@ Token builtinPrint (string name, ReferenceToken args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinLoad (string name, ReferenceToken args) {
-    if (!hasMore(args)) {
+Token builtinLoad (string name, Token[] args) {
+    if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Token sourceFileToken = getFirst(args);
+    Token sourceFileToken = evaluate(args[0]);
     string sourceFile;
     if (sourceFileToken.type == TokenType.constant) {
         sourceFile = (cast(ConstantToken)sourceFileToken).stringValue;
     } else if (sourceFileToken.type == TokenType.string) {
         sourceFile = (cast(StringToken)sourceFileToken).stringValue;
     } else {
-        throw new TypeMismatchException(name, args, "string or constant");
+        throw new TypeMismatchException(name, sourceFileToken, "string or constant");
     }
 
     File source = File(sourceFile, "r");
@@ -58,12 +58,12 @@ Token builtinLoad (string name, ReferenceToken args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinOpen (string name, ReferenceToken args) {
-    if (listLength(args) < 1) {
+Token builtinOpen (string name, Token[] args) {
+    if (args.length < 1) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Token fileSpecToken = evaluate(getItem(args, 0));
+    Token fileSpecToken = evaluate(args[0]);
     string fileSpec;
     if (fileSpecToken.type == TokenType.string) {
         fileSpec = (cast(StringToken)fileSpecToken).stringValue;
@@ -74,8 +74,8 @@ Token builtinOpen (string name, ReferenceToken args) {
     }
 
     Token direction = null;
-    if (listLength(args) >= 2) {
-        direction = evaluate(getItem(args, 1));
+    if (args.length >= 2) {
+        direction = evaluate(args[1]);
         if (direction.type != TokenType.constant) {
             throw new TypeMismatchException(name, direction, "constant");
         }
@@ -87,12 +87,12 @@ Token builtinOpen (string name, ReferenceToken args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinClose (string name, ReferenceToken args) {
-    if (!hasMore(args)) {
+Token builtinClose (string name, Token[] args) {
+    if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Token streamToken = evaluate(getFirst(args));
+    Token streamToken = evaluate(args[0]);
     if (streamToken.type != TokenType.fileStream) {
         throw new TypeMismatchException(name, streamToken, "file stream");
     }
@@ -103,12 +103,12 @@ Token builtinClose (string name, ReferenceToken args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinRead (string name, ReferenceToken args) {
-    if (!hasMore(args)) {
+Token builtinRead (string name, Token[] args) {
+    if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Token streamToken = evaluate(getFirst(args));
+    Token streamToken = evaluate(args[0]);
     if (streamToken.type != TokenType.fileStream) {
         throw new TypeMismatchException(name, streamToken, "file stream");
     } else if (!(cast(FileStreamToken)streamToken).isOpen) {
