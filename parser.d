@@ -80,18 +80,23 @@ class LispParser {
 
         if (c == '(') {
             nextToken = new LexicalToken(TokenType.leftParen);
+            return;
 
         } else if (c == ')') {
             nextToken = new LexicalToken(TokenType.rightParen);
+            return;
 
         } else if (c == '[') {
             nextToken = new LexicalToken(TokenType.leftBrack);
+            return;
 
         } else if (c == ']') {
             nextToken = new LexicalToken(TokenType.rightBrack);
+            return;
 
         } else if (c == '.') {
             nextToken = new LexicalToken(TokenType.dot);
+            return;
 
         } else if (c == '\'') {
             // Encapsulate the next token in a quote.
@@ -110,32 +115,50 @@ class LispParser {
             }
 
             nextToken = Token.makeReference(new IdentifierToken("QUOTE"), Token.makeReference(quotedItem));
+            return;
 
-        } else if (isDigit(c)) {
-            bool isFloat = false;
-            string literal;
+        } else if (isDigit(c) || c == '-') {
+            bool giveUp = false;
 
-            do {
-                literal ~= c;
-                c = getc(stream);
+            // is this a negative number or an identifier starting with a hyphen?
+            if (c == '-') {
+                // get the next character and put it back
+                char next = getc(stream);
+                ungetc(next, stream);
 
-                if (c == '.' || c == 'e' || c == 'E') {
-                    isFloat = true;
-
-                } else if (c == '(' || c == ')' || c == '[' || c == ']') {
-                    ungetc(c, stream);
-                    break;
+                if (!isDigit(next)) {
+                    // if not a digit, this is an identifier. skip the next block.
+                    giveUp = true;
                 }
-            } while (!isWhite(c));
+            }
 
-            try {
-                if (isFloat) {
-                    nextToken = new FloatToken(to!double(literal));
-                } else {
-                    nextToken = new IntegerToken(to!int(literal));
+            if (!giveUp) {
+                bool isFloat = false;
+                string literal;
+
+                do {
+                    literal ~= c;
+                    c = getc(stream);
+
+                    if (c == '.' || c == 'e' || c == 'E') {
+                        isFloat = true;
+
+                    } else if (c == '(' || c == ')' || c == '[' || c == ']') {
+                        ungetc(c, stream);
+                        break;
+                    }
+                } while (!isWhite(c));
+
+                try {
+                    if (isFloat) {
+                        nextToken = new FloatToken(to!double(literal));
+                    } else {
+                        nextToken = new IntegerToken(to!int(literal));
+                    }
+                } catch (ConvException e) {
+                    throw new SyntaxErrorException("malformed number literal");
                 }
-            } catch (ConvException e) {
-                throw new SyntaxErrorException("malformed number literal");
+                return;
             }
 
         } else if (c == '\"') {
@@ -148,8 +171,10 @@ class LispParser {
             } while (c != '\"');
 
             nextToken = new StringToken(stringValue);
+            return;
+       }
 
-       } else {
+       {
             string stringValue;
 
             do {
