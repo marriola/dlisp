@@ -10,6 +10,44 @@ import variables;
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value builtinLet (string name, Value[] args) {
+    if (args.length < 2) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    if (args[0].token.type != TokenType.reference) {
+        throw new TypeMismatchException(name, args[0].token, "reference");
+    }
+
+    Value[] bindings = toArray(args[0]);
+    Value[] forms = args[1 .. args.length];
+
+    enterScope();
+
+    foreach (Value bindingReference; bindings) {
+        Value bindingName = getFirst(bindingReference);
+        Value bindingValue = evaluateOnce(getFirst(getRest(bindingReference)));
+
+        if (bindingName.token.type != TokenType.identifier) {
+            throw new TypeMismatchException(name, bindingName.token, "identifier");
+        }
+
+        addVariable((cast(IdentifierToken)bindingName.token).stringValue, bindingValue);
+    }
+
+    Value lastResult = new Value(new BooleanToken(false));
+
+    foreach (Value form; forms) {
+        lastResult = evaluateOnce(form);
+    }
+
+    leaveScope();
+
+    return lastResult;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 Value builtinSetq (string name, Value[] args) {
     if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
@@ -72,6 +110,7 @@ Value builtinDefun (string name, Value[] args) {
 ///////////////////////////////////////////////////////////////////////////////
 
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
+    builtinTable["LET"] = &builtinLet;
     builtinTable["SETF"] = &builtinSetf;
     builtinTable["SETQ"] = &builtinSetq;
     builtinTable["DEFUN"] = &builtinDefun;
