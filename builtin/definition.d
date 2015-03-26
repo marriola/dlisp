@@ -83,6 +83,24 @@ Value builtinSetf (string name, Value[] args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value builtinFuncall (string name, Value[] args) {
+    if (args.length < 1) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Value fun = evaluateOnce(args[0]);
+    Value[] funArgs = args[1 .. args.length];
+
+    if (fun.token.type != TokenType.identifier) {
+        throw new TypeMismatchException(name, fun.token, "identifier");
+    }
+
+    return evaluateFunction((cast(IdentifierToken)fun.token).stringValue, funArgs);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 Value builtinDefun (string name, Value[] args) {
     if (args.length < 3) {
         throw new NotEnoughArgumentsException(name);
@@ -113,6 +131,7 @@ BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["LET"] = &builtinLet;
     builtinTable["SETF"] = &builtinSetf;
     builtinTable["SETQ"] = &builtinSetq;
+    builtinTable["FUNCALL"] = &builtinFuncall;
     builtinTable["DEFUN"] = &builtinDefun;
     return builtinTable;
 }
