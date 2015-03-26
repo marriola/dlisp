@@ -1,9 +1,11 @@
 module token;
 
 import exceptions;
+import functions;
 import lispObject;
 import node;
 
+import std.algorithm;
 import std.stdio;
 import std.conv;
 import std.string;
@@ -11,7 +13,7 @@ import std.string;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-enum TokenType { leftParen, rightParen, leftBrack, rightBrack, dot, boolean, reference, integer, floating, identifier, string, constant, fileStream, vector };
+enum TokenType { leftParen, rightParen, leftBrack, rightBrack, dot, boolean, reference, integer, floating, identifier, string, constant, fileStream, vector, lambda };
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -279,6 +281,29 @@ class VectorToken : Token {
 
         builder ~= ">";
         return builder;
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+class LambdaToken : Token {
+    LispFunction fun;
+
+    this (Value[] lambdaList, Value[] forms) {
+        this.type = TokenType.lambda;
+        this.fun = LispFunction(lambdaList, forms);
+    }
+
+    Value evaluate (Value[] args) {
+        return evaluateDefinedFunction(fun, args);
+    }
+
+    override string toString () {
+        return "#<LAMBDA " ~
+               "(" ~ join(map!(x => x.toString())(fun.lambdaList), " ") ~ ") " ~
+               join(map!(x => x.toString())(fun.forms), " ") ~
+               ">";
     }
 }
 

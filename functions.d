@@ -23,7 +23,7 @@ import builtin.system;
 ///////////////////////////////////////////////////////////////////////////////
 
 struct LispFunction {
-    Value[] parameters;
+    Value[] lambdaList;
     Value[] forms;
 }
 
@@ -46,8 +46,37 @@ void initializeBuiltins () {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void addFunction (string name, Value[] parameters, Value[] forms) {
-    lispFunctions[name] = LispFunction(parameters, forms);
+void addFunction (string name, Value[] lambdaList, Value[] forms) {
+    lispFunctions[name] = LispFunction(lambdaList, forms);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Value evaluateDefinedFunction (LispFunction fun, Value[] parameters) {
+    Value[] lambdaList = fun.lambdaList;
+    Value[] forms = fun.forms;
+    Value returnValue;
+
+    if (lambdaList.length > parameters.length) {
+        throw new EvaluationException("Not enough arguments");
+    }
+
+    enterScope();
+
+    for (int i = 0; i < lambdaList.length; i++) {
+        string funParameter = (cast(IdentifierToken)lambdaList[i].token).stringValue;
+        Value parameter = evaluateOnce(parameters[i]);
+        addVariable(funParameter, parameter);
+    }
+
+    for (int i = 0; i < forms.length; i++) {
+        returnValue = evaluate(forms[i]);
+    }
+
+    leaveScope();
+
+    return returnValue;
 }
 
 
@@ -62,28 +91,5 @@ Value evaluateFunction (string name, Value[] parameters) {
         throw new UndefinedFunctionException(name);
     }
 
-    LispFunction fun = lispFunctions[name];
-    Value[] funParameters = fun.parameters;
-    Value[] forms = fun.forms;
-    Value returnValue;
-
-    if (funParameters.length > parameters.length) {
-        throw new EvaluationException("Not enough arguments");
-    }
-
-    enterScope();
-
-    for (int i = 0; i < funParameters.length; i++) {
-        string funParameter = (cast(IdentifierToken)funParameters[i].token).stringValue;
-        Value parameter = evaluateOnce(parameters[i]);
-        addVariable(funParameter, parameter);
-    }
-
-    for (int i = 0; i < forms.length; i++) {
-        returnValue = evaluate(forms[i]);
-    }
-
-    leaveScope();
-
-    return returnValue;
+    return evaluateDefinedFunction(lispFunctions[name], parameters);
 }

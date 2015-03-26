@@ -83,6 +83,20 @@ Value builtinSetf (string name, Value[] args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value builtinLambda (string name, Value[] args) {
+    if (args.length < 1) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Value[] lambdaList = toArray(args[0]);
+    Value[] forms = args[1 .. args.length];
+
+    return new Value(new LambdaToken(lambdaList, forms));
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 Value builtinFuncall (string name, Value[] args) {
     if (args.length < 1) {
         throw new NotEnoughArgumentsException(name);
@@ -91,11 +105,15 @@ Value builtinFuncall (string name, Value[] args) {
     Value fun = evaluateOnce(args[0]);
     Value[] funArgs = args[1 .. args.length];
 
-    if (fun.token.type != TokenType.identifier) {
-        throw new TypeMismatchException(name, fun.token, "identifier");
-    }
+    if (fun.token.type == TokenType.identifier) {
+        return evaluateFunction((cast(IdentifierToken)fun.token).stringValue, funArgs);
 
-    return evaluateFunction((cast(IdentifierToken)fun.token).stringValue, funArgs);
+    } else if (fun.token.type == TokenType.lambda) {
+        return evaluateDefinedFunction((cast(LambdaToken)fun.token).fun, funArgs);
+
+    } else {
+        throw new TypeMismatchException(name, fun.token, "identifier or lambda");
+    }
 }
 
 
@@ -131,6 +149,7 @@ BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["LET"] = &builtinLet;
     builtinTable["SETF"] = &builtinSetf;
     builtinTable["SETQ"] = &builtinSetq;
+    builtinTable["LAMBDA"] = &builtinLambda;
     builtinTable["FUNCALL"] = &builtinFuncall;
     builtinTable["DEFUN"] = &builtinDefun;
     return builtinTable;
