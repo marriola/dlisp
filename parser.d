@@ -232,7 +232,16 @@ class LispParser {
             return new Value(new BooleanToken(false));
         }
 
-        root = node = Token.makeReference(new Value(mExpression ? identifier : nextToken));
+        Token firstItem;
+
+        if (nextToken.type == TokenType.leftParen) {
+            // immediately going into another list
+            firstItem = new ReferenceToken((cast(ReferenceToken)parseList(false).token).reference);
+        } else {
+            firstItem = mExpression ? identifier : nextToken;
+        }
+
+        root = node = Token.makeReference(new Value(firstItem));
         if (!mExpression) {
             getToken();
         }
