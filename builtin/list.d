@@ -16,12 +16,14 @@ Value builtinMakeArray (string name, Value[] args) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    if (args[0].token.type == TokenType.integer) {
-        Value lengthToken = evaluate(args[0]);
+    Value arg = evaluateOnce(args[0]);
+
+    if (arg.token.type == TokenType.integer) {
+        Value lengthToken = evaluate(arg);
         return new Value(new VectorToken(to!int((cast(IntegerToken)lengthToken.token).intValue)));
 
-    } else if (args[0].token.type == TokenType.reference) {
-        Value[] list = toArray(evaluateOnce(args[0]));
+    } else if (arg.token.type == TokenType.reference) {
+        Value[] list = toArray(evaluateOnce(arg));
         Value vector = new Value(new VectorToken(list.length));
         for (int i = 0; i < list.length; i++) {
             (cast(VectorToken)vector.token).array[i] = list[i];
@@ -29,7 +31,7 @@ Value builtinMakeArray (string name, Value[] args) {
         return vector;
 
     } else {
-        throw new TypeMismatchException(name, args[0].token, "integer or list");
+        throw new TypeMismatchException(name, arg.token, "integer or list");
     }
 
 }
