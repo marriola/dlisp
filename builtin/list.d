@@ -113,6 +113,10 @@ Value builtinCdr (string name, Value[] args) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinElt (string name, Value[] args) {
+    if (args.length < 2) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
     Value indexToken = evaluateOnce(args[1]);
     if (indexToken.token.type != TokenType.integer) {
         throw new TypeMismatchException(name, indexToken.token, "integer");
@@ -120,21 +124,20 @@ Value builtinElt (string name, Value[] args) {
     int index = (cast(IntegerToken)indexToken.token).intValue;
 
     Value obj = evaluateOnce(args[0]);
-    return obj.getItem(index);
 
-    //if (obj.type == TokenType.reference) {
-    //    return getItem(cast(ReferenceToken)obj, index);
+    if (obj.token.type == TokenType.reference) {
+        return getItem(obj, index);
 
-    //} else if (obj.type == TokenType.vector) {
-    //    Token[] array = (cast(VectorToken)obj).array;
-    //    if (index > array.length) {
-    //        throw new OutOfBoundsException(name, index);
-    //    }
-    //    return array[index];
+    } else if (obj.token.type == TokenType.vector) {
+        Value[] array = (cast(VectorToken)obj.token).array;
+        if (index > array.length) {
+            throw new OutOfBoundsException(index);
+        }
+        return array[index];
 
-    //} else {
-    //    throw new TypeMismatchException(name, obj, "reference or vector");
-    //}
+    } else {
+        throw new TypeMismatchException(name, obj.token, "reference or vector");
+    }
 }
 
 

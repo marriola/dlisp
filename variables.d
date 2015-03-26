@@ -60,53 +60,7 @@ void addVariable (string name, Value token) {
 ///////////////////////////////////////////////////////////////////////////////
 
 void copyValue (Value src, Value dest) {
-    //if (src.type != dest.type) {
-    //    throw new TypeMismatchException("copyValue", src, tokenTypeName(dest.type));
-    //}
-
-    //switch (src.type) {
-    //    case TokenType.boolean:
-    //        (cast(BooleanToken)dest).boolValue = (cast(BooleanToken)src).boolValue;
-    //        return;
-
-    //    case TokenType.integer:
-    //        (cast(IntegerToken)dest).intValue = (cast(IntegerToken)src).intValue;
-    //        return;
-
-    //    case TokenType.floating:
-    //        (cast(FloatToken)dest).floatValue = (cast(FloatToken)src).floatValue;
-    //        return;
-
-    //    case TokenType.string:
-    //        (cast(StringToken)dest).stringValue = "" ~ (cast(StringToken)src).stringValue;
-    //        return;
-
-    //    case TokenType.identifier:
-    //        (cast(IdentifierToken)dest).stringValue = "" ~ (cast(IdentifierToken)src).stringValue;
-    //        return;
-
-    //    case TokenType.constant:
-    //        (cast(ConstantToken)dest).stringValue = "" ~ (cast(ConstantToken)src).stringValue;
-    //        return;
-
-    //    case TokenType.reference:
-    //        (cast(ReferenceToken)dest).reference = (cast(ReferenceToken)src).reference;
-    //        return;
-
-    //    case TokenType.vector:
-    //        (cast(VectorToken)dest).array = (cast(VectorToken)src).array;
-    //        return;
-
-    //    case TokenType.fileStream:
-    //        (cast(FileStreamToken)dest).fileSpec = (cast(FileStreamToken)src).fileSpec;
-    //        (cast(FileStreamToken)dest).direction = (cast(FileStreamToken)src).direction;
-    //        (cast(FileStreamToken)dest).stream = (cast(FileStreamToken)src).stream;
-    //        (cast(FileStreamToken)dest).isOpen = (cast(FileStreamToken)src).isOpen;
-    //        return;
-
-    //    default:
-    //        return;
-    //}
+    dest.token = src.token;
 }
 
 

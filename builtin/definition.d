@@ -38,9 +38,6 @@ Value builtinSetf (string name, Value[] args) {
     Value reference = evaluateOnce(args[0]);
     Value value = evaluate(args[1]);
 
-    std.stdio.writeln(args[0], " ", evaluateOnce(args[0]));
-    std.stdio.writeln(tokenTypeName(value.token.type), " ", tokenTypeName(reference.token.type));
-
     copyValue(value, reference);
     return value;
 }
