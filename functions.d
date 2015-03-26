@@ -23,11 +23,11 @@ import builtin.system;
 ///////////////////////////////////////////////////////////////////////////////
 
 struct LispFunction {
-    Token[] parameters;
-    Token[] forms;
+    Value[] parameters;
+    Value[] forms;
 }
 
-alias BuiltinFunction = Token function(string, Token[]);
+alias BuiltinFunction = Value function(string, Value[]);
 
 LispFunction[string] lispFunctions;
 BuiltinFunction[string] builtinFunctions;
@@ -46,14 +46,14 @@ void initializeBuiltins () {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void addFunction (string name, Token[] parameters, Token[] forms) {
+void addFunction (string name, Value[] parameters, Value[] forms) {
     lispFunctions[name] = LispFunction(parameters, forms);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token evaluateFunction (string name, Token[] parameters) {
+Value evaluateFunction (string name, Value[] parameters) {
     if (name in builtinFunctions) {
         return builtinFunctions[name](name, parameters);
     }
@@ -63,9 +63,9 @@ Token evaluateFunction (string name, Token[] parameters) {
     }
 
     LispFunction fun = lispFunctions[name];
-    Token[] funParameters = fun.parameters;
-    Token[] forms = fun.forms;
-    Token returnValue;
+    Value[] funParameters = fun.parameters;
+    Value[] forms = fun.forms;
+    Value returnValue;
 
     if (funParameters.length > parameters.length) {
         throw new EvaluationException("Not enough arguments");
@@ -74,8 +74,8 @@ Token evaluateFunction (string name, Token[] parameters) {
     enterScope();
 
     for (int i = 0; i < funParameters.length; i++) {
-        string funParameter = (cast(IdentifierToken)funParameters[i]).stringValue;
-        Token parameter = evaluate(parameters[i]);
+        string funParameter = (cast(IdentifierToken)funParameters[i].token).stringValue;
+        Value parameter = evaluateOnce(parameters[i]);
         addVariable(funParameter, parameter);
     }
 

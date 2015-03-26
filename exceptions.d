@@ -1,5 +1,7 @@
 module exceptions;
 
+import std.conv;
+
 import token;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -32,6 +34,15 @@ class NotEnoughArgumentsException : Exception {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+class OutOfBoundsException : Exception {
+    this (int index) {
+        super("Index " ~ to!string(index) ~ " is out of bounds");
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 class TypeMismatchException : Exception {
     this (string caller, Token token, string expectedType) {
         super(caller ~ ": " ~ token.toString() ~ " is not " ~ expectedType);
@@ -56,3 +67,11 @@ class UndefinedVariableException : Exception {
     }
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+
+class UnsupportedOperationException : Exception {
+    this (Token token, string operation) {
+        super(operation ~ " operation is unsupported on " ~ tokenTypeName(token.type) ~ " token");
+    }
+}

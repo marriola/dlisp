@@ -10,43 +10,61 @@ import variables;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinSetq (string name, Token[] args) {
+Value builtinSetq (string name, Value[] args) {
     if (args.length < 2) {
-        return NotEnoughArgumentsException(name);
+        throw new NotEnoughArgumentsException(name);
     }
 
     string identifier;
-    if (args[0].type != TokenType.string) {
-        identifier = (cast(StringToken)args[0]).stringValue;
+    if (args[0].token.type == TokenType.identifier) {
+        identifier = (cast(IdentifierToken)args[0].token).stringValue;
     } else {
-        throw new TypeMismatchException(name, args[0], "string");
+        throw new TypeMismatchException(name, args[0].token, "identifier");
     }
 
-    Token 
-
+    Value value = evaluateOnce(args[1]);
+    addVariable(identifier, value);
     return value;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinDefun (string name, Token[] args) {
+Value builtinSetf (string name, Value[] args) {
+    if (args.length < 2) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Value reference = evaluateOnce(args[0]);
+    Value value = evaluate(args[1]);
+
+    std.stdio.writeln(args[0], " ", evaluateOnce(args[0]));
+    std.stdio.writeln(tokenTypeName(value.token.type), " ", tokenTypeName(reference.token.type));
+
+    copyValue(value, reference);
+    return value;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Value builtinDefun (string name, Value[] args) {
     if (args.length < 3) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Token identifierToken = args[0];
-    Token lambdaListToken = args[1];
-    Token[] forms = args[2 .. args.length];
+    Value identifierToken = args[0];
+    Value lambdaListToken = args[1];
+    Value[] forms = args[2 .. args.length];
 
-    if (identifierToken.type != TokenType.identifier) {
-        throw new TypeMismatchException(name, identifierToken, "identifier");
-    } else if (!Token.isNil(lambdaListToken) && lambdaListToken.type != TokenType.reference) {
-        throw new TypeMismatchException(name, lambdaListToken, "reference");
+    if (identifierToken.token.type != TokenType.identifier) {
+        throw new TypeMismatchException(name, identifierToken.token, "identifier");
+    } else if (!Token.isNil(lambdaListToken) && lambdaListToken.token.type != TokenType.reference) {
+        throw new TypeMismatchException(name, lambdaListToken.token, "reference");
     }
 
-    string identifier = (cast(IdentifierToken)identifierToken).stringValue;
-    Token[] lambdaList = toArray(lambdaListToken);
+    string identifier = (cast(IdentifierToken)identifierToken.token).stringValue;
+    Value[] lambdaList = toArray(lambdaListToken);
 
     addFunction(identifier, lambdaList, forms);
 
@@ -57,7 +75,8 @@ Token builtinDefun (string name, Token[] args) {
 ///////////////////////////////////////////////////////////////////////////////
 
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
-    builtinTable["DEFUN"] = &builtinDefun;
+    builtinTable["SETF"] = &builtinSetf;
     builtinTable["SETQ"] = &builtinSetq;
+    builtinTable["DEFUN"] = &builtinDefun;
     return builtinTable;
 }

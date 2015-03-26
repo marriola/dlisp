@@ -1,5 +1,7 @@
 module token;
 
+import exceptions;
+import lispObject;
 import node;
 
 import std.stdio;
@@ -23,6 +25,21 @@ string tokenTypeName (TokenType type) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// This is kind of an ugly hack that lets us swap in a token of a different type into a Node's CAR or CDR.
+class Value {
+    Token token;
+
+    this (Token token) {
+        this.token = token;
+    }
+
+    override string toString () {
+        return token.toString();
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 
 abstract class Token {
     TokenType type;
@@ -37,22 +54,24 @@ abstract class Token {
      */
     bool isLexicalToken () { return false; }
 
+    Value getItem (int index) { throw new UnsupportedOperationException(this, "Subscript"); }
+
     /**
      * Constructs a reference token encapsulating a new Node object.
      * @param car the CAR of the new node
      * @param cdr the CDR of the new node
      * @return a reference token
      */
-    static ReferenceToken makeReference (Token car, Token cdr = null) {
-        return new ReferenceToken(new Node(car, cdr));
+    static Value makeReference (Value car, Value cdr = null) {
+        return new Value(new ReferenceToken(new Node(car, cdr)));
     }
 
     /**
      * @param value a Token object to test.
      * @return true if the Token object is a BooleanToken representing the value NIL.
      */
-    static bool isNil (Token value) {
-        return value.type == TokenType.boolean && (cast(BooleanToken)value).boolValue == false;
+    static bool isNil (Value value) {
+        return value.token.type == TokenType.boolean && (cast(BooleanToken)value.token).boolValue == false;
     }
 }
 
@@ -185,6 +204,13 @@ class ReferenceToken : Token {
         this.reference = reference;
     }
 
+    override Value getItem (int index) {
+        if (index < 0) {
+            throw new OutOfBoundsException(index);
+        }
+        return lispObject.getItem(new Value(this), index);
+    }
+
     override string toString () {
         return reference.toString();
     }
@@ -224,7 +250,36 @@ class FileStreamToken : Token {
 ///////////////////////////////////////////////////////////////////////////////
 
 class VectorToken : Token {
+    Value[] array;
 
+    this (int length) {
+        type = TokenType.vector;
+        array = new Value[length];
+        for (int i = 0; i < length; i++) {
+            array[i] = new Value(new BooleanToken(false));
+        }
+    }
+
+    override Value getItem (int index) {
+        if (index < 0 || index >= array.length) {
+            throw new OutOfBoundsException(index);
+        }
+        return array[index];
+    }
+
+    override string toString () {
+        string builder = "#<";
+
+        for (int i = 0; i < array.length; i++) {
+            builder ~= array[i].toString();
+            if (i < array.length - 1) {
+                builder ~= " ";
+            }
+        }
+
+        builder ~= ">";
+        return builder;
+    }
 }
 
 

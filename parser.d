@@ -103,7 +103,7 @@ class LispParser {
             // We grab the next token, and throw it in a new list with the identifier QUOTE as the first item, and it as the second.
             getToken();
 
-            Token quotedItem;
+            Value quotedItem;
             if (nextToken.isLexicalToken()) {
                 if (nextToken.type != TokenType.leftParen) {
                     throw new SyntaxErrorException("Expected non-lexical token or left paren, got " ~ nextToken.toString());
@@ -111,10 +111,10 @@ class LispParser {
                     quotedItem = parseList(false);
                 }
             } else {
-                quotedItem = nextToken;
+                quotedItem = new Value(nextToken);
             }
 
-            nextToken = Token.makeReference(new IdentifierToken("QUOTE"), Token.makeReference(quotedItem));
+            nextToken = Token.makeReference(new Value(new IdentifierToken("QUOTE")), Token.makeReference(quotedItem)).token;
             return;
 
         } else if (isDigit(c) || c == '-') {
@@ -223,23 +223,23 @@ class LispParser {
      *
      * @return a ReferenceToken object containing a reference to the first node of a list.
      */
-    private Token parseList (bool mExpression, Token identifier = null) {
-        ReferenceToken root, node;
+    private Value parseList (bool mExpression, Token identifier = null) {
+        Value root, node;
 
         matchToken(mExpression ? TokenType.leftBrack : TokenType.leftParen);
         if ((mExpression && nextToken.type == TokenType.rightBrack) ||
             nextToken.type == TokenType.rightParen) {
-            return new BooleanToken(false);
+            return new Value(new BooleanToken(false));
         }
 
-        root = node = Token.makeReference(mExpression ? identifier : nextToken);
+        root = node = Token.makeReference(new Value(mExpression ? identifier : nextToken));
         if (!mExpression) {
             getToken();
         }
 
         if (!mExpression && nextToken.type == TokenType.dot) {
             matchToken(TokenType.dot);
-            root.reference.cdr = nextToken;
+            (cast(ReferenceToken)root.token).reference.cdr = new Value(nextToken);
             getToken();
             matchToken(TokenType.rightParen, false);
             return root;
@@ -248,8 +248,8 @@ class LispParser {
             while (true) {
                 switch (nextToken.type) {
                     case TokenType.leftParen:
-                        ReferenceToken newReference = Token.makeReference(parseList(false));
-                        node.reference.cdr = newReference;
+                        Value newReference = Token.makeReference(parseList(false));
+                        (cast(ReferenceToken)node.token).reference.cdr = newReference;
                         node = newReference;
                         break;
 
@@ -270,8 +270,8 @@ class LispParser {
                         return root;
 
                     default:
-                        ReferenceToken newReference = Token.makeReference(nextToken);
-                        node.reference.cdr = newReference;
+                        Value newReference = Token.makeReference(new Value(nextToken));
+                        (cast(ReferenceToken)node.token).reference.cdr = newReference;
                         node = newReference;
 
                 }
@@ -284,7 +284,7 @@ class LispParser {
     /**
      * @return a Token object containing the next whole Lisp object from input.
      */
-    Token read () {
+    Value read () {
         getToken();
 
         if (nextToken.type == TokenType.leftParen) {
@@ -310,7 +310,7 @@ class LispParser {
         //    }
 
         } else {
-            return nextToken;
+            return new Value(nextToken);
         }
     }
 }

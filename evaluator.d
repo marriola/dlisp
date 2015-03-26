@@ -6,10 +6,10 @@ import lispObject;
 import token;
 import variables;
 
-Token evaluateOnce (Token token) {
-    switch (token.type) {
+Value evaluateOnce (Value value) {
+    switch (value.token.type) {
         case TokenType.identifier:
-            return getVariable((cast(IdentifierToken)token).stringValue);
+            return getVariable((cast(IdentifierToken)value.token).stringValue);
 
         case TokenType.boolean:
         case TokenType.integer:
@@ -17,30 +17,31 @@ Token evaluateOnce (Token token) {
         case TokenType.string:
         case TokenType.constant:
         case TokenType.fileStream:
-            return token;
+            return value;
 
         case TokenType.reference:
-            ReferenceToken refToken = cast(ReferenceToken)token;
+            ReferenceToken refToken = cast(ReferenceToken)value.token;
+            Value refValue = new Value(refToken);
 
-            if (refToken.reference.car.type != TokenType.identifier) {
+            if (refToken.reference.car.token.type != TokenType.identifier) {
                 throw new EvaluationException(refToken.reference.car.toString() ~ " is not a function name");
             }
 
-            return evaluateFunction((cast(IdentifierToken)getFirst(refToken)).stringValue, toArray(getRest(refToken))); //(cast(ReferenceToken)getRest(refToken)));
+            return evaluateFunction((cast(IdentifierToken)getFirst(refValue).token).stringValue, toArray(getRest(refValue))); //(cast(ReferenceToken)getRest(refToken)));
                 //(cast(IdentifierToken)(refToken.reference.car)).stringValue, (cast(ReferenceToken)refToken).reference.cdr);
 
         default:
-            return new BooleanToken(false);
+            return new Value(new BooleanToken(false));
     }
 }
 
-Token evaluate (Token token) {
-    Token lastToken;
+Value evaluate (Value token) {
+    Value lastToken;
 
     do {
         lastToken = token;
         token = evaluateOnce(token);
-    } while (lastToken != token);
+    } while (lastToken.token != token.token);
 
     return token;
 }

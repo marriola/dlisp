@@ -10,15 +10,15 @@ import token;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinExit (string name, Token[] args) {
+Value builtinExit (string name, Value[] args) {
     int exitCode = 0;
 
     if (args.length > 0) {
-        Token exitCodeToken = evaluate(args[0]);
-        if (exitCodeToken.type != TokenType.integer) {
+        Value exitCodeToken = evaluate(args[0]);
+        if (exitCodeToken.token.type != TokenType.integer) {
             throw new Exception("Exit code must be an integer");
         } else {
-            exitCode = (cast(IntegerToken)exitCodeToken).intValue;
+            exitCode = (cast(IntegerToken)exitCodeToken.token).intValue;
         }
     }
 

@@ -5,17 +5,31 @@ import token;
 import std.conv;
 
 class Node {
-    Token car;
-    Token cdr;
+    Value car;
+    Value cdr;
 
     /**
      * @param car the CAR of the new Node.
      * @param cdr the CDR of the new Node.
      * @return a Node object initialized with the given CAR and CDR. If null is passed for either argument, that part of the Node is initalized to the BooleanToken NIL.
      */
-    this (Token car = null, Token cdr = null) {
-        this.car = car is null ? new BooleanToken(false) : car;
-        this.cdr = cdr is null ? new BooleanToken(false) : cdr;
+    this (Value car = null, Value cdr = null) {
+        this.car = car is null ? new Value(new BooleanToken(false)) : car;
+        this.cdr = cdr is null ? new Value(new BooleanToken(false)) : cdr;
+    }
+
+    /**
+     * Return's the CAR's token.
+     */
+    Value getCar () {
+        return car;
+    }
+
+    /**
+     * Return's the CDR's token.
+     */
+    Value getCdr () {
+        return cdr;
     }
 
     /**
@@ -28,7 +42,7 @@ class Node {
 
         while (true) {
             // Add the string representation of the value in the CAR to the builder.
-            builder ~= node.car.toString();
+            builder ~= node.car.token.toString();
 
             // If the CDR is NIL, this is the last element of the list.
             if (Token.isNil(node.cdr)) {
@@ -36,7 +50,7 @@ class Node {
 
             } else {
                 builder ~= " ";
-                node = (cast(ReferenceToken)node.cdr).reference;
+                node = (cast(ReferenceToken)node.cdr.token).reference;
             }
         }
 
@@ -50,7 +64,7 @@ class Node {
         string builder;
 
         // If the CDR is a reference-type value or NIL, this is a list.
-        if (cdr.type == TokenType.reference || Token.isNil(cdr)) {
+        if (cdr.token.type == TokenType.reference || Token.isNil(cdr)) {
             return listToString(this);
             
         } else {

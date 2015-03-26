@@ -9,8 +9,52 @@ import token;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinDo (string name, Token[] args) {
-    Token lastResult = new BooleanToken(false);
+Value builtinMakeArray (string name, Value[] args) {
+    if (args.length < 1) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    if (args[0].token.type == TokenType.integer) {
+        Value lengthToken = evaluate(args[0]);
+        return new Value(new VectorToken((cast(IntegerToken)lengthToken.token).intValue));
+
+    } else if (args[0].token.type == TokenType.reference) {
+        Value[] list = toArray(evaluateOnce(args[0]));
+        Value vector = new Value(new VectorToken(list.length));
+        for (int i = 0; i < list.length; i++) {
+            (cast(VectorToken)vector.token).array[i] = list[i];
+        }
+        return vector;
+
+    } else {
+        throw new TypeMismatchException(name, args[0].token, "integer or list");
+    }
+
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Value builtinList (string name, Value[] args) {
+    if (args.length == 0) {
+        return new Value(new BooleanToken(false));
+    }
+
+    Value head = Token.makeReference(evaluateOnce(args[0]));
+    Value current = head;
+    for (int i = 1; i < args.length; i++) {
+        (cast(ReferenceToken)current.token).reference.cdr = Token.makeReference(evaluateOnce(args[i]));
+        current = (cast(ReferenceToken)current.token).reference.cdr;
+    }
+
+    return head;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Value builtinDo (string name, Value[] args) {
+    Value lastResult = new Value(new BooleanToken(false));
 
     for (int i = 0; i < args.length; i++) {
         lastResult = evaluate(args[i]);
@@ -22,7 +66,7 @@ Token builtinDo (string name, Token[] args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinQuote (string name, Token[] args) {
+Value builtinQuote (string name, Value[] args) {
     if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -33,20 +77,20 @@ Token builtinQuote (string name, Token[] args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinCons (string name, Token[] args) {
+Value builtinCons (string name, Value[] args) {
     if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Token car = evaluate(args[0]);
-    Token cdr = evaluate(args[1]);
+    Value car = evaluate(args[0]);
+    Value cdr = evaluate(args[1]);
     return Token.makeReference(car, cdr);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinCar (string name, Token[] args) {
+Value builtinCar (string name, Value[] args) {
     if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -57,7 +101,7 @@ Token builtinCar (string name, Token[] args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinCdr (string name, Token[] args) {
+Value builtinCdr (string name, Value[] args) {
     if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -68,24 +112,37 @@ Token builtinCdr (string name, Token[] args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinElt (string name, Token[] args) {
-    Token obj = evaluate(args[0]);
-    if (obj.type != TokenType.reference) {
-        throw new TypeMismatchException(name, obj, "reference");
+Value builtinElt (string name, Value[] args) {
+    Value indexToken = evaluateOnce(args[1]);
+    if (indexToken.token.type != TokenType.integer) {
+        throw new TypeMismatchException(name, indexToken.token, "integer");
     }
+    int index = (cast(IntegerToken)indexToken.token).intValue;
 
-    Token index = evaluate(args[1]);
-    if (index.type != TokenType.integer) {
-        throw new TypeMismatchException(name, index, "integer");
-    }
+    Value obj = evaluateOnce(args[0]);
+    return obj.getItem(index);
 
-    return getItem(cast(ReferenceToken)obj, (cast(IntegerToken)index).intValue);
+    //if (obj.type == TokenType.reference) {
+    //    return getItem(cast(ReferenceToken)obj, index);
+
+    //} else if (obj.type == TokenType.vector) {
+    //    Token[] array = (cast(VectorToken)obj).array;
+    //    if (index > array.length) {
+    //        throw new OutOfBoundsException(name, index);
+    //    }
+    //    return array[index];
+
+    //} else {
+    //    throw new TypeMismatchException(name, obj, "reference or vector");
+    //}
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
+    builtinTable["MAKE-ARRAY"] = &builtinMakeArray;
+    builtinTable["LIST"] = &builtinList;
     builtinTable["DO"] = &builtinDo;
     builtinTable["QUOTE"] = &builtinQuote;
     builtinTable["CONS"] = &builtinCons;

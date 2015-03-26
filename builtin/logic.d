@@ -9,33 +9,44 @@ import token;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinIf (string name, Token[] args) {
+Value builtinNull (string name, Value[] args) {
+    if (args.length == 0) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    return new Value(new BooleanToken(Token.isNil(evaluateOnce(args[0]))));
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Value builtinIf (string name, Value[] args) {
     if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
 
     bool condition;
-    Token current = evaluate(args[0]);
+    Value current = evaluate(args[0]);
 
-    if (current.type != TokenType.boolean) {
-        throw new TypeMismatchException(name, current, "boolean");
+    if (current.token.type != TokenType.boolean) {
+        throw new TypeMismatchException(name, current.token, "boolean");
     } else {
-        condition = (cast(BooleanToken)current).boolValue;
+        condition = (cast(BooleanToken)current.token).boolValue;
     }
 
     if (args.length < 3) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Token thenClause = args[1];
-    Token elseClause = args[2];
+    Value thenClause = args[1];
+    Value elseClause = args[2];
     return condition ? evaluate(thenClause) : evaluate(elseClause);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinAnd (string name, Token[] args) {
+Value builtinAnd (string name, Value[] args) {
     bool result = true;
 
     for (int i = 0; i < args.length; i++) {
@@ -43,83 +54,84 @@ Token builtinAnd (string name, Token[] args) {
             break;
         }
 
-        Token current = evaluate(args[i]);
-        if (current.type != TokenType.boolean) {
-            throw new TypeMismatchException(name, current, "boolean");
+        Value current = evaluate(args[i]);
+        if (current.token.type != TokenType.boolean) {
+            throw new TypeMismatchException(name, current.token, "boolean");
         } else {
-            result &= (cast(BooleanToken)current).boolValue;
+            result &= (cast(BooleanToken)current.token).boolValue;
         }
     }
 
-    return new BooleanToken(result);
+    return new Value(new BooleanToken(result));
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinOr (string name, Token[] args) {
+Value builtinOr (string name, Value[] args) {
     bool result = false;
 
     for (int i = 0; i < args.length; i++) {
-        Token current = evaluate(args[i]);
-        if (current.type != TokenType.boolean) {
-            throw new TypeMismatchException(name, current, "boolean");
+        Value current = evaluate(args[i]);
+        if (current.token.type != TokenType.boolean) {
+            throw new TypeMismatchException(name, current.token, "boolean");
         } else {
-            result |= (cast(BooleanToken)current).boolValue;
+            result |= (cast(BooleanToken)current.token).boolValue;
         }
     }
 
-    return new BooleanToken(result);
+    return new Value(new BooleanToken(result));
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinNot (string name, Token[] args) {
+Value builtinNot (string name, Value[] args) {
     if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Token current = evaluate(args[0]);
-    if (current.type != TokenType.boolean) {
-        throw new TypeMismatchException(name, current, "boolean");
+    Value current = evaluate(args[0]);
+    if (current.token.type != TokenType.boolean) {
+        throw new TypeMismatchException(name, current.token, "boolean");
     }
 
-    return new BooleanToken(!(cast(BooleanToken)current).boolValue);
+    return new Value(new BooleanToken(!(cast(BooleanToken)current.token).boolValue));
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinEq (string name, Token[] args) {
+Value builtinEq (string name, Value[] args) {
     if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Token obj1 = evaluate(args[0]);
-    Token obj2 = evaluate(args[1]);
+    Value obj1 = evaluate(args[0]);
+    Value obj2 = evaluate(args[1]);
 
-    return new BooleanToken(objectsEqual(obj1, obj2));
+    return new Value(new BooleanToken(objectsEqual(obj1, obj2)));
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Token builtinNeq (string name, Token[] args) {
+Value builtinNeq (string name, Value[] args) {
     if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Token obj1 = evaluate(args[0]);
-    Token obj2 = evaluate(args[1]);
+    Value obj1 = evaluate(args[0]);
+    Value obj2 = evaluate(args[1]);
 
-    return new BooleanToken(!objectsEqual(obj1, obj2));
+    return new Value(new BooleanToken(!objectsEqual(obj1, obj2)));
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
+    builtinTable["NULL"] = &builtinNull;
     builtinTable["IF"] = &builtinIf;
     builtinTable["AND"] = &builtinAnd;
     builtinTable["OR"] = &builtinOr;
