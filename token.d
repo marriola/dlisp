@@ -270,17 +270,7 @@ class VectorToken : Token {
     }
 
     override string toString () {
-        string builder = "#<";
-
-        for (int i = 0; i < array.length; i++) {
-            builder ~= array[i].toString();
-            if (i < array.length - 1) {
-                builder ~= " ";
-            }
-        }
-
-        builder ~= ">";
-        return builder;
+        return "#<" ~ join(map!(x => x.toString())(array), " ") ~ ">";
     }
 }
 
@@ -318,14 +308,14 @@ ReferenceToken toReference (Token token) {
 ///////////////////////////////////////////////////////////////////////////////
 
 IntegerToken toInteger (Token token) {
-    return (cast(IntegerToken)token);   
+    return (cast(IntegerToken)token);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
 FloatToken toFloat (Token token) {
-    return (cast(FloatToken)token);   
+    return (cast(FloatToken)token);
 }
 
 
