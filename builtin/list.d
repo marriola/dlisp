@@ -99,7 +99,7 @@ Value builtinCar (string name, Value[] args) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    return getFirst(args[0]);
+    return getFirst(evaluateOnce(args[0]));
 }
 
 
@@ -110,7 +110,7 @@ Value builtinCdr (string name, Value[] args) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    return getRest(args[0]);
+    return getRest(evaluateOnce(args[0]));
 }
 
 
