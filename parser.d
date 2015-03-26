@@ -153,7 +153,7 @@ class LispParser {
                     if (isFloat) {
                         nextToken = new FloatToken(to!double(literal));
                     } else {
-                        nextToken = new IntegerToken(to!int(literal));
+                        nextToken = new IntegerToken(to!long(literal));
                     }
                 } catch (ConvException e) {
                     throw new SyntaxErrorException("malformed number literal");

@@ -149,9 +149,9 @@ class IdentifierToken : Token {
 ///////////////////////////////////////////////////////////////////////////////
 
 class IntegerToken : Token {
-    int intValue;
+    long intValue;
 
-    this (int intValue) {
+    this (long intValue) {
         type = TokenType.integer;
         this.intValue = intValue;
     }

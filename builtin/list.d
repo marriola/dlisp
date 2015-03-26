@@ -1,5 +1,7 @@
 module builtin.list;
 
+import std.conv;
+
 import evaluator;
 import exceptions;
 import functions;
@@ -16,7 +18,7 @@ Value builtinMakeArray (string name, Value[] args) {
 
     if (args[0].token.type == TokenType.integer) {
         Value lengthToken = evaluate(args[0]);
-        return new Value(new VectorToken((cast(IntegerToken)lengthToken.token).intValue));
+        return new Value(new VectorToken(to!int((cast(IntegerToken)lengthToken.token).intValue)));
 
     } else if (args[0].token.type == TokenType.reference) {
         Value[] list = toArray(evaluateOnce(args[0]));
@@ -121,7 +123,7 @@ Value builtinElt (string name, Value[] args) {
     if (indexToken.token.type != TokenType.integer) {
         throw new TypeMismatchException(name, indexToken.token, "integer");
     }
-    int index = (cast(IntegerToken)indexToken.token).intValue;
+    int index = to!int((cast(IntegerToken)indexToken.token).intValue);
 
     Value obj = evaluateOnce(args[0]);
 

@@ -18,7 +18,7 @@ Value builtinExit (string name, Value[] args) {
         if (exitCodeToken.token.type != TokenType.integer) {
             throw new Exception("Exit code must be an integer");
         } else {
-            exitCode = (cast(IntegerToken)exitCodeToken.token).intValue;
+            exitCode = cast(int)(cast(IntegerToken)exitCodeToken.token).intValue;
         }
     }
 

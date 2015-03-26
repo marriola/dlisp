@@ -1,4 +1,4 @@
-(setq fibcache (make-array 100))
+(setq fibcache (make-array 1000))
 
 (defun fib (n)
     (let ((cached-number (elt fibcache n)))

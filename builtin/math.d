@@ -208,7 +208,7 @@ Value builtinLesserOrEqual (string name, Value[] args) {
 
 Value builtinPlus (string name, Value[] args) {
     bool isFloat = false;
-    int intTotal = 0;
+    long intTotal = 0;
     double floatTotal = 0;
 
     for (int i = 0; i < args.length; i++) {
@@ -235,7 +235,7 @@ Value builtinPlus (string name, Value[] args) {
 
 Value builtinMinus (string name, Value[] args) {
     bool isFloat = false;
-    int intTotal = 0;
+    long intTotal = 0;
     double floatTotal = 0;
 
     if (args.length > 0) {
@@ -280,7 +280,7 @@ Value builtinMinus (string name, Value[] args) {
 
 Value builtinTimes (string name, Value[] args) {
     bool isFloat = false;
-    int intTotal = 1;
+    long intTotal = 1;
     double floatTotal = 0;
 
     if (args.length > 0) {
@@ -319,7 +319,7 @@ Value builtinTimes (string name, Value[] args) {
 
 Value builtinDivide (string name, Value[] args) {
     bool isFloat = false;
-    int intTotal = 0;
+    long intTotal = 0;
     double floatTotal = 0;
 
     if (args.length > 0) {
