@@ -57,7 +57,7 @@ Value builtinList (string name, Value[] args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinDo (string name, Value[] args) {
+Value builtinProgn (string name, Value[] args) {
     Value lastResult = new Value(new BooleanToken(false));
 
     for (int i = 0; i < args.length; i++) {
@@ -150,7 +150,7 @@ Value builtinElt (string name, Value[] args) {
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["MAKE-ARRAY"] = &builtinMakeArray;
     builtinTable["LIST"] = &builtinList;
-    builtinTable["DO"] = &builtinDo;
+    builtinTable["PROGN"] = &builtinProgn;
     builtinTable["QUOTE"] = &builtinQuote;
     builtinTable["CONS"] = &builtinCons;
     builtinTable["CAR"] = &builtinCar;
