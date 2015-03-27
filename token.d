@@ -20,7 +20,7 @@ enum TokenType { leftParen, rightParen, leftBrack, rightBrack, dot, boolean, ref
 
 
 string tokenTypeName (TokenType type) {
-    static string typeNames[] = [ "left paren", "right paren", "left bracket", "right bracket", "dot", "boolean", "reference", "integer", "floating point", "identifier", "string", "constant", "file stream", "vector" ];
+    static string typeNames[] = [ "left paren", "right paren", "left bracket", "right bracket", "dot", "boolean", "reference", "integer", "floating point", "identifier", "string", "constant", "file stream", "vector", "lambda" ];
     return typeNames[cast(int)type];
 }
 
@@ -45,11 +45,6 @@ class Value {
 
 abstract class Token {
     TokenType type;
-
-    /**
-     * @return a string representation of this token
-     */
-    //override string toString();
 
     /**
      * @return true if this is a lexical token, false otherwise. 
