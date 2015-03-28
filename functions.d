@@ -27,7 +27,7 @@ struct LispFunction {
     Value[] forms;
 }
 
-alias BuiltinFunction = Value function(string, Value[]);
+alias BuiltinFunction = Value function(string, Value[], string[Value]);
 
 LispFunction[string] lispFunctions;
 BuiltinFunction[string] builtinFunctions;
@@ -82,14 +82,38 @@ Value evaluateDefinedFunction (LispFunction fun, Value[] parameters) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value evaluateFunction (string name, Value[] parameters) {
+string[Value] extractKeywordArguments (ref Value[] arguments) {
+    int firstKeyword = -1;
+
+    foreach (int i, Value arg; arguments) {
+        if (arg.token.type == TokenType.constant) {
+            firstKeyword = i;
+            break;
+        }
+    }
+
+    if (firstKeyword == -1) {
+        return null;
+    }
+
+    string[Value] keywordArguments;
+
+    arguments = arguments[0 .. firstKeyword];
+
+    return keywordArguments;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Value evaluateFunction (string name, Value[] arguments) {
     if (name in builtinFunctions) {
-        return builtinFunctions[name](name, parameters);
+        return builtinFunctions[name](name, arguments, null);
     }
 
     if (name !in lispFunctions) {
         throw new UndefinedFunctionException(name);
     }
 
-    return evaluateDefinedFunction(lispFunctions[name], parameters);
+    return evaluateDefinedFunction(lispFunctions[name], arguments);
 }

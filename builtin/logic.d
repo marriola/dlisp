@@ -9,7 +9,7 @@ import token;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinNull (string name, Value[] args) {
+Value builtinNull (string name, Value[] args, string[Value] kwargs) {
     if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -20,7 +20,7 @@ Value builtinNull (string name, Value[] args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinIf (string name, Value[] args) {
+Value builtinIf (string name, Value[] args, string[Value] kwargs) {
     if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -46,7 +46,7 @@ Value builtinIf (string name, Value[] args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinAnd (string name, Value[] args) {
+Value builtinAnd (string name, Value[] args, string[Value] kwargs) {
     bool result = true;
 
     for (int i = 0; i < args.length; i++) {
@@ -68,7 +68,7 @@ Value builtinAnd (string name, Value[] args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinOr (string name, Value[] args) {
+Value builtinOr (string name, Value[] args, string[Value] kwargs) {
     bool result = false;
 
     for (int i = 0; i < args.length; i++) {
@@ -86,7 +86,7 @@ Value builtinOr (string name, Value[] args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinNot (string name, Value[] args) {
+Value builtinNot (string name, Value[] args, string[Value] kwargs) {
     if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -102,7 +102,7 @@ Value builtinNot (string name, Value[] args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinEq (string name, Value[] args) {
+Value builtinEq (string name, Value[] args, string[Value] kwargs) {
     if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -116,7 +116,7 @@ Value builtinEq (string name, Value[] args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinNeq (string name, Value[] args) {
+Value builtinNeq (string name, Value[] args, string[Value] kwargs) {
     if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
     }

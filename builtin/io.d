@@ -12,7 +12,7 @@ import token;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinPrint (string name, Value[] args) {
+Value builtinPrint (string name, Value[] args, string[Value] kwargs) {
     Value lastResult;
 
     for (int i = 0; i < args.length; i++) {
@@ -26,7 +26,7 @@ Value builtinPrint (string name, Value[] args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinLoad (string name, Value[] args) {
+Value builtinLoad (string name, Value[] args, string[Value] kwargs) {
     if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -58,7 +58,7 @@ Value builtinLoad (string name, Value[] args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinOpen (string name, Value[] args) {
+Value builtinOpen (string name, Value[] args, string[Value] kwargs) {
     if (args.length < 1) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -87,7 +87,7 @@ Value builtinOpen (string name, Value[] args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinClose (string name, Value[] args) {
+Value builtinClose (string name, Value[] args, string[Value] kwargs) {
     if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -103,19 +103,22 @@ Value builtinClose (string name, Value[] args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinRead (string name, Value[] args) {
-    if (args.length == 0) {
-        throw new NotEnoughArgumentsException(name);
+Value builtinRead (string name, Value[] args, string[Value] kwargs) {
+    LispParser parser;
+
+    if (args.length > 0) {
+        Value streamToken = evaluate(args[0]);
+        if (streamToken.token.type != TokenType.fileStream) {
+            throw new TypeMismatchException(name, streamToken.token, "file stream");
+        } else if (!(cast(FileStreamToken)streamToken.token).isOpen) {
+            throw new BuiltinException(name, "Attempt to read from " ~ streamToken.toString());
+        }
+
+        parser = new LispParser((cast(FileStreamToken)streamToken.token).stream);
+    } else {
+        parser = new LispParser(stdin);
     }
 
-    Value streamToken = evaluate(args[0]);
-    if (streamToken.token.type != TokenType.fileStream) {
-        throw new TypeMismatchException(name, streamToken.token, "file stream");
-    } else if (!(cast(FileStreamToken)streamToken.token).isOpen) {
-        throw new BuiltinException(name, "Attempt to read from " ~ streamToken.toString());
-    }
-
-    LispParser parser = new LispParser((cast(FileStreamToken)streamToken.token).stream);
     return parser.read();
 }
 

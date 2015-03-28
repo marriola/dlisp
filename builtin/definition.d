@@ -10,7 +10,52 @@ import variables;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinLet (string name, Value[] args) {
+Value builtinLet (string name, Value[] args, string[Value] kwargs) {
+    if (args.length < 2) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    if (args[0].token.type != TokenType.reference) {
+        throw new TypeMismatchException(name, args[0].token, "reference");
+    }
+
+    Value[] bindings = toArray(args[0]);
+    Value[] forms = args[1 .. args.length];
+
+    string[] variables = new string[bindings.length];
+    Value[] initialValues = new Value[bindings.length];
+    foreach (int i, Value binding; bindings) {
+        Value bindingName = getFirst(binding);
+        Value bindingValue = evaluateOnce(getFirst(getRest(binding)));
+
+        if (bindingName.token.type != TokenType.identifier) {
+            throw new TypeMismatchException(name, binding.token, "identifier");
+        }
+        variables[i] = (cast(IdentifierToken)bindingName.token).stringValue;
+        initialValues[i] = bindingValue;
+    }
+
+    enterScope();
+
+    for (int i = 0; i < bindings.length; i++) {
+        addVariable(variables[i], initialValues[i]);
+    }
+
+    Value lastResult = new Value(new BooleanToken(false));
+
+    foreach (Value form; forms) {
+        lastResult = evaluateOnce(form);
+    }
+
+    leaveScope();
+
+    return lastResult;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Value builtinLetStar (string name, Value[] args, string[Value] kwargs) {
     if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -48,7 +93,7 @@ Value builtinLet (string name, Value[] args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinSetq (string name, Value[] args) {
+Value builtinSetq (string name, Value[] args, string[Value] kwargs) {
     if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -68,7 +113,7 @@ Value builtinSetq (string name, Value[] args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinSetf (string name, Value[] args) {
+Value builtinSetf (string name, Value[] args, string[Value] kwargs) {
     if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -83,7 +128,7 @@ Value builtinSetf (string name, Value[] args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinLambda (string name, Value[] args) {
+Value builtinLambda (string name, Value[] args, string[Value] kwargs) {
     if (args.length < 1) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -97,7 +142,7 @@ Value builtinLambda (string name, Value[] args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinFuncall (string name, Value[] args) {
+Value builtinFuncall (string name, Value[] args, string[Value] kwargs) {
     if (args.length < 1) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -119,7 +164,7 @@ Value builtinFuncall (string name, Value[] args) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinDefun (string name, Value[] args) {
+Value builtinDefun (string name, Value[] args, string[Value] kwargs) {
     if (args.length < 3) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -147,6 +192,7 @@ Value builtinDefun (string name, Value[] args) {
 
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["LET"] = &builtinLet;
+    builtinTable["LET*"] = &builtinLetStar;
     builtinTable["SETF"] = &builtinSetf;
     builtinTable["SETQ"] = &builtinSetq;
     builtinTable["LAMBDA"] = &builtinLambda;
