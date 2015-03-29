@@ -52,6 +52,15 @@ class TypeMismatchException : Exception {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+class InvalidLambdaListElementException : Exception {
+    this (Token token, string reason) {
+        super("Invalid lambda list element " ~ token.toString() ~ ", " ~ reason);
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 class UndefinedFunctionException : Exception {
     this (string msg) {
         super(msg);

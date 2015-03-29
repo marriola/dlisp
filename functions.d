@@ -3,6 +3,11 @@ module functions;
 
 ///////////////////////////////////////////////////////////////////////////////
 
+import std.algorithm;
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 import evaluator;
 import exceptions;
 import lispObject;
@@ -22,8 +27,18 @@ import builtin.system;
 
 ///////////////////////////////////////////////////////////////////////////////
 
+struct PairedArgument {
+    string name;
+    Value defaultValue;
+}
+
 struct LispFunction {
-    Value[] lambdaList;
+    string[] requiredArguments;
+    PairedArgument[] optionalArguments;
+    PairedArgument[] keywordArguments;
+    string restArgument;
+    PairedArgument[] auxArguments;
+
     Value[] forms;
 }
 
@@ -47,7 +62,16 @@ void initializeBuiltins () {
 ///////////////////////////////////////////////////////////////////////////////
 
 void addFunction (string name, Value[] lambdaList, Value[] forms) {
-    lispFunctions[name] = LispFunction(lambdaList, forms);
+    PairedArgument[] optionalArguments = extractKeywordArguments(lambdaList, "&optional");
+    PairedArgument[] keywordArguments = extractKeywordArguments(lambdaList, "&key");
+    string restArgument = extractRestArgument(lambdaList);
+    PairedArgument[] auxArguments = extractKeywordArguments(lambdaList, "&aux");
+    string[] requiredArguments = reduce!((result, x) => result ~= (cast(IdentifierToken)x.token).stringValue)(new string[0], lambdaList);
+    if (requiredArguments.length == 0) {
+        requiredArguments = null;
+    }
+
+    lispFunctions[name] = LispFunction(requiredArguments, optionalArguments, keywordArguments, restArgument, auxArguments, forms);
 }
 
 
@@ -82,25 +106,67 @@ Value evaluateDefinedFunction (LispFunction fun, Value[] parameters) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-string[Value] extractKeywordArguments (ref Value[] arguments) {
-    int firstKeyword = -1;
+string extractRestArgument (ref Value[] lambdaList) {
+    int firstArgument = -1;
 
-    foreach (int i, Value arg; arguments) {
-        if (arg.token.type == TokenType.constant) {
-            firstKeyword = i;
-            break;
+    // look for the &key keyword, exit if not found
+    foreach (int i, Value arg; lambdaList) {
+        if ((cast(IdentifierToken)arg.token).stringValue == "&rest") {
+            if (i == lambdaList.length - 1) {
+                throw new Exception("Missing &rest element in lambda list");
+            } else if (lambdaList[i + 1].token.type != TokenType.identifier) {
+                throw new InvalidLambdaListElementException(lambdaList[i + 1].token, "identifier");
+            }
+
+            return (cast(IdentifierToken)lambdaList[i + 1].token).stringValue;
         }
     }
 
-    if (firstKeyword == -1) {
+    return null;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+PairedArgument[] extractKeywordArguments (ref Value[] lambdaList, string keyword) {
+    int firstArgument = -1;
+
+    // look for the &key keyword, exit if not found
+    foreach (int i, Value arg; lambdaList) {
+        if ((cast(IdentifierToken)arg.token).stringValue == keyword) {
+            firstArgument = i + 1;
+            break;
+        }
+    }
+    
+    if (firstArgument == -1) {
         return null;
     }
 
-    string[Value] keywordArguments;
+    PairedArgument[] keywordArguments = new PairedArgument[0];
+    foreach (Value arg; lambdaList[firstArgument .. lambdaList.length]) {
+        // keep going until we reach another keyword
+        if ((cast(IdentifierToken)arg.token).stringValue[0] == '&') {
+            break;
+        }
 
-    arguments = arguments[0 .. firstKeyword];
+        if (arg.token.type == TokenType.reference) {
+            Value argumentName = getFirst(arg);
+            Value argumentValue = evaluateOnce(getFirst(getRest(arg)));
+            if (argumentName.token.type != TokenType.identifier) {
+                throw new InvalidLambdaListElementException(argumentName.token, "expected identifier");
+            }
+            keywordArguments ~= PairedArgument((cast(IdentifierToken)argumentName.token).stringValue, argumentValue);
 
-    return keywordArguments;
+        } else if (arg.token.type == TokenType.identifier) {
+            keywordArguments ~= PairedArgument((cast(IdentifierToken)arg.token).stringValue, null);
+
+        } else {
+            throw new InvalidLambdaListElementException(arg.token, "expected identifier or list");
+        }
+    }
+
+    lambdaList = lambdaList[0 .. firstArgument - 1];
+    return keywordArguments.length == 0 ? null : keywordArguments;
 }
 
 
