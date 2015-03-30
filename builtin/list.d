@@ -45,10 +45,8 @@ Value builtinList (string name, Value[] args, string[Value] kwargs) {
     }
 
     Value head = Token.makeReference(evaluateOnce(args[0]));
-    Value current = head;
     for (int i = 1; i < args.length; i++) {
-        (cast(ReferenceToken)current.token).reference.cdr = Token.makeReference(evaluateOnce(args[i]));
-        current = (cast(ReferenceToken)current.token).reference.cdr;
+        (cast(ReferenceToken)head.token).append(evaluateOnce(args[i]));
     }
 
     return head;

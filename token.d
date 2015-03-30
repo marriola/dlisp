@@ -51,6 +51,8 @@ abstract class Token {
      */
     bool isLexicalToken () { return false; }
 
+    Value append (Value element) { throw new UnsupportedOperationException(this, "Append"); }
+
     Value getItem (int index) { throw new UnsupportedOperationException(this, "Subscript"); }
 
     /**
@@ -201,6 +203,22 @@ class ReferenceToken : Token {
         this.reference = reference;
     }
 
+    /**
+     * Appends an element to a list
+     *
+     * @return a ReferenceToken containing the newly apended element in its CAR
+     */
+    override Value append (Value element) {
+        Node last = reference;
+
+        while (!Token.isNil(last.cdr)) {
+            last = (cast(ReferenceToken)last.cdr.token).reference;
+        }
+
+        last.cdr = Token.makeReference(element);
+        return last.cdr;
+    }
+
     override Value getItem (int index) {
         if (index < 0) {
             throw new OutOfBoundsException(index);
@@ -273,11 +291,12 @@ class VectorToken : Token {
 ///////////////////////////////////////////////////////////////////////////////
 
 class LambdaToken : Token {
+    Value[] lambdaList;
     LispFunction fun;
 
     this (Value[] lambdaList, Value[] forms) {
         this.type = TokenType.lambda;
-        this.fun = LispFunction(lambdaList, forms);
+        this.fun = processFunctionDefinition(lambdaList, forms);
     }
 
     Value evaluate (Value[] args) {
@@ -286,7 +305,7 @@ class LambdaToken : Token {
 
     override string toString () {
         return "#<LAMBDA " ~
-               "(" ~ join(map!(x => x.toString())(fun.lambdaList), " ") ~ ") " ~
+               "(" ~ join(map!(x => x.toString())(lambdaList), " ") ~ ") " ~
                join(map!(x => x.toString())(fun.forms), " ") ~
                ">";
     }
