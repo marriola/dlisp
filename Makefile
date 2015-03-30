@@ -1,8 +1,11 @@
 ########################################
 # Variables
 
-COMPILER := dmd
-LINKER   := dmd
+COMPILER := dmd -c
+
+CFLAGS   := # -debug -g -gc -unittest
+
+LINKER   := dmd -v
 
 LISPCORE := lisp.obj exceptions.obj token.obj node.obj lispObject.obj parser.obj variables.obj evaluator.obj functions.obj
 LISPBUILTINS := builtin/definition.obj builtin/io.obj builtin/list.obj builtin/math.obj builtin/system.obj builtin/logic.obj
@@ -18,7 +21,7 @@ all: lisp
 	$(LINKER) $^ -of$@
 
 %.obj : %.d
-	$(COMPILER) -c $< -of$@
+	$(COMPILER) $(CFLAGS) $< -of$@
 
 ########################################
 
