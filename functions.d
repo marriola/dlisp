@@ -35,8 +35,8 @@ struct PairedArgument {
 struct LispFunction {
     string[] requiredArguments;
     PairedArgument[] optionalArguments;
-    PairedArgument[] keywordArguments;
     string restArgument;
+    PairedArgument[] keywordArguments;
     PairedArgument[] auxArguments;
 
     Value[] forms;
@@ -59,50 +59,6 @@ void initializeBuiltins () {
     builtinFunctions = builtin.system.addBuiltins(builtinFunctions);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-
-void addFunction (string name, Value[] lambdaList, Value[] forms) {
-    PairedArgument[] optionalArguments = extractKeywordArguments(lambdaList, "&optional");
-    PairedArgument[] keywordArguments = extractKeywordArguments(lambdaList, "&key");
-    string restArgument = extractRestArgument(lambdaList);
-    PairedArgument[] auxArguments = extractKeywordArguments(lambdaList, "&aux");
-    string[] requiredArguments = reduce!((result, x) => result ~= (cast(IdentifierToken)x.token).stringValue)(new string[0], lambdaList);
-    if (requiredArguments.length == 0) {
-        requiredArguments = null;
-    }
-
-    lispFunctions[name] = LispFunction(requiredArguments, optionalArguments, keywordArguments, restArgument, auxArguments, forms);
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-
-Value evaluateDefinedFunction (LispFunction fun, Value[] parameters) {
-    Value[] lambdaList = fun.lambdaList;
-    Value[] forms = fun.forms;
-    Value returnValue;
-
-    if (lambdaList.length > parameters.length) {
-        throw new EvaluationException("Not enough arguments");
-    }
-
-    enterScope();
-
-    for (int i = 0; i < lambdaList.length; i++) {
-        string funParameter = (cast(IdentifierToken)lambdaList[i].token).stringValue;
-        Value parameter = evaluateOnce(parameters[i]);
-        addVariable(funParameter, parameter);
-    }
-
-    for (int i = 0; i < forms.length; i++) {
-        returnValue = evaluate(forms[i]);
-    }
-
-    leaveScope();
-
-    return returnValue;
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -111,28 +67,33 @@ string extractRestArgument (ref Value[] lambdaList) {
 
     // look for the &key keyword, exit if not found
     foreach (int i, Value arg; lambdaList) {
-        if ((cast(IdentifierToken)arg.token).stringValue == "&rest") {
+        if (arg.token.type == TokenType.identifier && (cast(IdentifierToken)arg.token).stringValue == "&REST") {
             if (i == lambdaList.length - 1) {
                 throw new Exception("Missing &rest element in lambda list");
             } else if (lambdaList[i + 1].token.type != TokenType.identifier) {
                 throw new InvalidLambdaListElementException(lambdaList[i + 1].token, "identifier");
             }
 
-            return (cast(IdentifierToken)lambdaList[i + 1].token).stringValue;
+            string restArgument = (cast(IdentifierToken)lambdaList[i + 1].token).stringValue;
+            lambdaList = remove(lambdaList, i, i + 1);
+
+            return restArgument;
         }
     }
 
     return null;
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////
 
 PairedArgument[] extractKeywordArguments (ref Value[] lambdaList, string keyword) {
     int firstArgument = -1;
+    int lastArgument = lambdaList.length;
 
-    // look for the &key keyword, exit if not found
+    // look for the given keyword, exit if not found
     foreach (int i, Value arg; lambdaList) {
-        if ((cast(IdentifierToken)arg.token).stringValue == keyword) {
+        if (arg.token.type == TokenType.identifier && (cast(IdentifierToken)arg.token).stringValue == keyword) {
             firstArgument = i + 1;
             break;
         }
@@ -143,9 +104,10 @@ PairedArgument[] extractKeywordArguments (ref Value[] lambdaList, string keyword
     }
 
     PairedArgument[] keywordArguments = new PairedArgument[0];
-    foreach (Value arg; lambdaList[firstArgument .. lambdaList.length]) {
+    foreach (int i, Value arg; lambdaList[firstArgument .. lambdaList.length]) {
         // keep going until we reach another keyword
-        if ((cast(IdentifierToken)arg.token).stringValue[0] == '&') {
+        if (arg.token.type == TokenType.identifier && (cast(IdentifierToken)arg.token).stringValue[0] == '&') {
+            lastArgument = i;
             break;
         }
 
@@ -165,8 +127,128 @@ PairedArgument[] extractKeywordArguments (ref Value[] lambdaList, string keyword
         }
     }
 
-    lambdaList = lambdaList[0 .. firstArgument - 1];
+    lambdaList = lambdaList[0 .. firstArgument - 1] ~ lambdaList[lastArgument .. lambdaList.length];
     return keywordArguments.length == 0 ? null : keywordArguments;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+LispFunction processFunctionDefinition (Value[] lambdaList, Value[] forms) {
+    PairedArgument[] optionalArguments = extractKeywordArguments(lambdaList, "&OPTIONAL");
+    PairedArgument[] keywordArguments = extractKeywordArguments(lambdaList, "&KEY");
+    string restArgument = extractRestArgument(lambdaList);
+    PairedArgument[] auxArguments = extractKeywordArguments(lambdaList, "&AUX");
+    string[] requiredArguments = reduce!((result, x) => result ~= (cast(IdentifierToken)x.token).stringValue)(new string[0], lambdaList);
+    if (requiredArguments.length == 0) {
+        requiredArguments = null;
+    }
+
+    return LispFunction(requiredArguments, optionalArguments, restArgument, keywordArguments, auxArguments, forms);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+void addFunction (string name, Value[] lambdaList, Value[] forms) {
+    lispFunctions[name] = processFunctionDefinition(lambdaList, forms);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+void bindParameters (string name, LispFunction fun, Value[] parameters) {
+    // extract and bind required arguments
+    foreach (string requiredArg; fun.requiredArguments) {
+        if (parameters.length == 0) {
+            throw new Exception("Too few arguments given to " ~ name);
+        }
+
+        addVariable(requiredArg, parameters[0]);
+        parameters = remove(parameters, 0);
+    }
+
+    // extract and bind optional arguments
+    foreach (PairedArgument optArg; fun.optionalArguments) {
+        Value value;
+        if (parameters.length == 0) {
+            // use default value if we're out of arguments
+            value = optArg.defaultValue is null ? new Value(new BooleanToken(false)) : optArg.defaultValue;
+        } else {
+            // otherwise use and remove the next one
+            value = parameters[0];
+            parameters = remove(parameters, 0);
+        }
+
+        addVariable(optArg.name, value);
+    }
+
+    // if fun wants a rest parameter, grab all remaining parameters
+    if (fun.restArgument !is null) {
+        Value restParameters;
+
+        if (parameters.length == 0) {
+            restParameters = new Value(new BooleanToken(false));
+
+        } else {
+            restParameters = Token.makeReference(parameters[0]);
+            for (int i = 1; i < parameters.length; i++) {
+                (cast(ReferenceToken)restParameters.token).append(parameters[i]);
+            }
+        }
+
+        addVariable(fun.restArgument, restParameters);
+    }
+
+    // extract and bind keyword arguments
+    foreach (PairedArgument kwArg; fun.keywordArguments) {
+        Value value;
+        // find matching keyword argument in parameters
+        int kwIndex =
+            countUntil!
+                (x => x.token.type == TokenType.constant &&
+                      (cast(ConstantToken)x.token).stringValue == kwArg.name)
+                (parameters);
+        
+        if (kwIndex == -1 || kwIndex == parameters.length - 1) {
+            // not found, or doesn't have a value after it
+            if (kwArg.defaultValue is null) {
+                // no default value
+                throw new Exception("Missing keyword argument " ~ kwArg.name);
+            } else {
+                // use the default value
+                value = kwArg.defaultValue;
+            }
+        } else {
+            // grab value following keyword argument and remove both
+            value = parameters[kwIndex + 1];
+            parameters = remove(parameters, kwIndex, kwIndex + 1);
+        }
+
+        addVariable(kwArg.name, value);
+    }
+
+    // bind auxiliary arguments
+    foreach (PairedArgument auxArg; fun.auxArguments) {
+        addVariable(auxArg.name, auxArg.defaultValue is null ? new Value(new BooleanToken(false)) : auxArg.defaultValue);
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Value evaluateDefinedFunction (LispFunction fun, Value[] parameters, string name = "lambda") {
+    Value[] forms = fun.forms;
+    Value returnValue;
+
+    enterScope();
+    bindParameters(name, fun, parameters.dup);
+    foreach (Value form; forms) {
+        returnValue = evaluateOnce(form);
+    }
+    leaveScope();
+
+    return returnValue;
 }
 
 
@@ -181,5 +263,5 @@ Value evaluateFunction (string name, Value[] arguments) {
         throw new UndefinedFunctionException(name);
     }
 
-    return evaluateDefinedFunction(lispFunctions[name], arguments);
+    return evaluateDefinedFunction(lispFunctions[name], arguments, name);
 }
