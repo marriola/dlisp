@@ -164,7 +164,7 @@ void bindParameters (string name, LispFunction fun, Value[] parameters) {
             throw new Exception("Too few arguments given to " ~ name);
         }
 
-        addVariable(requiredArg, parameters[0]);
+        addVariable(requiredArg, evaluateOnce(parameters[0]));
         parameters = remove(parameters, 0);
     }
 
@@ -180,7 +180,7 @@ void bindParameters (string name, LispFunction fun, Value[] parameters) {
             parameters = remove(parameters, 0);
         }
 
-        addVariable(optArg.name, value);
+        addVariable(optArg.name, evaluateOnce(value));
     }
 
     // if fun wants a rest parameter, grab all remaining parameters
@@ -191,9 +191,9 @@ void bindParameters (string name, LispFunction fun, Value[] parameters) {
             restParameters = new Value(new BooleanToken(false));
 
         } else {
-            restParameters = Token.makeReference(parameters[0]);
+            restParameters = Token.makeReference(evaluateOnce(parameters[0]));
             for (int i = 1; i < parameters.length; i++) {
-                (cast(ReferenceToken)restParameters.token).append(parameters[i]);
+                (cast(ReferenceToken)restParameters.token).append(evaluateOnce(parameters[i]));
             }
         }
 
@@ -225,12 +225,12 @@ void bindParameters (string name, LispFunction fun, Value[] parameters) {
             parameters = remove(parameters, kwIndex, kwIndex + 1);
         }
 
-        addVariable(kwArg.name, value);
+        addVariable(kwArg.name, evaluateOnce(value));
     }
 
     // bind auxiliary arguments
     foreach (PairedArgument auxArg; fun.auxArguments) {
-        addVariable(auxArg.name, auxArg.defaultValue is null ? new Value(new BooleanToken(false)) : auxArg.defaultValue);
+        addVariable(auxArg.name, auxArg.defaultValue is null ? new Value(new BooleanToken(false)) : evaluateOnce(auxArg.defaultValue));
     }
 }
 
