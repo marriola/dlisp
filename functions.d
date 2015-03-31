@@ -107,7 +107,7 @@ PairedArgument[] extractKeywordArguments (ref Value[] lambdaList, string keyword
     foreach (int i, Value arg; lambdaList[firstArgument .. lambdaList.length]) {
         // keep going until we reach another keyword
         if (arg.token.type == TokenType.identifier && (cast(IdentifierToken)arg.token).stringValue[0] == '&') {
-            lastArgument = i;
+            lastArgument = i + firstArgument;
             break;
         }
 
@@ -209,7 +209,7 @@ void bindParameters (string name, LispFunction fun, Value[] parameters) {
                 (x => x.token.type == TokenType.constant &&
                       (cast(ConstantToken)x.token).stringValue == kwArg.name)
                 (parameters);
-        
+
         if (kwIndex == -1 || kwIndex == parameters.length - 1) {
             // not found, or doesn't have a value after it
             if (kwArg.defaultValue is null) {
