@@ -46,6 +46,27 @@ Value builtinIf (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value builtinCond (string name, Value[] args, string[Value] kwargs) {
+    Value result = new Value(new BooleanToken(false));
+
+    foreach (Value variant; args) {
+        Value condition = getFirst(variant);
+        Value[] forms = toArray(getRest(variant));
+
+        if (!Token.isNil(evaluateOnce(condition))) {
+            foreach (Value form; forms) {
+                result = evaluateOnce(form);
+            }
+            break;
+        }
+    }
+
+    return result;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 Value builtinAnd (string name, Value[] args, string[Value] kwargs) {
     bool result = true;
 
@@ -133,6 +154,7 @@ Value builtinNeq (string name, Value[] args, string[Value] kwargs) {
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["NULL"] = &builtinNull;
     builtinTable["IF"] = &builtinIf;
+    builtinTable["COND"] = &builtinCond;
     builtinTable["AND"] = &builtinAnd;
     builtinTable["OR"] = &builtinOr;
     builtinTable["NOT"] = &builtinNot;
