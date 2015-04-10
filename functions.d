@@ -33,6 +33,7 @@ struct PairedArgument {
 }
 
 struct LispFunction {
+    Value[] lambdaList;
     string[] requiredArguments;
     PairedArgument[] optionalArguments;
     string restArgument;
@@ -42,7 +43,7 @@ struct LispFunction {
     Value[] forms;
 }
 
-alias BuiltinFunction = Value function(string, Value[], string[Value]);
+alias BuiltinFunction = Value function(string, Value[], Value[string]);
 
 LispFunction[string] lispFunctions;
 BuiltinFunction[string] builtinFunctions;
@@ -135,6 +136,7 @@ PairedArgument[] extractKeywordArguments (ref Value[] lambdaList, string keyword
 ///////////////////////////////////////////////////////////////////////////////
 
 LispFunction processFunctionDefinition (Value[] lambdaList, Value[] forms) {
+    Value[] oldLambdaList = lambdaList[];
     PairedArgument[] optionalArguments = extractKeywordArguments(lambdaList, "&OPTIONAL");
     PairedArgument[] keywordArguments = extractKeywordArguments(lambdaList, "&KEY");
     string restArgument = extractRestArgument(lambdaList);
@@ -144,7 +146,7 @@ LispFunction processFunctionDefinition (Value[] lambdaList, Value[] forms) {
         requiredArguments = null;
     }
 
-    return LispFunction(requiredArguments, optionalArguments, restArgument, keywordArguments, auxArguments, forms);
+    return LispFunction(lambdaList, requiredArguments, optionalArguments, restArgument, keywordArguments, auxArguments, forms);
 }
 
 
@@ -237,6 +239,13 @@ void bindParameters (string name, LispFunction fun, Value[] parameters) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value evaluateBuiltinFunction (string name, Value[] arguments, Value[string] kwargs = null) {
+    return builtinFunctions[name](name, arguments, kwargs);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 Value evaluateDefinedFunction (LispFunction fun, Value[] parameters, string name = "lambda") {
     Value[] forms = fun.forms;
     Value returnValue;
@@ -256,7 +265,7 @@ Value evaluateDefinedFunction (LispFunction fun, Value[] parameters, string name
 
 Value evaluateFunction (string name, Value[] arguments) {
     if (name in builtinFunctions) {
-        return builtinFunctions[name](name, arguments, null);
+        return evaluateBuiltinFunction(name, arguments);
     }
 
     if (name !in lispFunctions) {
@@ -264,4 +273,19 @@ Value evaluateFunction (string name, Value[] arguments) {
     }
 
     return evaluateDefinedFunction(lispFunctions[name], arguments, name);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Value getFunction (string name) {
+    if (name in builtinFunctions) {
+        return new Value(new BuiltinFunctionToken(name));
+ 
+    } else if (name in lispFunctions) {
+        return new Value(new DefinedFunctionToken(name));
+ 
+    } else {
+        throw new Exception("Undefined function " ~ name);
+    }
 }

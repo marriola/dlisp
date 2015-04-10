@@ -10,7 +10,7 @@ import token;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinExit (string name, Value[] args, string[Value] kwargs) {
+Value builtinExit (string name, Value[] args, Value[string] kwargs) {
     int exitCode = 0;
 
     if (args.length > 0) {

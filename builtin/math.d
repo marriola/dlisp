@@ -16,7 +16,7 @@ import token;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinGreaterOrEqual (string name, Value[] args, string[Value] kwargs) {
+Value builtinGreaterOrEqual (string name, Value[] args, Value[string] kwargs) {
     bool result = true;
     float lastValue = float.min_normal;
 
@@ -54,7 +54,7 @@ Value builtinGreaterOrEqual (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinGreater (string name, Value[] args, string[Value] kwargs) {
+Value builtinGreater (string name, Value[] args, Value[string] kwargs) {
     bool result = true;
     float lastValue = float.min_normal;
 
@@ -92,7 +92,7 @@ Value builtinGreater (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinEqual (string name, Value[] args, string[Value] kwargs) {
+Value builtinEqual (string name, Value[] args, Value[string] kwargs) {
     bool result = true;
     float lastValue = float.max;
 
@@ -130,7 +130,7 @@ Value builtinEqual (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinLesser (string name, Value[] args, string[Value] kwargs) {
+Value builtinLesser (string name, Value[] args, Value[string] kwargs) {
     bool result = true;
     float lastValue = float.max;
 
@@ -168,7 +168,7 @@ Value builtinLesser (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinLesserOrEqual (string name, Value[] args, string[Value] kwargs) {
+Value builtinLesserOrEqual (string name, Value[] args, Value[string] kwargs) {
     bool result = true;
     float lastValue = float.max;
 
@@ -206,7 +206,7 @@ Value builtinLesserOrEqual (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinPlus (string name, Value[] args, string[Value] kwargs) {
+Value builtinPlus (string name, Value[] args, Value[string] kwargs) {
     bool isFloat = false;
     long intTotal = 0;
     double floatTotal = 0;
@@ -233,7 +233,7 @@ Value builtinPlus (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinMinus (string name, Value[] args, string[Value] kwargs) {
+Value builtinMinus (string name, Value[] args, Value[string] kwargs) {
     bool isFloat = false;
     long intTotal = 0;
     double floatTotal = 0;
@@ -278,7 +278,7 @@ Value builtinMinus (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinTimes (string name, Value[] args, string[Value] kwargs) {
+Value builtinTimes (string name, Value[] args, Value[string] kwargs) {
     bool isFloat = false;
     long intTotal = 1;
     double floatTotal = 0;
@@ -317,7 +317,7 @@ Value builtinTimes (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinDivide (string name, Value[] args, string[Value] kwargs) {
+Value builtinDivide (string name, Value[] args, Value[string] kwargs) {
     bool isFloat = false;
     long intTotal = 0;
     double floatTotal = 0;
@@ -351,7 +351,7 @@ Value builtinDivide (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinSqrt (string name, Value[] args, string[Value] kwargs) {
+Value builtinSqrt (string name, Value[] args, Value[string] kwargs) {
     if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     } else {

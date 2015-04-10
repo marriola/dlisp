@@ -9,7 +9,7 @@ import token;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinNull (string name, Value[] args, string[Value] kwargs) {
+Value builtinNull (string name, Value[] args, Value[string] kwargs) {
     if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -20,7 +20,7 @@ Value builtinNull (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinIf (string name, Value[] args, string[Value] kwargs) {
+Value builtinIf (string name, Value[] args, Value[string] kwargs) {
     if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -46,7 +46,7 @@ Value builtinIf (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinCond (string name, Value[] args, string[Value] kwargs) {
+Value builtinCond (string name, Value[] args, Value[string] kwargs) {
     Value result = new Value(new BooleanToken(false));
 
     foreach (Value variant; args) {
@@ -67,7 +67,7 @@ Value builtinCond (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinAnd (string name, Value[] args, string[Value] kwargs) {
+Value builtinAnd (string name, Value[] args, Value[string] kwargs) {
     bool result = true;
 
     for (int i = 0; i < args.length; i++) {
@@ -89,7 +89,7 @@ Value builtinAnd (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinOr (string name, Value[] args, string[Value] kwargs) {
+Value builtinOr (string name, Value[] args, Value[string] kwargs) {
     bool result = false;
 
     for (int i = 0; i < args.length; i++) {
@@ -107,7 +107,7 @@ Value builtinOr (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinNot (string name, Value[] args, string[Value] kwargs) {
+Value builtinNot (string name, Value[] args, Value[string] kwargs) {
     if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -123,7 +123,7 @@ Value builtinNot (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinEq (string name, Value[] args, string[Value] kwargs) {
+Value builtinEq (string name, Value[] args, Value[string] kwargs) {
     if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -137,7 +137,7 @@ Value builtinEq (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinNeq (string name, Value[] args, string[Value] kwargs) {
+Value builtinNeq (string name, Value[] args, Value[string] kwargs) {
     if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
     }

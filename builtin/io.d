@@ -12,7 +12,7 @@ import token;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinPrint (string name, Value[] args, string[Value] kwargs) {
+Value builtinPrint (string name, Value[] args, Value[string] kwargs) {
     Value lastResult;
 
     for (int i = 0; i < args.length; i++) {
@@ -26,7 +26,7 @@ Value builtinPrint (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinLoad (string name, Value[] args, string[Value] kwargs) {
+Value builtinLoad (string name, Value[] args, Value[string] kwargs) {
     if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -58,7 +58,7 @@ Value builtinLoad (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinOpen (string name, Value[] args, string[Value] kwargs) {
+Value builtinOpen (string name, Value[] args, Value[string] kwargs) {
     if (args.length < 1) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -87,7 +87,7 @@ Value builtinOpen (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinClose (string name, Value[] args, string[Value] kwargs) {
+Value builtinClose (string name, Value[] args, Value[string] kwargs) {
     if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -103,7 +103,7 @@ Value builtinClose (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinRead (string name, Value[] args, string[Value] kwargs) {
+Value builtinRead (string name, Value[] args, Value[string] kwargs) {
     LispParser parser;
 
     if (args.length > 0) {

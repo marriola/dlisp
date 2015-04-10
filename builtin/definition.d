@@ -10,7 +10,7 @@ import variables;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinLet (string name, Value[] args, string[Value] kwargs) {
+Value builtinLet (string name, Value[] args, Value[string] kwargs) {
     if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -55,7 +55,7 @@ Value builtinLet (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinLetStar (string name, Value[] args, string[Value] kwargs) {
+Value builtinLetStar (string name, Value[] args, Value[string] kwargs) {
     if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -93,7 +93,7 @@ Value builtinLetStar (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinSetq (string name, Value[] args, string[Value] kwargs) {
+Value builtinSetq (string name, Value[] args, Value[string] kwargs) {
     if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -113,7 +113,7 @@ Value builtinSetq (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinSetf (string name, Value[] args, string[Value] kwargs) {
+Value builtinSetf (string name, Value[] args, Value[string] kwargs) {
     if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -128,7 +128,7 @@ Value builtinSetf (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinLambda (string name, Value[] args, string[Value] kwargs) {
+Value builtinLambda (string name, Value[] args, Value[string] kwargs) {
     if (args.length < 1) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -136,13 +136,13 @@ Value builtinLambda (string name, Value[] args, string[Value] kwargs) {
     Value[] lambdaList = toArray(args[0]);
     Value[] forms = args[1 .. args.length];
 
-    return new Value(new LambdaToken(lambdaList, forms));
+    return new Value(new DefinedFunctionToken(lambdaList, forms));
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinFuncall (string name, Value[] args, string[Value] kwargs) {
+Value builtinFuncall (string name, Value[] args, Value[string] kwargs) {
     if (args.length < 1) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -153,18 +153,18 @@ Value builtinFuncall (string name, Value[] args, string[Value] kwargs) {
     if (fun.token.type == TokenType.identifier) {
         return evaluateFunction((cast(IdentifierToken)fun.token).stringValue, funArgs);
 
-    } else if (fun.token.type == TokenType.lambda) {
-        return evaluateDefinedFunction((cast(LambdaToken)fun.token).fun, funArgs);
+    } else if (fun.token.type == TokenType.definedFunction || fun.token.type == TokenType.builtinFunction) {
+        return (cast(FunctionToken)fun.token).evaluate(funArgs);
 
     } else {
-        throw new TypeMismatchException(name, fun.token, "identifier or lambda");
+        throw new TypeMismatchException(name, fun.token, "identifier or function");
     }
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinDefun (string name, Value[] args, string[Value] kwargs) {
+Value builtinDefun (string name, Value[] args, Value[string] kwargs) {
     if (args.length < 3) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -190,6 +190,24 @@ Value builtinDefun (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value builtinFunction (string name, Value[] args, Value[string] kwargs) {
+    if (args.length < 1) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Value identifierToken = args[0];
+
+    if (identifierToken.token.type != TokenType.identifier) {
+        throw new TypeMismatchException(name, identifierToken.token, "identifier");
+
+    } else {
+        return getFunction((cast(IdentifierToken)identifierToken.token).stringValue);
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["LET"] = &builtinLet;
     builtinTable["LET*"] = &builtinLetStar;
@@ -198,5 +216,6 @@ BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["LAMBDA"] = &builtinLambda;
     builtinTable["FUNCALL"] = &builtinFuncall;
     builtinTable["DEFUN"] = &builtinDefun;
+    builtinTable["FUNCTION"] = &builtinFunction;
     return builtinTable;
 }

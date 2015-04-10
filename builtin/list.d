@@ -11,7 +11,7 @@ import token;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinMakeArray (string name, Value[] args, string[Value] kwargs) {
+Value builtinMakeArray (string name, Value[] args, Value[string] kwargs) {
     if (args.length < 1) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -39,7 +39,7 @@ Value builtinMakeArray (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinList (string name, Value[] args, string[Value] kwargs) {
+Value builtinList (string name, Value[] args, Value[string] kwargs) {
     if (args.length == 0) {
         return new Value(new BooleanToken(false));
     }
@@ -55,7 +55,7 @@ Value builtinList (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinProgn (string name, Value[] args, string[Value] kwargs) {
+Value builtinProgn (string name, Value[] args, Value[string] kwargs) {
     Value lastResult = new Value(new BooleanToken(false));
 
     for (int i = 0; i < args.length; i++) {
@@ -68,7 +68,7 @@ Value builtinProgn (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinQuote (string name, Value[] args, string[Value] kwargs) {
+Value builtinQuote (string name, Value[] args, Value[string] kwargs) {
     if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -79,7 +79,7 @@ Value builtinQuote (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinCons (string name, Value[] args, string[Value] kwargs) {
+Value builtinCons (string name, Value[] args, Value[string] kwargs) {
     if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -92,7 +92,7 @@ Value builtinCons (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinCar (string name, Value[] args, string[Value] kwargs) {
+Value builtinCar (string name, Value[] args, Value[string] kwargs) {
     if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -103,7 +103,7 @@ Value builtinCar (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinCdr (string name, Value[] args, string[Value] kwargs) {
+Value builtinCdr (string name, Value[] args, Value[string] kwargs) {
     if (args.length == 0) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -114,7 +114,7 @@ Value builtinCdr (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinElt (string name, Value[] args, string[Value] kwargs) {
+Value builtinElt (string name, Value[] args, Value[string] kwargs) {
     if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -145,6 +145,13 @@ Value builtinElt (string name, Value[] args, string[Value] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value builtinMapcar (string name, Value[] args, Value[string] kwargs) {
+    return null;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["MAKE-ARRAY"] = &builtinMakeArray;
     builtinTable["LIST"] = &builtinList;
@@ -156,5 +163,6 @@ BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["CDR"] = &builtinCdr;
     builtinTable["REST"] = &builtinCdr;
     builtinTable["ELT"] = &builtinElt;
+    builtinTable["MAPCAR"] = &builtinMapcar;
     return builtinTable;
 }

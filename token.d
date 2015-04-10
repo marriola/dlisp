@@ -13,7 +13,7 @@ import std.string;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-enum TokenType { leftParen, rightParen, leftBrack, rightBrack, dot, boolean, reference, integer, floating, identifier, string, constant, fileStream, vector, lambda };
+enum TokenType { leftParen, rightParen, leftBrack, rightBrack, dot, boolean, reference, integer, floating, identifier, string, constant, fileStream, vector, builtinFunction, definedFunction };
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -290,22 +290,63 @@ class VectorToken : Token {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-class LambdaToken : Token {
-    Value[] lambdaList;
-    LispFunction fun;
+abstract class FunctionToken : Token {
+    Value evaluate (Value[] args, Value[string] kwargs = null);
+}
 
-    this (Value[] lambdaList, Value[] forms) {
-        this.type = TokenType.lambda;
-        this.fun = processFunctionDefinition(lambdaList, forms);
+
+///////////////////////////////////////////////////////////////////////////////
+
+class BuiltinFunctionToken : FunctionToken {
+    string name;
+
+    this (string name) {
+        this.type = TokenType.builtinFunction;
+        this.name = name;
     }
 
-    Value evaluate (Value[] args) {
-        return evaluateDefinedFunction(fun, args);
+    override Value evaluate (Value[] args, Value[string] kwargs = null) {
+        return evaluateBuiltinFunction(name, args, kwargs);
     }
 
     override string toString () {
-        return "#<LAMBDA " ~
-               "(" ~ join(map!(x => x.toString())(lambdaList), " ") ~ ") " ~
+        return "#<BUILTIN-FUNCTION " ~ name ~ ">";
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+class DefinedFunctionToken : FunctionToken {
+    string name;
+    LispFunction fun;
+
+    // Constructor for a lambda function
+    this (Value[] lambdaList, Value[] forms) {
+        this.type = TokenType.definedFunction;
+        this.name = null;
+        this.fun = processFunctionDefinition(lambdaList, forms);
+    }
+
+    this (string name) {
+        this.type = TokenType.definedFunction;
+        this.name = name;
+    }
+
+    override Value evaluate (Value[] args, Value[string] kwargs = null) {
+        if (name is null) {
+            // evaluate a lambda function
+            return evaluateDefinedFunction(fun, args, name);
+        } else {
+            // evaluate a named defined function
+            return evaluateFunction(name, args);
+        }
+    }
+
+    override string toString () {
+        return "#<FUNCTION " ~
+               (name is null ? ":LAMBDA " : "") ~
+               "(" ~ join(map!(x => x.toString())(fun.lambdaList), " ") ~ ") " ~
                join(map!(x => x.toString())(fun.forms), " ") ~
                ">";
     }
