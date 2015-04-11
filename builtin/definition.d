@@ -171,7 +171,14 @@ Value builtinDefun (string name, Value[] args, Value[string] kwargs) {
 
     Value identifierToken = args[0];
     Value lambdaListToken = args[1];
-    Value[] forms = args[2 .. args.length];
+
+    Value[] forms;
+    if (args[2].token.type == TokenType.string && args.length > 3) {
+        // remove documentation string
+        forms = args[3 .. args.length];
+    } else {
+        forms = args[2 .. args.length];
+    }
 
     if (identifierToken.token.type != TokenType.identifier) {
         throw new TypeMismatchException(name, identifierToken.token, "identifier");
