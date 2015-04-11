@@ -146,7 +146,44 @@ Value builtinElt (string name, Value[] args, Value[string] kwargs) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinMapcar (string name, Value[] args, Value[string] kwargs) {
-    return null;
+    if (args.length < 2) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    // type check list arguments and get length of shortest one
+    int shortestList = int.max;
+
+    for (int i = 1; i < args.length; i++) {
+        Value argument;
+        argument = args[i] = evaluateOnce(args[i]);
+        if (argument.token.type != TokenType.reference) {
+            throw new TypeMismatchException(name, argument.token, "reference");
+        }
+
+        int len = listLength(argument);
+        if (len < shortestList) {
+            shortestList = len;
+        }
+    }
+
+    // type check function argument
+    Value mapFunction = evaluateOnce(args[0]);
+    if (mapFunction.token.type != TokenType.definedFunction && mapFunction.token.type != TokenType.builtinFunction) {
+        throw new TypeMismatchException(name, mapFunction.token, "function");
+    }
+
+    Value result = new Value(new BooleanToken(false));
+    Value[] lists = args[1 .. args.length];
+    for (int i = 0; i < shortestList; i++) {
+        Value[] crossSection;
+        for (int j = 0; j < lists.length; j++) {
+            crossSection ~= getFirst(lists[j]);
+            lists[j] = getRest(lists[j]);
+        }
+        result.append((cast(FunctionToken)mapFunction.token).evaluate(crossSection));
+    }
+
+    return result;
 }
 
 
