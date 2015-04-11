@@ -19,8 +19,7 @@ Value builtinMakeArray (string name, Value[] args, Value[string] kwargs) {
     Value arg = evaluateOnce(args[0]);
 
     if (arg.token.type == TokenType.integer) {
-        Value lengthToken = evaluate(arg);
-        return new Value(new VectorToken(to!int((cast(IntegerToken)lengthToken.token).intValue)));
+        return new Value(new VectorToken(to!int((cast(IntegerToken)arg.token).intValue)));
 
     } else if (arg.token.type == TokenType.reference) {
         Value[] list = toArray(evaluateOnce(arg));
@@ -59,7 +58,7 @@ Value builtinProgn (string name, Value[] args, Value[string] kwargs) {
     Value lastResult = new Value(new BooleanToken(false));
 
     for (int i = 0; i < args.length; i++) {
-        lastResult = evaluate(args[i]);
+        lastResult = evaluateOnce(args[i]);
     }
 
     return lastResult;
@@ -84,8 +83,8 @@ Value builtinCons (string name, Value[] args, Value[string] kwargs) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Value car = evaluate(args[0]);
-    Value cdr = evaluate(args[1]);
+    Value car = evaluateOnce(args[0]);
+    Value cdr = evaluateOnce(args[1]);
     return Token.makeReference(car, cdr);
 }
 
@@ -162,8 +161,10 @@ Value builtinAppend (string name, Value[] args, Value[string] kwargs) {
 
     for (int i = 1; i < args.length; i++) {
         Value list = evaluateOnce(args[i]);
-        if (list.token.type != TokenType.reference) {
-            throw new TypeMismatchException(name, result.token, "reference");
+        if (list.token.type == TokenType.boolean && (cast(BooleanToken)list.token).boolValue == false) {
+            continue;
+        } else if (list.token.type != TokenType.reference) {
+            throw new TypeMismatchException(name, list.token, "reference or NIL");
         }
         (cast(ReferenceToken)lastItem.token).reference.cdr = list;
         while (!Token.isNil((cast(ReferenceToken)lastItem.token).reference.cdr)) {

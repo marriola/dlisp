@@ -40,7 +40,7 @@ Value builtinIf (string name, Value[] args, Value[string] kwargs) {
 
     Value thenClause = args[1];
     Value elseClause = args[2];
-    return condition ? evaluate(thenClause) : evaluate(elseClause);
+    return condition ? evaluateOnce(thenClause) : evaluateOnce(elseClause);
 }
 
 

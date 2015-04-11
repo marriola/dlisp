@@ -100,6 +100,8 @@ class LispParser {
             return;
 
         } else if (c == '#') {
+            // Macro character
+            
             c = getc(stream);
             switch (c) {
                 case '\'':
