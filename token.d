@@ -35,6 +35,10 @@ class Value {
         this.token = token;
     }
 
+    /**
+     * Appends an element to the encapsulated Token object. If its value is not
+     * '() (aka NIL) or a list, it throws an UnsupportedOperationException.
+     */
     void append (Value element) {
         if (token.type == TokenType.reference) {
             (cast(ReferenceToken)token).append(element);
@@ -287,6 +291,13 @@ class VectorToken : Token {
         }
     }
 
+    void setItem (int index, Value element) {
+        if (index < 0 || index >= array.length) {
+            throw new OutOfBoundsException(index);
+        }
+        array[index] = element;
+    }
+    
     override Value getItem (int index) {
         if (index < 0 || index >= array.length) {
             throw new OutOfBoundsException(index);
