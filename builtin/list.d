@@ -145,25 +145,45 @@ Value builtinElt (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinMapcar (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 2) {
+Value builtinMap (string name, Value[] args, Value[string] kwargs) {
+    if (args.length < 3) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    // type check list arguments and get length of shortest one
-    int shortestList = int.max;
+    Value resultTypeToken = evaluateOnce(args[0]);
+    TokenType resultType;
+    if (resultTypeToken.token.type != TokenType.identifier) {
+        throw new TypeMismatchException(name, resultTypeToken.token, "identifier");
+    }
 
-    for (int i = 1; i < args.length; i++) {
-        Value argument;
-        argument = args[i] = evaluateOnce(args[i]);
-        if (argument.token.type != TokenType.reference) {
-            throw new TypeMismatchException(name, argument.token, "reference");
-        }
+    switch ((cast(IdentifierToken)resultTypeToken.token).stringValue) {
+        case "LIST":
+            resultType = TokenType.reference;
+            break;
 
-        int len = listLength(argument);
-        if (len < shortestList) {
-            shortestList = len;
-        }
+        case "VECTOR":
+            resultType = TokenType.vector;
+            break;
+
+        default:
+            throw new TypeMismatchException(name, resultTypeToken.token, "list or vector");
+    }
+
+    // type check function argument
+    Value mapFunction = evaluateOnce(args[1]);
+    if (mapFunction.token.type != TokenType.definedFunction && mapFunction.token.type != TokenType.builtinFunction) {
+        throw new TypeMismatchException(name, mapFunction.token, "function");
+    }
+
+    return map(resultType, mapFunction, args[2 .. args.length]);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Value builtinMapcar (string name, Value[] args, Value[string] kwargs) {
+    if (args.length < 2) {
+        throw new NotEnoughArgumentsException(name);
     }
 
     // type check function argument
@@ -172,18 +192,7 @@ Value builtinMapcar (string name, Value[] args, Value[string] kwargs) {
         throw new TypeMismatchException(name, mapFunction.token, "function");
     }
 
-    Value result = new Value(new BooleanToken(false));
-    Value[] lists = args[1 .. args.length];
-    for (int i = 0; i < shortestList; i++) {
-        Value[] crossSection;
-        for (int j = 0; j < lists.length; j++) {
-            crossSection ~= getFirst(lists[j]);
-            lists[j] = getRest(lists[j]);
-        }
-        result.append((cast(FunctionToken)mapFunction.token).evaluate(crossSection));
-    }
-
-    return result;
+    return map(TokenType.reference, mapFunction, args[1 .. args.length]);
 }
 
 
@@ -200,6 +209,7 @@ BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["CDR"] = &builtinCdr;
     builtinTable["REST"] = &builtinCdr;
     builtinTable["ELT"] = &builtinElt;
+    builtinTable["MAP"] = &builtinMap;
     builtinTable["MAPCAR"] = &builtinMapcar;
     return builtinTable;
 }

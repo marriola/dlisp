@@ -2,6 +2,7 @@ module lispObject;
 
 import std.conv;
 
+import evaluator;
 import exceptions;
 import token;
 
@@ -114,4 +115,51 @@ bool objectsEqual (Value obj1, Value obj2) {
     } else {
         return obj1 == obj2;
     }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Value map (TokenType type, Value mapFunction, Value[] lists) {
+    // type check list arguments and get length of shortest one
+    int shortestList = int.max;
+
+    for (int i = 0; i < lists.length; i++) {
+        Value argument;
+        argument = lists[i] = evaluateOnce(lists[i]);
+        if (argument.token.type != TokenType.reference) {
+            throw new TypeMismatchException("map", argument.token, "reference");
+        }
+
+        int len = listLength(argument);
+        if (len < shortestList) {
+            shortestList = len;
+        }
+    }
+
+    Value result;
+    if (type == TokenType.reference) {
+        result = new Value(new BooleanToken(false));
+    } else if (type == TokenType.vector) {
+        result = new Value(new VectorToken(shortestList));
+    } else {
+        throw new Exception("map: expected reference or vector for sequence type");
+    }
+
+    for (int i = 0; i < shortestList; i++) {
+        Value[] crossSection;
+        for (int j = 0; j < lists.length; j++) {
+            crossSection ~= getFirst(lists[j]);
+            lists[j] = getRest(lists[j]);
+        }
+
+        Value mapResult = (cast(FunctionToken)mapFunction.token).evaluate(crossSection);
+        if (type == TokenType.reference) {
+            result.append(mapResult);
+        } else if (type == TokenType.vector) {
+            (cast(VectorToken)result.token).setItem(i, mapResult);
+        }
+    }
+
+    return result;
 }
