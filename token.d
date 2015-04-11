@@ -35,6 +35,18 @@ class Value {
         this.token = token;
     }
 
+    void append (Value element) {
+        if (token.type == TokenType.reference) {
+            (cast(ReferenceToken)token).append(element);
+
+        } else if (token.type == TokenType.boolean && (cast(BooleanToken)token).boolValue == false) {
+            token = Token.makeReference(element).token;
+
+        } else {
+            throw new UnsupportedOperationException(token, "Append");
+        }
+    }
+
     override string toString () {
         return token.toString();
     }
