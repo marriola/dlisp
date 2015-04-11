@@ -145,6 +145,38 @@ Value builtinElt (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value builtinAppend (string name, Value[] args, Value[string] kwargs) {
+    if (args.length < 2) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Value result = evaluateOnce(args[0]);
+    if (result.token.type != TokenType.reference) {
+        throw new TypeMismatchException(name, result.token, "reference");
+    }
+
+    Value lastItem = result;
+    while (!Token.isNil((cast(ReferenceToken)lastItem.token).reference.cdr)) {
+        lastItem = (cast(ReferenceToken)lastItem.token).reference.cdr;
+    }
+
+    for (int i = 1; i < args.length; i++) {
+        Value list = evaluateOnce(args[i]);
+        if (list.token.type != TokenType.reference) {
+            throw new TypeMismatchException(name, result.token, "reference");
+        }
+        (cast(ReferenceToken)lastItem.token).reference.cdr = list;
+        while (!Token.isNil((cast(ReferenceToken)lastItem.token).reference.cdr)) {
+            lastItem = (cast(ReferenceToken)lastItem.token).reference.cdr;
+        }
+    }
+
+    return result;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 Value builtinMap (string name, Value[] args, Value[string] kwargs) {
     if (args.length < 3) {
         throw new NotEnoughArgumentsException(name);
@@ -209,6 +241,7 @@ BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["CDR"] = &builtinCdr;
     builtinTable["REST"] = &builtinCdr;
     builtinTable["ELT"] = &builtinElt;
+    builtinTable["APPEND"] = &builtinAppend;
     builtinTable["MAP"] = &builtinMap;
     builtinTable["MAPCAR"] = &builtinMapcar;
     return builtinTable;
