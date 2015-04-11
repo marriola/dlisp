@@ -17,6 +17,8 @@ Value evaluateOnce (Value value) {
         case TokenType.string:
         case TokenType.constant:
         case TokenType.fileStream:
+        case TokenType.builtinFunction:
+        case TokenType.definedFunction:
             return value;
 
         case TokenType.reference:

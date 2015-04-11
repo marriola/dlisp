@@ -6,6 +6,7 @@ import std.file;
 import std.stdio;
 import std.string;
 
+import functions;
 import node;
 import token;
 
@@ -96,6 +97,28 @@ class LispParser {
 
         } else if (c == '.') {
             nextToken = new LexicalToken(TokenType.dot);
+            return;
+
+        } else if (c == '#') {
+            c = getc(stream);
+            switch (c) {
+                case '\'':
+                    // function
+                    string functionName;
+                    while (true) {
+                        c = getc(stream);
+                        if (isWhite(c)) {
+                            break;
+                        }
+                        functionName ~= c;
+                    }
+
+                    nextToken = getFunction(functionName).token;
+                    break;
+
+                default:
+                    throw new Exception("#" ~ c ~ " is an invalid macro sequence");
+            }
             return;
 
         } else if (c == '\'') {
