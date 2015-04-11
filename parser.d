@@ -79,7 +79,16 @@ class LispParser {
             c = getc(stream);
         } while (isWhite(c));
 
-        if (c == '(') {
+        if (c == ';') {
+            // Comment
+            // Throw away the rest of the line
+            do {
+                c = getc(stream);
+            } while (c != '\n');
+            getToken();
+            return;
+
+        } else if (c == '(') {
             nextToken = new LexicalToken(TokenType.leftParen);
             return;
 
@@ -101,7 +110,7 @@ class LispParser {
 
         } else if (c == '#') {
             // Macro character
-            
+
             c = getc(stream);
             switch (c) {
                 case '\'':
