@@ -256,11 +256,11 @@ class FileStreamToken : Token {
     File stream;
     bool isOpen;
 
-    this (string fileSpec, ConstantToken direction) {
+    this (string fileSpec, Value direction) {
         static enum char[][string] openModes = [ "input" : cast(char[])"r", "output" : cast(char[])"w", "io" : cast(char[])"rw" ];
 
         type = TokenType.fileStream;
-        this.direction = direction is null ? "input" : direction.stringValue;
+        this.direction = direction is null ? "input" : (cast(ConstantToken)direction.token).stringValue;
         stream = File(fileSpec, openModes[this.direction]);
         this.fileSpec = fileSpec;
         isOpen = true;

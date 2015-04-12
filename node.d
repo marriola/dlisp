@@ -1,5 +1,6 @@
 module node;
 
+import exceptions;
 import token;
 
 import std.conv;

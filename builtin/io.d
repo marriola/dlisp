@@ -63,7 +63,7 @@ Value builtinOpen (string name, Value[] args, Value[string] kwargs) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Value fileSpecToken = evaluate(args[0]);
+    Value fileSpecToken = evaluateOnce(args[0]);
     string fileSpec;
     if (fileSpecToken.token.type == TokenType.string) {
         fileSpec = (cast(StringToken)fileSpecToken.token).stringValue;
@@ -75,13 +75,13 @@ Value builtinOpen (string name, Value[] args, Value[string] kwargs) {
 
     Value direction = null;
     if (args.length >= 2) {
-        direction = evaluate(args[1]);
+        direction = evaluateOnce(args[1]);
         if (direction.token.type != TokenType.constant) {
             throw new TypeMismatchException(name, direction.token, "constant");
         }
     }
 
-    return new Value(new FileStreamToken(fileSpec, cast(ConstantToken)direction.token));
+    return new Value(new FileStreamToken(fileSpec, direction));
 }
 
 
