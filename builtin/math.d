@@ -207,145 +207,76 @@ Value builtinLesserOrEqual (string name, Value[] args, Value[string] kwargs) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinPlus (string name, Value[] args, Value[string] kwargs) {
-    bool isFloat = false;
-    long intTotal = 0;
-    double floatTotal = 0;
-
-    for (int i = 0; i < args.length; i++) {
-        Value current = evaluateOnce(args[i]);
-
-        if (!isFloat && current.token.type == TokenType.floating) {
-            isFloat = true;
-        } else if (current.token.type != TokenType.floating && current.token.type != TokenType.integer) {
-            throw new Exception(current.toString() ~ " is not a number");
-        }
-
-        if (isFloat) {
-            floatTotal += (current.token.type == TokenType.floating) ? (cast(FloatToken)current.token).floatValue : (cast(IntegerToken)current.token).intValue;
-        } else {
-            intTotal += (cast(IntegerToken)current.token).intValue;
-        }
+    if (args.length < 1) {
+        throw new NotEnoughArgumentsException(name);
     }
 
-    return new Value(isFloat ? new FloatToken(floatTotal + intTotal) : new IntegerToken(intTotal));
+    Value result = evaluateOnce(args[0]);
+    foreach (Value addend; args[1 .. args.length]) {
+        result.add(evaluateOnce(addend));
+    }
+
+    return result;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinMinus (string name, Value[] args, Value[string] kwargs) {
-    bool isFloat = false;
-    long intTotal = 0;
-    double floatTotal = 0;
+    Value result;
 
-    if (args.length > 0) {
-        Value current = evaluateOnce(args[0]);
-
-        if (current.token.type == TokenType.integer) {
-            intTotal = (cast(IntegerToken)current.token).intValue;
-        } else if (current.token.type == TokenType.floating) {
-            floatTotal = (cast(FloatToken)current.token).floatValue;
-            isFloat = true;
-        }
-
-        if (args.length < 2) {
-            if (isFloat) {
-                floatTotal *= -1;
-            } else {
-                intTotal *= -1;
-            }
-        } else {
-            for (int i = 1; i < args.length; i++) {
-                current = evaluateOnce(args[i]);
-                if (!isFloat && current.token.type == TokenType.floating) {
-                    isFloat = true;
-                } else if (current.token.type != TokenType.floating && current.token.type != TokenType.integer) {
-                    throw new Exception(current.toString() ~ " is not a number");
-                }
-
-                if (isFloat) {
-                    floatTotal -= (current.token.type == TokenType.floating) ? (cast(FloatToken)current.token).floatValue : (cast(IntegerToken)current.token).intValue;
-                } else {
-                    intTotal -= (cast(IntegerToken)current.token).intValue;
-                }
-            }
-        }
+    if (args.length < 1) {
+        throw new NotEnoughArgumentsException(name);
+    } else if (args.length == 1) {
+        result = new Value(new IntegerToken(0));
+    } else {
+        result = evaluateOnce(args[0]);
+        args = args[1 .. args.length];
     }
 
-    return new Value(isFloat ? new FloatToken(floatTotal + intTotal) : new IntegerToken(intTotal));
+    foreach (Value subtrahend; args) {
+        result.subtract(evaluateOnce(subtrahend));
+    }
+
+    return result;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinTimes (string name, Value[] args, Value[string] kwargs) {
-    bool isFloat = false;
-    long intTotal = 1;
-    double floatTotal = 0;
-
-    if (args.length > 0) {
-        Value current = evaluateOnce(args[0]);
-        if (current.token.type == TokenType.integer) {
-            intTotal = (cast(IntegerToken)current.token).intValue;
-        } else if (current.token.type == TokenType.floating) {
-            floatTotal = (cast(FloatToken)current.token).floatValue;
-            isFloat = true;
-        } else {
-            throw new TypeMismatchException(name, args[0].token, "integer or floating point");
-        }
-
-        for (int i = 1; i < args.length; i++) {
-            current = evaluateOnce(args[i]);
-
-            if (!isFloat && current.token.type == TokenType.floating) {
-                isFloat = true;
-            } else if (current.token.type != TokenType.floating && current.token.type != TokenType.integer) {
-                throw new Exception(current.toString() ~ " is not a number");
-            }
-
-            if (isFloat) {
-                floatTotal *= (current.token.type == TokenType.floating) ? (cast(FloatToken)current.token).floatValue : (cast(IntegerToken)current.token).intValue;
-            } else {
-                intTotal *= (cast(IntegerToken)current.token).intValue;
-            }
-        }        
+    if (args.length < 1) {
+        throw new NotEnoughArgumentsException(name);
     }
 
-    return new Value(isFloat ? new FloatToken(floatTotal + intTotal) : new IntegerToken(intTotal)); 
+    Value result = evaluateOnce(args[0]);
+    foreach (Value multiplicand; args[1 .. args.length]) {
+        result.multiply(evaluateOnce(multiplicand));
+    }
+
+    return result;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinDivide (string name, Value[] args, Value[string] kwargs) {
-    bool isFloat = false;
-    long intTotal = 0;
-    double floatTotal = 0;
+    Value result;
 
-    if (args.length > 0) {
-        Value current = evaluateOnce(args[0]);
-
-        if (current.token.type == TokenType.integer) {
-            floatTotal = (cast(IntegerToken)current.token).intValue;
-        } else if (current.token.type == TokenType.floating) {
-            floatTotal = (cast(FloatToken)current.token).floatValue;
-        }
-
-        if (args.length < 2) {
-            floatTotal = 1 / floatTotal;
-        } else {
-            for (int i = 1; i < args.length; i++) {
-                current = evaluateOnce(args[i]);
-                if (current.token.type != TokenType.floating && current.token.type != TokenType.integer) {
-                    throw new Exception(current.toString() ~ " is not a number");
-                }
-
-                floatTotal /= (current.token.type == TokenType.floating) ? (cast(FloatToken)current.token).floatValue : (cast(IntegerToken)current.token).intValue;
-            }
-        }
+    if (args.length < 1) {
+        throw new NotEnoughArgumentsException(name);
+    } else if (args.length == 1) {
+        result = new Value(new FloatToken(1));
+    } else {
+        result = evaluateOnce(args[0]);
+        args = args[1 .. args.length];
     }
 
-    return new Value(new FloatToken(floatTotal));
+    foreach (Value divisor; args) {
+        result.divide(evaluateOnce(divisor));
+    }
+
+    return result;
 }
 
 

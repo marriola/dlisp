@@ -54,6 +54,70 @@ class Value {
     override string toString () {
         return token.toString();
     }
+
+    void add (Value addend) {
+        if (token.type != TokenType.integer && token.type != TokenType.floating) {
+            throw new UnsupportedOperationException(token, "Addition");
+        } else if (addend.token.type != TokenType.integer && addend.token.type != TokenType.floating) {
+            throw new UnsupportedOperationException(addend.token, "Addition");
+        }
+
+        if (token.type == TokenType.floating) {
+            (cast(FloatToken)token).floatValue += addend.token.type == TokenType.integer ? (cast(IntegerToken)addend.token).intValue : (cast(FloatToken)addend.token).floatValue;
+        } else if (addend.token.type == TokenType.floating) {
+            token = new FloatToken((cast(IntegerToken)token).intValue + (cast(FloatToken)addend.token).floatValue);
+        } else {
+            (cast(IntegerToken)token).intValue += (cast(IntegerToken)addend.token).intValue;
+        }
+    }
+
+    void subtract (Value subtrahend) {
+        if (token.type != TokenType.integer && token.type != TokenType.floating) {
+            throw new UnsupportedOperationException(token, "Subtraction");
+        } else if (subtrahend.token.type != TokenType.integer && subtrahend.token.type != TokenType.floating) {
+            throw new UnsupportedOperationException(subtrahend.token, "Subtraction");
+        }
+
+        if (token.type == TokenType.floating) {
+            (cast(FloatToken)token).floatValue -= subtrahend.token.type == TokenType.integer ? (cast(IntegerToken)subtrahend.token).intValue : (cast(FloatToken)subtrahend.token).floatValue;
+        } else if (subtrahend.token.type == TokenType.floating) {
+            token = new FloatToken((cast(IntegerToken)token).intValue - (cast(FloatToken)subtrahend.token).floatValue);
+        } else {
+            (cast(IntegerToken)token).intValue -= (cast(IntegerToken)subtrahend.token).intValue;
+        }
+    }
+
+    void multiply (Value multiplicand) {
+        if (token.type != TokenType.integer && token.type != TokenType.floating) {
+            throw new UnsupportedOperationException(token, "Multiplication");
+        } else if (multiplicand.token.type != TokenType.integer && multiplicand.token.type != TokenType.floating) {
+            throw new UnsupportedOperationException(multiplicand.token, "Multiplication");
+        }
+
+        if (token.type == TokenType.floating) {
+            (cast(FloatToken)token).floatValue *= multiplicand.token.type == TokenType.integer ? (cast(IntegerToken)multiplicand.token).intValue : (cast(FloatToken)multiplicand.token).floatValue;
+        } else if (multiplicand.token.type == TokenType.floating) {
+            token = new FloatToken((cast(IntegerToken)token).intValue * (cast(FloatToken)multiplicand.token).floatValue);
+        } else {
+            (cast(IntegerToken)token).intValue *= (cast(IntegerToken)multiplicand.token).intValue;
+        }
+    }
+
+    void divide (Value divisor) {
+        if (token.type != TokenType.integer && token.type != TokenType.floating) {
+            throw new UnsupportedOperationException(token, "Division");
+        } else if (divisor.token.type != TokenType.integer && divisor.token.type != TokenType.floating) {
+            throw new UnsupportedOperationException(divisor.token, "Division");
+        }
+
+        if (token.type == TokenType.floating) {
+            (cast(FloatToken)token).floatValue /= divisor.token.type == TokenType.integer ? (cast(IntegerToken)divisor.token).intValue : (cast(FloatToken)divisor.token).floatValue;
+        } else if (divisor.token.type == TokenType.floating) {
+            token = new FloatToken((cast(IntegerToken)token).intValue / (cast(FloatToken)divisor.token).floatValue);
+        } else {
+            (cast(IntegerToken)token).intValue /= (cast(IntegerToken)divisor.token).intValue;
+        }
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////

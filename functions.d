@@ -146,7 +146,7 @@ LispFunction processFunctionDefinition (Value[] lambdaList, Value[] forms) {
         requiredArguments = null;
     }
 
-    return LispFunction(lambdaList, requiredArguments, optionalArguments, restArgument, keywordArguments, auxArguments, forms);
+    return LispFunction(oldLambdaList, requiredArguments, optionalArguments, restArgument, keywordArguments, auxArguments, forms);
 }
 
 
