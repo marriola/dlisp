@@ -124,7 +124,7 @@ class LispParser {
                         functionName ~= c;
                     }
 
-                    nextToken = getFunction(functionName).token;
+                    nextToken = getFunction(std.string.toUpper(functionName)).token;
                     break;
 
                 default:
