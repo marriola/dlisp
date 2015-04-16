@@ -474,6 +474,12 @@ class DefinedFunctionToken : FunctionToken {
         this.fun = processFunctionDefinition(lambdaList, forms);
     }
 
+    this (string name, LispFunction fun) {
+        this.type = TokenType.definedFunction;
+        this.name = name;
+        this.fun = fun;
+    }
+
     this (string name) {
         this.type = TokenType.definedFunction;
         this.name = name;
@@ -497,8 +503,8 @@ class DefinedFunctionToken : FunctionToken {
 
     override string toString () {
         return "#<FUNCTION " ~
-               (name is null ? ":LAMBDA " : "") ~
-               "(" ~ join(map!(x => x.toString())(fun.lambdaList), " ") ~ ") " ~
+               (name is null ? ":LAMBDA" : name) ~
+               " (" ~ join(map!(x => x.toString())(fun.lambdaList), " ") ~ ") " ~
                join(map!(x => x.toString())(fun.forms), " ") ~
                ">";
     }

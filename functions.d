@@ -283,7 +283,7 @@ Value getFunction (string name) {
         return new Value(new BuiltinFunctionToken(name));
  
     } else if (name in lispFunctions) {
-        return new Value(new DefinedFunctionToken(name));
+        return new Value(new DefinedFunctionToken(name, lispFunctions[name]));
  
     } else {
         throw new Exception("Undefined function " ~ name);
