@@ -55,20 +55,46 @@ Value getItem (Value head, int index) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Returns the first item (aka CAR) of a list.
+ */
 Value getFirst (Value head) {
-    return (head.token.type == TokenType.reference) ? (cast(ReferenceToken)head.token).reference.car : null;
+    if (head.token.type != TokenType.reference) {
+        throw new TypeMismatchException("getFirst", head.token, "list");
+    }
+    return (cast(ReferenceToken)head.token).reference.car;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Returns the rest (aka CDR) of a list.
+ */
 Value getRest (Value head) {
-    //return cast(ReferenceToken) ((head.type == TokenType.reference) ? (cast(ReferenceToken)head).reference.cdr : null);
-    if (head.token.type == TokenType.reference) {
-        return (cast(ReferenceToken)head.token).reference.cdr;
-    } else {
-        return null;
+    if (head.token.type != TokenType.reference) {
+        throw new TypeMismatchException("getRest", head.token, "list");
     }
+    return (cast(ReferenceToken)head.token).reference.cdr;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Returns the last item of a list.
+ */
+Value getLast (Value head) {
+    if (head.token.type != TokenType.reference) {
+        throw new TypeMismatchException("getLast", head.token, "list");
+    }
+
+    Value lastItem = head;
+    while (!Token.isNil((cast(ReferenceToken)lastItem.token).reference.cdr)) {
+        lastItem = (cast(ReferenceToken)lastItem.token).reference.cdr;
+    }
+
+    return lastItem;
 }
 
 

@@ -6,6 +6,7 @@ import evaluator;
 import exceptions;
 import functions;
 import lispObject;
+import node;
 import token;
 
 
@@ -149,26 +150,40 @@ Value builtinAppend (string name, Value[] args, Value[string] kwargs) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Value result = evaluateOnce(args[0]);
-    if (result.token.type != TokenType.reference) {
-        throw new TypeMismatchException(name, result.token, "reference");
-    }
-
+    Value result = new Value(new BooleanToken(false));
     Value lastItem = result;
-    while (!Token.isNil((cast(ReferenceToken)lastItem.token).reference.cdr)) {
-        lastItem = (cast(ReferenceToken)lastItem.token).reference.cdr;
-    }
 
-    for (int i = 1; i < args.length; i++) {
-        Value list = evaluateOnce(args[i]);
-        if (list.token.type == TokenType.boolean && (cast(BooleanToken)list.token).boolValue == false) {
+    foreach (int i, Value item; args) {
+        item = evaluateOnce(item);
+
+        if (Token.isNil(item)) {
+            // skip empty list
             continue;
-        } else if (list.token.type != TokenType.reference) {
-            throw new TypeMismatchException(name, list.token, "reference or NIL");
-        }
-        (cast(ReferenceToken)lastItem.token).reference.cdr = list;
-        while (!Token.isNil((cast(ReferenceToken)lastItem.token).reference.cdr)) {
-            lastItem = (cast(ReferenceToken)lastItem.token).reference.cdr;
+
+        } else {
+            if (Token.isNil(lastItem)) {
+                // appending to NIL
+                result = lastItem = item.copy();
+
+                if (item.token.type == TokenType.reference) {
+                    lastItem = getLast(lastItem);
+
+                } else if (i < args.length - 1) {
+                    throw new TypeMismatchException(name, item.token, "list");
+                }
+
+            } else {
+                // appending to a list
+                if (item.token.type != TokenType.reference && i < args.length - 1) {
+                    throw new TypeMismatchException(name, item.token, "list");
+                }
+
+                // attach this item to the result, then move down to the last item
+                (cast(ReferenceToken)lastItem.token).reference.cdr = item.copy();
+                if (lastItem.token.type == TokenType.reference) {
+                    lastItem = getLast(lastItem);
+                }
+            }
         }
     }
 

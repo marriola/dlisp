@@ -36,15 +36,22 @@ class Value {
     }
 
     /**
+     * Produces a new Value object with a copy of the encapsulated token.
+     */
+    Value copy () {
+        return new Value(token.copy());
+    }
+
+    /**
      * Appends an element to the encapsulated Token object. If its value is not
      * '() (aka NIL) or a list, it throws an UnsupportedOperationException.
      */
     void append (Value element) {
-        if (token.type == TokenType.reference) {
-            (cast(ReferenceToken)token).append(element);
-
-        } else if (token.type == TokenType.boolean && (cast(BooleanToken)token).boolValue == false) {
+        if (token.type == TokenType.boolean && (cast(BooleanToken)token).boolValue == false) {
             token = Token.makeReference(element).token;
+
+        } else if (token.type == TokenType.reference) {
+            (cast(ReferenceToken)token).append(element);
 
         } else {
             throw new UnsupportedOperationException(token, "Append");
@@ -127,6 +134,11 @@ abstract class Token {
     TokenType type;
 
     /**
+     * Returns a copy of itself.
+     */
+    Token copy ();
+
+    /**
      * @return true if this is a lexical token, false otherwise. 
      */
     bool isLexicalToken () { return false; }
@@ -164,6 +176,10 @@ class LexicalToken : Token {
 
     override bool isLexicalToken () { return true; }
 
+    override Token copy () {
+        return this;
+    }
+
     override string toString () {
         static enum string[TokenType] lexicalTokens =
             [ TokenType.leftParen : "(",
@@ -187,6 +203,10 @@ class BooleanToken : Token {
         this.boolValue = boolValue;
     }
 
+    override Token copy () {
+        return new BooleanToken(boolValue);
+    }
+
     override string toString () {
         return boolValue ? "T" : "NIL";
     }
@@ -201,6 +221,10 @@ class StringToken : Token {
     this (string stringValue) {
         type = TokenType.string;
         this.stringValue = stringValue;
+    }
+
+    override Token copy () {
+        return new StringToken(stringValue);
     }
 
     override string toString () {
@@ -219,6 +243,10 @@ class IdentifierToken : Token {
         this.stringValue = toUpper(stringValue);
     }
 
+    override Token copy () {
+        return new IdentifierToken(stringValue);
+    }
+
     override string toString () {
         return stringValue;
     }
@@ -233,6 +261,10 @@ class IntegerToken : Token {
     this (long intValue) {
         type = TokenType.integer;
         this.intValue = intValue;
+    }
+
+    override Token copy () {
+        return new IntegerToken(intValue);
     }
 
     override string toString () {
@@ -251,6 +283,10 @@ class ConstantToken : Token {
         this.stringValue = toUpper(stringValue);
     }
 
+    override Token copy () {
+        return new ConstantToken(stringValue);
+    }
+
     override string toString () {
         return ":" ~ stringValue;
     }
@@ -265,6 +301,10 @@ class FloatToken : Token {
     this (double floatValue) {
         type = TokenType.floating;
         this.floatValue = floatValue;
+    }
+
+    override Token copy () {
+        return new FloatToken(floatValue);
     }
 
     override string toString () {
@@ -306,6 +346,10 @@ class ReferenceToken : Token {
         return lispObject.getItem(new Value(this), index);
     }
 
+    override Token copy () {
+        return new ReferenceToken(new Node(reference.car.copy(), reference.cdr.copy()));
+    }
+
     override string toString () {
         return reference.toString();
     }
@@ -334,6 +378,11 @@ class FileStreamToken : Token {
         bool wasOpen = isOpen;
         stream.close();
         return wasOpen;
+    }
+
+    // what does it mean to copy a file stream...?
+    override Token copy () {
+        return this;
     }
 
     override string toString () {
@@ -369,6 +418,12 @@ class VectorToken : Token {
         return array[index];
     }
 
+    override Token copy () {
+        VectorToken vectorCopy = new VectorToken(0);
+        vectorCopy.array = array[];
+        return vectorCopy;
+    }
+
     override string toString () {
         return "#<" ~ join(map!(x => x.toString())(array), " ") ~ ">";
     }
@@ -394,6 +449,10 @@ class BuiltinFunctionToken : FunctionToken {
 
     override Value evaluate (Value[] args, Value[string] kwargs = null) {
         return evaluateBuiltinFunction(name, args, kwargs);
+    }
+
+    override Token copy () {
+        return new BuiltinFunctionToken(name);
     }
 
     override string toString () {
@@ -428,6 +487,12 @@ class DefinedFunctionToken : FunctionToken {
             // evaluate a named defined function
             return evaluateFunction(name, args);
         }
+    }
+
+    override Token copy () {
+        DefinedFunctionToken functionCopy = new DefinedFunctionToken(name);
+        functionCopy.fun = fun;
+        return functionCopy;
     }
 
     override string toString () {
