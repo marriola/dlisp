@@ -211,7 +211,7 @@ Value builtinPlus (string name, Value[] args, Value[string] kwargs) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Value result = evaluateOnce(args[0]);
+    Value result = evaluateOnce(args[0]).copy();
     foreach (Value addend; args[1 .. args.length]) {
         result.add(evaluateOnce(addend));
     }
@@ -230,7 +230,7 @@ Value builtinMinus (string name, Value[] args, Value[string] kwargs) {
     } else if (args.length == 1) {
         result = new Value(new IntegerToken(0));
     } else {
-        result = evaluateOnce(args[0]);
+        result = evaluateOnce(args[0]).copy();
         args = args[1 .. args.length];
     }
 
@@ -249,7 +249,7 @@ Value builtinTimes (string name, Value[] args, Value[string] kwargs) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Value result = evaluateOnce(args[0]);
+    Value result = evaluateOnce(args[0]).copy();
     foreach (Value multiplicand; args[1 .. args.length]) {
         result.multiply(evaluateOnce(multiplicand));
     }
@@ -268,7 +268,7 @@ Value builtinDivide (string name, Value[] args, Value[string] kwargs) {
     } else if (args.length == 1) {
         result = new Value(new FloatToken(1));
     } else {
-        result = evaluateOnce(args[0]);
+        result = evaluateOnce(args[0]).copy();
         args = args[1 .. args.length];
     }
 
