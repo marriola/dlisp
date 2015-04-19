@@ -162,25 +162,27 @@ Value builtinAppend (string name, Value[] args, Value[string] kwargs) {
 
         } else {
             if (Token.isNil(lastItem)) {
-                // appending to NIL
+                // (append nil x) = x
                 result = lastItem = item.copy();
 
                 if (item.token.type == TokenType.reference) {
                     lastItem = getLast(lastItem);
 
                 } else if (i < args.length - 1) {
+                    // all items but last must be a list
                     throw new TypeMismatchException(name, item.token, "list");
                 }
 
             } else {
                 // appending to a list
                 if (item.token.type != TokenType.reference && i < args.length - 1) {
+                    // all items but last must be a list
                     throw new TypeMismatchException(name, item.token, "list");
                 }
 
                 // attach this item to the result, then move down to the last item
                 (cast(ReferenceToken)lastItem.token).reference.cdr = item.copy();
-                if (lastItem.token.type == TokenType.reference) {
+                if (item.token.type == TokenType.reference) {
                     lastItem = getLast(lastItem);
                 }
             }
