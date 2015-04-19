@@ -125,11 +125,38 @@ Value builtinRead (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value builtinFormat (string name, Value[] args, Value[string] kwargs) {
+    Value destination = evaluateOnce(args[0]);
+
+    Value formatString = evaluateOnce(args[1]);
+    if (formatString.token.type != TokenType.string) {
+        throw new TypeMismatchException(name, formatString.token, "string");
+    }
+
+    string output = (cast(StringToken)formatString.token).stringValue;
+
+    if (Token.isNil(destination)) {
+        return new Value(new StringToken(output));
+
+    } else if (destination.token.type == TokenType.fileStream) {
+        (cast(FileStreamToken)destination.token).stream.write(output);
+
+    } else {
+        std.stdio.write(output);
+    }
+
+    return new Value(new BooleanToken(false));
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["LOAD"] = &builtinLoad;
     builtinTable["OPEN"] = &builtinOpen;
     builtinTable["CLOSE"] = &builtinClose;
     builtinTable["READ"] = &builtinRead;
     builtinTable["PRINT"] = &builtinPrint;
+    builtinTable["FORMAT"] = &builtinFormat;
     return builtinTable;
 }
