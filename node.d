@@ -51,7 +51,15 @@ class Node {
 
             } else {
                 builder ~= " ";
-                node = (cast(ReferenceToken)node.cdr.token).reference;
+                if (node.cdr.token.type == TokenType.reference) {
+                    // if CDR is a reference token, retrieve the reference
+                    node = (cast(ReferenceToken)node.cdr.token).reference;
+
+                } else {
+                    // otherwise indicate that it is part of a dotted pair and finish
+                    builder ~= ". " ~ node.cdr.token.toString();
+                    break;
+                }
             }
         }
 
