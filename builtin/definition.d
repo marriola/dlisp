@@ -119,7 +119,7 @@ Value builtinSetf (string name, Value[] args, Value[string] kwargs) {
     }
 
     Value reference = evaluateOnce(args[0]);
-    Value value = evaluate(args[1]);
+    Value value = evaluateOnce(args[1]);
 
     copyValue(value, reference);
     return value;
@@ -215,6 +215,17 @@ Value builtinFunction (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value builtinEval (string name, Value[] args, Value[string] kwargs) {
+    if (args.length < 1) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    return evaluateOnce(evaluateOnce(args[0]));
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["LET"] = &builtinLet;
     builtinTable["LET*"] = &builtinLetStar;
@@ -224,5 +235,6 @@ BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["FUNCALL"] = &builtinFuncall;
     builtinTable["DEFUN"] = &builtinDefun;
     builtinTable["FUNCTION"] = &builtinFunction;
+    builtinTable["EVAL"] = &builtinEval;
     return builtinTable;
 }
