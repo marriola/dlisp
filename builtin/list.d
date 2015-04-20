@@ -114,6 +114,33 @@ Value builtinCdr (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value builtinCompoundAccessor (string name, Value[] args, Value[string] kwargs) {
+    if (args.length < 1) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    string accessPath = name[1 .. name.length - 1];
+    Value x = evaluateOnce(args[0]);
+
+    foreach_reverse (char c; accessPath) {
+        if (x.token.type != TokenType.reference) {
+            throw new TypeMismatchException(name, x.token, "reference");
+        }
+
+        if (c == 'A') {
+            x = (cast(ReferenceToken)x.token).reference.car;
+
+        } else if (c == 'R') {
+            x = (cast(ReferenceToken)x.token).reference.cdr;
+        }
+    }
+
+    return x;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 Value builtinElt (string name, Value[] args, Value[string] kwargs) {
     if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
@@ -258,6 +285,34 @@ BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["FIRST"] = &builtinCar;
     builtinTable["CDR"] = &builtinCdr;
     builtinTable["REST"] = &builtinCdr;
+    builtinTable["CAAR"] = &builtinCompoundAccessor;
+    builtinTable["CADR"] = &builtinCompoundAccessor;
+    builtinTable["CDAR"] = &builtinCompoundAccessor;
+    builtinTable["CDDR"] = &builtinCompoundAccessor;
+    builtinTable["CAAAR"] = &builtinCompoundAccessor;
+    builtinTable["CAADR"] = &builtinCompoundAccessor;
+    builtinTable["CADAR"] = &builtinCompoundAccessor;
+    builtinTable["CADDR"] = &builtinCompoundAccessor;
+    builtinTable["CDAAR"] = &builtinCompoundAccessor;
+    builtinTable["CDADR"] = &builtinCompoundAccessor;
+    builtinTable["CDDAR"] = &builtinCompoundAccessor;
+    builtinTable["CDDDR"] = &builtinCompoundAccessor;
+    builtinTable["CAAAAR"] = &builtinCompoundAccessor;
+    builtinTable["CAAADR"] = &builtinCompoundAccessor;
+    builtinTable["CAADAR"] = &builtinCompoundAccessor;
+    builtinTable["CAADDR"] = &builtinCompoundAccessor;
+    builtinTable["CADAAR"] = &builtinCompoundAccessor;
+    builtinTable["CADADR"] = &builtinCompoundAccessor;
+    builtinTable["CADDAR"] = &builtinCompoundAccessor;
+    builtinTable["CADDDR"] = &builtinCompoundAccessor;
+    builtinTable["CDAAAR"] = &builtinCompoundAccessor;
+    builtinTable["CDAADR"] = &builtinCompoundAccessor;
+    builtinTable["CDADAR"] = &builtinCompoundAccessor;
+    builtinTable["CDADDR"] = &builtinCompoundAccessor;
+    builtinTable["CDDAAR"] = &builtinCompoundAccessor;
+    builtinTable["CDDADR"] = &builtinCompoundAccessor;
+    builtinTable["CDDDAR"] = &builtinCompoundAccessor;
+    builtinTable["CDDDDR"] = &builtinCompoundAccessor;
     builtinTable["ELT"] = &builtinElt;
     builtinTable["APPEND"] = &builtinAppend;
     builtinTable["MAP"] = &builtinMap;
