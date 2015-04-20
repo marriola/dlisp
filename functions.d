@@ -34,11 +34,12 @@ struct PairedArgument {
 
 struct LispFunction {
     Value[] lambdaList;
+
     string[] requiredArguments;
     PairedArgument[] optionalArguments;
-    string restArgument;
     PairedArgument[] keywordArguments;
     PairedArgument[] auxArguments;
+    string restArgument;
 
     Value[] forms;
 }
@@ -146,7 +147,7 @@ LispFunction processFunctionDefinition (Value[] lambdaList, Value[] forms) {
         requiredArguments = null;
     }
 
-    return LispFunction(oldLambdaList, requiredArguments, optionalArguments, restArgument, keywordArguments, auxArguments, forms);
+    return LispFunction(oldLambdaList, requiredArguments, optionalArguments, keywordArguments, auxArguments, restArgument, forms);
 }
 
 
