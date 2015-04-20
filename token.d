@@ -20,7 +20,7 @@ enum TokenType { leftParen, rightParen, leftBrack, rightBrack, dot, boolean, ref
 
 
 string tokenTypeName (TokenType type) {
-    static string typeNames[] = [ "left paren", "right paren", "left bracket", "right bracket", "dot", "boolean", "reference", "integer", "floating point", "identifier", "string", "constant", "file stream", "vector", "lambda" ];
+    static string typeNames[] = [ "left paren", "right paren", "left bracket", "right bracket", "dot", "boolean", "reference", "integer", "floating point", "identifier", "string", "constant", "file stream", "vector", "builtin function", "function" ];
     return typeNames[cast(int)type];
 }
 
@@ -359,10 +359,13 @@ class ReferenceToken : Token {
 ///////////////////////////////////////////////////////////////////////////////
 
 class FileStreamToken : Token {
+    import parser;
+
     string direction;
     string fileSpec;
     File stream;
     bool isOpen;
+    LispParser streamParser;
 
     this (string fileSpec, Value direction) {
         static enum char[][string] openModes = [ "input" : cast(char[])"r", "output" : cast(char[])"w", "io" : cast(char[])"rw" ];
@@ -372,6 +375,15 @@ class FileStreamToken : Token {
         stream = File(fileSpec, openModes[this.direction]);
         this.fileSpec = fileSpec;
         isOpen = true;
+        streamParser = null;
+    }
+
+    LispParser getParser () {
+        if (streamParser is null) {
+            streamParser = new LispParser(stream);
+        }
+
+        return streamParser;
     }
 
     bool close () {

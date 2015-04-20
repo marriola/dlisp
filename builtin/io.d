@@ -114,7 +114,7 @@ Value builtinRead (string name, Value[] args, Value[string] kwargs) {
             throw new BuiltinException(name, "Attempt to read from " ~ streamToken.toString());
         }
 
-        parser = new LispParser((cast(FileStreamToken)streamToken.token).stream);
+        parser = (cast(FileStreamToken)streamToken.token).getParser();
     } else {
         parser = new LispParser(stdin);
     }
