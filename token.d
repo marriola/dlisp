@@ -164,6 +164,14 @@ abstract class Token {
     static bool isNil (Value value) {
         return value.token.type == TokenType.boolean && (cast(BooleanToken)value.token).boolValue == false;
     }
+
+    /**
+     * @param value a Token object to test.
+     * @return true if the Token object is a BooleanToken representing the value T.
+     */
+    static bool isTrue (Value value) {
+        return value.token.type == TokenType.boolean && (cast(BooleanToken)value.token).boolValue == true;
+    }
 }
 
 
