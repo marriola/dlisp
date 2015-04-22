@@ -275,6 +275,70 @@ Value builtinMapcar (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value builtinRemoveIf (string name, Value[] args, Value[string] kwargs) {
+    if (args.length < 2) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Value predicateToken = evaluateOnce(args[0]);
+    FunctionToken predicate;
+
+    Value list = evaluateOnce(args[1]);
+    Value result = new Value(new BooleanToken(false));
+
+    if (predicateToken.token.type != TokenType.builtinFunction && predicateToken.token.type != TokenType.definedFunction) {
+        throw new TypeMismatchException(name, predicateToken.token, "function");
+    } else {
+        predicate = cast(FunctionToken)predicateToken.token;
+    }
+
+    while (!Token.isNil(list)) {
+        Value item = getFirst(list);
+        Value testResult = predicate.evaluate([item]);
+        if (!Token.isTrue(testResult)) {
+            result.append(item);
+        }
+        list = getRest(list);
+    }
+
+    return result;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Value builtinRemoveIfNot (string name, Value[] args, Value[string] kwargs) {
+    if (args.length < 2) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Value predicateToken = evaluateOnce(args[0]);
+    FunctionToken predicate;
+
+    Value list = evaluateOnce(args[1]);
+    Value result = new Value(new BooleanToken(false));
+
+    if (predicateToken.token.type != TokenType.builtinFunction && predicateToken.token.type != TokenType.definedFunction) {
+        throw new TypeMismatchException(name, predicateToken.token, "function");
+    } else {
+        predicate = cast(FunctionToken)predicateToken.token;
+    }
+
+    while (!Token.isNil(list)) {
+        Value item = getFirst(list);
+        Value testResult = predicate.evaluate([item]);
+        if (Token.isTrue(testResult)) {
+            result.append(item);
+        }
+        list = getRest(list);
+    }
+
+    return result;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["MAKE-ARRAY"] = &builtinMakeArray;
     builtinTable["LIST"] = &builtinList;
@@ -317,5 +381,7 @@ BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["APPEND"] = &builtinAppend;
     builtinTable["MAP"] = &builtinMap;
     builtinTable["MAPCAR"] = &builtinMapcar;
+    builtinTable["REMOVE-IF"] = &builtinRemoveIf;
+    builtinTable["REMOVE-IF-NOT"] = &builtinRemoveIfNot;
     return builtinTable;
 }
