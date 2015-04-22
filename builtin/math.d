@@ -130,6 +130,44 @@ Value builtinEqual (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value builtinNotEqual (string name, Value[] args, Value[string] kwargs) {
+    bool result = true;
+    float lastValue = float.max;
+
+    if (args.length == 0) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Value current = evaluateOnce(args[0]);
+    if (current.token.type == TokenType.floating) {
+        lastValue = (cast(FloatToken)current.token).floatValue;
+    } else if (current.token.type == TokenType.integer) {
+        lastValue = (cast(IntegerToken)current.token).intValue;
+    } else {
+        throw new TypeMismatchException(name, current.token, "integer or floating point");
+    }
+
+    for (int i = 1; i < args.length; i++) {
+        current = evaluateOnce(args[i]);
+        float currentValue;
+        if (current.token.type == TokenType.floating) {
+            currentValue = (cast(FloatToken)current.token).floatValue;
+        } else if (current.token.type == TokenType.integer) {
+            currentValue = (cast(IntegerToken)current.token).intValue;
+        } else {
+            throw new TypeMismatchException(name, current.token, "integer or floating point");
+        }
+
+        result = currentValue != lastValue;
+        lastValue = currentValue;
+    }
+
+    return new Value(new BooleanToken(result));
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 Value builtinLesser (string name, Value[] args, Value[string] kwargs) {
     bool result = true;
     float lastValue = float.max;
@@ -295,10 +333,42 @@ Value builtinSqrt (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value builtinMod (string name, Value[] args, Value[string] kwargs) {
+    if (args.length < 2) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Value numberToken = evaluateOnce(args[0]);
+    Value divisorToken = evaluateOnce(args[1]);
+    long number, divisor;
+
+    if (numberToken.token.type == TokenType.integer) {
+        number = (cast(IntegerToken)numberToken.token).intValue;
+    } else if (numberToken.token.type == TokenType.floating) {
+        number = cast (int) (cast(FloatToken)numberToken.token).floatValue;
+    } else {
+        throw new TypeMismatchException(name, numberToken.token, "integer or floating point");
+    }
+
+    if (divisorToken.token.type == TokenType.integer) {
+        divisor = (cast(IntegerToken)divisorToken.token).intValue;
+    } else if (divisorToken.token.type == TokenType.floating) {
+        divisor = cast (int) (cast(FloatToken)divisorToken.token).floatValue;
+    } else {
+        throw new TypeMismatchException(name, divisorToken.token, "integer or floating point");
+    }
+
+    return new Value(new IntegerToken(number % divisor));
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["<="] = &builtinGreaterOrEqual;
     builtinTable["<"] = &builtinGreater;
     builtinTable["="] = &builtinEqual;
+    builtinTable["/="] = &builtinNotEqual;
     builtinTable[">"] = &builtinLesser;
     builtinTable[">="] = &builtinLesserOrEqual;
     builtinTable["+"] = &builtinPlus;
@@ -306,5 +376,6 @@ BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["*"] = &builtinTimes;
     builtinTable["/"] = &builtinDivide;
     builtinTable["SQRT"] = &builtinSqrt;
+    builtinTable["MOD"] = &builtinMod;
     return builtinTable;
 }
