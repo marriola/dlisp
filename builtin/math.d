@@ -364,6 +364,32 @@ Value builtinMod (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value builtinEven (string name, Value[] args, Value[string] kwargs) {
+    Value numberToken = evaluateOnce(args[0]);
+    if (numberToken.token.type != TokenType.integer) {
+        throw new TypeMismatchException(name, numberToken.token, "integer");
+    }
+
+    long number = (cast(IntegerToken)numberToken.token).intValue;
+    return new Value(new BooleanToken(number % 2 == 0));
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Value builtinOdd (string name, Value[] args, Value[string] kwargs) {
+    Value numberToken = evaluateOnce(args[0]);
+    if (numberToken.token.type != TokenType.integer) {
+        throw new TypeMismatchException(name, numberToken.token, "integer");
+    }
+
+    long number = (cast(IntegerToken)numberToken.token).intValue;
+    return new Value(new BooleanToken(number % 2 != 0));
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["<="] = &builtinGreaterOrEqual;
     builtinTable["<"] = &builtinGreater;
@@ -377,5 +403,7 @@ BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["/"] = &builtinDivide;
     builtinTable["SQRT"] = &builtinSqrt;
     builtinTable["MOD"] = &builtinMod;
+    builtinTable["EVEN"] = &builtinEven;
+    builtinTable["ODD"] = &builtinOdd;
     return builtinTable;
 }
