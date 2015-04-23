@@ -235,16 +235,16 @@ Value builtinAppend (string name, Value[] args, Value[string] kwargs) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinConcatenate (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 1) {
+    if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Value result = evaluateOnce(args[0]);
+    Value result = evaluateOnce(args[1]);
     if (result.token.type != TokenType.string) {
         throw new TypeMismatchException(name, result.token, "string");
     }
 
-    foreach (Value arg; args[1 .. args.length]) {
+    foreach (Value arg; args[2 .. args.length]) {
         Value str = evaluateOnce(arg);
         if (str.token.type != TokenType.string) {
             throw new TypeMismatchException(name, str.token, "string");
