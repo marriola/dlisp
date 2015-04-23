@@ -33,6 +33,7 @@ struct PairedArgument {
 }
 
 struct LispFunction {
+    string docString;
     Value[] lambdaList;
 
     string[] requiredArguments;
@@ -136,7 +137,7 @@ PairedArgument[] extractKeywordArguments (ref Value[] lambdaList, string keyword
 
 ///////////////////////////////////////////////////////////////////////////////
 
-LispFunction processFunctionDefinition (Value[] lambdaList, Value[] forms) {
+LispFunction processFunctionDefinition (Value[] lambdaList, Value[] forms, string docString = null) {
     Value[] oldLambdaList = lambdaList[];
     PairedArgument[] optionalArguments = extractKeywordArguments(lambdaList, "&OPTIONAL");
     PairedArgument[] keywordArguments = extractKeywordArguments(lambdaList, "&KEY");
@@ -147,14 +148,14 @@ LispFunction processFunctionDefinition (Value[] lambdaList, Value[] forms) {
         requiredArguments = null;
     }
 
-    return LispFunction(oldLambdaList, requiredArguments, optionalArguments, keywordArguments, auxArguments, restArgument, forms);
+    return LispFunction(docString, oldLambdaList, requiredArguments, optionalArguments, keywordArguments, auxArguments, restArgument, forms);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void addFunction (string name, Value[] lambdaList, Value[] forms) {
-    lispFunctions[name] = processFunctionDefinition(lambdaList, forms);
+void addFunction (string name, Value[] lambdaList, Value[] forms, string docString = null) {
+    lispFunctions[name] = processFunctionDefinition(lambdaList, forms, docString);
 }
 
 
