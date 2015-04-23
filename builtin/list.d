@@ -39,6 +39,26 @@ Value builtinMakeArray (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value builtinCopyList (string name, Value[] args, Value[string] kwargs) {
+    if (args.length < 1) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Value list = evaluateOnce(args[0]);
+    if (Token.isNil(list)) {
+        return new Value(new BooleanToken(false));
+
+    } else if (list.token.type == TokenType.reference) {
+        return list.copy();
+
+    } else {
+        throw new TypeMismatchException(name, list.token, "list");
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 Value builtinList (string name, Value[] args, Value[string] kwargs) {
     if (args.length == 0) {
         return new Value(new BooleanToken(false));
@@ -394,6 +414,7 @@ Value builtinRemoveIfNot (string name, Value[] args, Value[string] kwargs) {
 
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["MAKE-ARRAY"] = &builtinMakeArray;
+    builtinTable["COPY-LIST"] = &builtinCopyList;
     builtinTable["LIST"] = &builtinList;
     builtinTable["LENGTH"] = &builtinLength;
     builtinTable["PROGN"] = &builtinProgn;
