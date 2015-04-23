@@ -135,8 +135,14 @@ Value builtinLambda (string name, Value[] args, Value[string] kwargs) {
 
     Value[] lambdaList = toArray(args[0]);
     Value[] forms = args[1 .. args.length];
+    string docString = null;
 
-    return new Value(new DefinedFunctionToken(lambdaList, forms));
+    if (forms[0].token.type == TokenType.string && forms.length > 1) {
+        docString = (cast(StringToken)forms[0].token).stringValue;
+        forms = forms[1 .. forms.length];
+    }
+
+    return new Value(new DefinedFunctionToken(lambdaList, forms, docString));
 }
 
 
@@ -173,8 +179,11 @@ Value builtinDefun (string name, Value[] args, Value[string] kwargs) {
     Value lambdaListToken = args[1];
 
     Value[] forms;
+    string docString = null;
+
     if (args[2].token.type == TokenType.string && args.length > 3) {
         // remove documentation string
+        docString = (cast(StringToken)args[2].token).stringValue;
         forms = args[3 .. args.length];
     } else {
         forms = args[2 .. args.length];
@@ -189,7 +198,7 @@ Value builtinDefun (string name, Value[] args, Value[string] kwargs) {
     string identifier = (cast(IdentifierToken)identifierToken.token).stringValue;
     Value[] lambdaList = toArray(lambdaListToken);
 
-    addFunction(identifier, lambdaList, forms);
+    addFunction(identifier, lambdaList, forms, docString);
 
     return identifierToken;
 }
