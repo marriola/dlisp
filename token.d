@@ -236,7 +236,11 @@ class CharacterToken : Token {
     }
 
     override string toString () {
-        return "" ~ charValue;
+        if (charValue == '\n') {
+            return "#\\Newline";
+        } else {
+            return "#\\" ~ charValue;
+        }
     }
 }
 
