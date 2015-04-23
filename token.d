@@ -13,14 +13,14 @@ import std.string;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-enum TokenType { leftParen, rightParen, leftBrack, rightBrack, dot, boolean, reference, integer, floating, identifier, string, constant, fileStream, vector, builtinFunction, definedFunction };
+enum TokenType { leftParen, rightParen, leftBrack, rightBrack, dot, boolean, reference, integer, floating, identifier, character, string, constant, fileStream, vector, builtinFunction, definedFunction };
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
 
 string tokenTypeName (TokenType type) {
-    static string typeNames[] = [ "left paren", "right paren", "left bracket", "right bracket", "dot", "boolean", "reference", "integer", "floating point", "identifier", "string", "constant", "file stream", "vector", "builtin function", "function" ];
+    static string typeNames[] = [ "left paren", "right paren", "left bracket", "right bracket", "dot", "boolean", "reference", "integer", "floating point", "identifier", "character", "string", "constant", "file stream", "vector", "builtin function", "function" ];
     return typeNames[cast(int)type];
 }
 
@@ -217,6 +217,26 @@ class BooleanToken : Token {
 
     override string toString () {
         return boolValue ? "T" : "NIL";
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+class CharacterToken : Token {
+    char charValue;
+
+    this (char charValue) {
+        type = TokenType.character;
+        this.charValue = charValue;
+    }
+
+    override Token copy () {
+        return new CharacterToken(charValue);
+    }
+
+    override string toString () {
+        return "" ~ charValue;
     }
 }
 
