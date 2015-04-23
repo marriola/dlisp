@@ -239,13 +239,21 @@ Value builtinConcatenate (string name, Value[] args, Value[string] kwargs) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    StringToken result = cast(StringToken)evaluateOnce(args[0]).token;
-    foreach (Value arg; args[1 .. args.length]) {
-        Value str = evaluateOnce(arg);
-        result.stringValue ~= (cast(StringToken)str.token).stringValue;
+    Value result = evaluateOnce(args[0]);
+    if (result.token.type != TokenType.string) {
+        throw new TypeMismatchException(name, result.token, "string");
     }
 
-    return new Value(result);
+    foreach (Value arg; args[1 .. args.length]) {
+        Value str = evaluateOnce(arg);
+        if (str.token.type != TokenType.string) {
+            throw new TypeMismatchException(name, str.token, "string");
+        }
+
+        (cast(StringToken)result.token).stringValue ~= (cast(StringToken)str.token).stringValue;
+    }
+
+    return result;
 }
 
 
