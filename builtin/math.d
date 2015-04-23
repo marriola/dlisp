@@ -390,6 +390,26 @@ Value builtinOdd (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value builtinRandom (string name, Value[] args, Value[string] kwargs) {
+    if (args.length < 1) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Value limitToken = evaluateOnce(args[0]);
+    long limit;
+
+    if (limitToken.token.type != TokenType.integer) {
+        throw new TypeMismatchException(name, limitToken.token, "integer");
+    } else {
+        limit = (cast(IntegerToken)limitToken.token).intValue;
+    }
+
+    return new Value(new IntegerToken(std.random.uniform(0, limit)));
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["<="] = &builtinGreaterOrEqual;
     builtinTable["<"] = &builtinGreater;
@@ -405,5 +425,6 @@ BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["MOD"] = &builtinMod;
     builtinTable["EVEN"] = &builtinEven;
     builtinTable["ODD"] = &builtinOdd;
+    builtinTable["RANDOM"] = &builtinRandom;
     return builtinTable;
 }
