@@ -227,10 +227,10 @@ class LispParser {
             string stringValue;
             c = getc(stream);
 
-            do {
+            while (c != '\"') {
                 stringValue ~= c;
                 c = getc(stream);
-            } while (c != '\"');
+            }
 
             nextToken = new StringToken(stringValue);
             return;
