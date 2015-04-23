@@ -218,7 +218,7 @@ class LispParser {
                         nextToken = new IntegerToken(to!long(literal));
                     }
                 } catch (ConvException e) {
-                    throw new SyntaxErrorException("malformed number literal");
+                    nextToken = new IdentifierToken(literal);
                 }
                 return;
             }
