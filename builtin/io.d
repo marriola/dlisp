@@ -125,6 +125,50 @@ Value builtinRead (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+string format (string formatString, Value[] args) {
+    string outString = "";
+
+    for (int i = 0; i < formatString.length; i++) {
+        if (formatString[i] == '~') {
+            // encountering format directive
+            i++;
+
+            // process repeat parameter
+            string repeatStr = "";
+            while (std.ascii.isDigit(formatString[i])) {
+                repeatStr ~= formatString[i++];
+            }
+            int repeatLength = (repeatStr.length > 0) ? std.conv.to!int(repeatStr) : 1;
+
+            // process directive
+            string directiveOut;
+            switch (formatString[i]) {
+                case '~':
+                    directiveOut = "~";
+                    break;
+
+                case '%':
+                    directiveOut = "\n";
+                    break;
+
+                default:
+                    throw new Exception("Invalid format directive character '" ~ formatString[i] ~ "'");
+            }
+
+            // append directive to output string
+            for (int j = 0; j < repeatLength; j++) {
+                outString ~= directiveOut;
+            }
+
+        } else {
+            // append everything else to output string
+            outString ~= formatString[i];
+        }
+    }
+
+    return outString;
+}
+
 Value builtinFormat (string name, Value[] args, Value[string] kwargs) {
     Value destination = evaluateOnce(args[0]);
 
@@ -133,7 +177,7 @@ Value builtinFormat (string name, Value[] args, Value[string] kwargs) {
         throw new TypeMismatchException(name, formatString.token, "string");
     }
 
-    string output = (cast(StringToken)formatString.token).stringValue;
+    string output = format((cast(StringToken)formatString.token).stringValue, args[1 .. args.length]);
 
     if (Token.isNil(destination)) {
         return new Value(new StringToken(output));
