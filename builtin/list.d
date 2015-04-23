@@ -234,6 +234,23 @@ Value builtinAppend (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value builtinConcatenate (string name, Value[] args, Value[string] kwargs) {
+    if (args.length < 1) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    StringToken result = cast(StringToken)evaluateOnce(args[0]).token;
+    foreach (Value arg; args[1 .. args.length]) {
+        Value str = evaluateOnce(arg);
+        result.stringValue ~= (cast(StringToken)str.token).stringValue;
+    }
+
+    return new Value(result);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 Value builtinMap (string name, Value[] args, Value[string] kwargs) {
     if (args.length < 3) {
         throw new NotEnoughArgumentsException(name);
@@ -374,6 +391,7 @@ BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
 
     builtinTable["ELT"] = &builtinElt;
     builtinTable["APPEND"] = &builtinAppend;
+    builtinTable["CONCATENATE"] = &builtinConcatenate;
     builtinTable["MAP"] = &builtinMap;
     builtinTable["MAPCAR"] = &builtinMapcar;
     builtinTable["REMOVE-IF"] = &builtinRemoveIf;
