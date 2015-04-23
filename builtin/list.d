@@ -55,6 +55,18 @@ Value builtinList (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value builtinLength (string name, Value[] args, Value[string] kwargs) {
+    if (args.length < 1) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Value list = evaluateOnce(args[0]);
+    return new Value(new IntegerToken(listLength(list)));
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 Value builtinProgn (string name, Value[] args, Value[string] kwargs) {
     Value lastResult = new Value(new BooleanToken(false));
 
@@ -342,6 +354,7 @@ Value builtinRemoveIfNot (string name, Value[] args, Value[string] kwargs) {
 BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable["MAKE-ARRAY"] = &builtinMakeArray;
     builtinTable["LIST"] = &builtinList;
+    builtinTable["LENGTH"] = &builtinLength;
     builtinTable["PROGN"] = &builtinProgn;
     builtinTable["QUOTE"] = &builtinQuote;
     builtinTable["CONS"] = &builtinCons;
