@@ -4,12 +4,7 @@
         (random-list
             (- n 1)
             limit
-            (append
-                out
-                (list
-                    (random limit)
-                )
-            )
+            (append out (list (random limit)))
         )
     )
 )
