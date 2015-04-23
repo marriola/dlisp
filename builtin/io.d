@@ -151,11 +151,20 @@ string format (string formatString, Value[] args) {
                     directiveOut = "\n";
                     break;
 
-                // strings, characters and numbers can all just be converted to strings and added to the output string
+                // strings and numbers can all just be converted to strings and added to the output string
                 case 'A':
-                case 'C':
                 case 'D':
-                    directiveOut = args[0].toString();
+                    Value param = evaluateOnce(args[0]);
+                    directiveOut = param.toString();
+                    args = args[1 .. args.length];
+                    break;
+
+                case 'C':
+                    Value param = evaluateOnce(args[0]);
+                    if (param.token.type != TokenType.character) {
+                        throw new TypeMismatchException("format", param.token, "character");
+                    }
+                    directiveOut = "" ~ (cast(CharacterToken)param.token).charValue;
                     args = args[1 .. args.length];
                     break;
 
