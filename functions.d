@@ -164,13 +164,18 @@ void addFunction (string name, Value[] lambdaList, Value[] forms, string docStri
 Value[string] bindParameters (string name, LispFunction fun, Value[] parameters) {
     Value[string] newScope;
 
+    // evaluate all parameters
+    for (int i = 0; i < parameters.length; i++) {
+        parameters[i] = evaluateOnce(parameters[i]);
+    }
+
     // extract and bind required arguments
     foreach (string requiredArg; fun.requiredArguments) {
         if (parameters.length == 0) {
             throw new Exception("Too few arguments given to " ~ name);
         }
 
-        newScope[requiredArg] = evaluateOnce(parameters[0]);
+        newScope[requiredArg] = parameters[0];
         parameters = remove(parameters, 0);
     }
 
@@ -179,14 +184,14 @@ Value[string] bindParameters (string name, LispFunction fun, Value[] parameters)
         Value value;
         if (parameters.length == 0) {
             // use default value if we're out of arguments
-            value = optArg.defaultValue is null ? new Value(new BooleanToken(false)) : optArg.defaultValue;
+            value = optArg.defaultValue is null ? new Value(new BooleanToken(false)) : evaluateOnce(optArg.defaultValue.copy());
         } else {
             // otherwise use and remove the next one
             value = parameters[0];
             parameters = remove(parameters, 0);
         }
 
-        newScope[optArg.name] = evaluateOnce(value);
+        newScope[optArg.name] = value;
     }
 
     // if fun wants a rest parameter, grab all remaining parameters
@@ -197,9 +202,9 @@ Value[string] bindParameters (string name, LispFunction fun, Value[] parameters)
             restParameters = new Value(new BooleanToken(false));
 
         } else {
-            restParameters = Token.makeReference(evaluateOnce(parameters[0]));
+            restParameters = Token.makeReference(parameters[0]);
             for (int i = 1; i < parameters.length; i++) {
-                (cast(ReferenceToken)restParameters.token).append(evaluateOnce(parameters[i]));
+                (cast(ReferenceToken)restParameters.token).append(parameters[i]);
             }
         }
 
@@ -208,7 +213,6 @@ Value[string] bindParameters (string name, LispFunction fun, Value[] parameters)
 
     // extract and bind keyword arguments
     foreach (PairedArgument kwArg; fun.keywordArguments) {
-        Value value;
         // find matching keyword argument in parameters
         int kwIndex =
             countUntil!
@@ -216,6 +220,7 @@ Value[string] bindParameters (string name, LispFunction fun, Value[] parameters)
                       (cast(ConstantToken)x.token).stringValue == kwArg.name)
                 (parameters);
 
+        Value value;
         if (kwIndex == -1 || kwIndex == parameters.length - 1) {
             // not found, or doesn't have a value after it
             if (kwArg.defaultValue is null) {
@@ -223,7 +228,7 @@ Value[string] bindParameters (string name, LispFunction fun, Value[] parameters)
                 throw new Exception("Missing keyword argument " ~ kwArg.name);
             } else {
                 // use the default value
-                value = kwArg.defaultValue;
+                value = evaluateOnce(kwArg.defaultValue.copy());
             }
         } else {
             // grab value following keyword argument and remove both
@@ -231,12 +236,12 @@ Value[string] bindParameters (string name, LispFunction fun, Value[] parameters)
             parameters = remove(parameters, kwIndex, kwIndex + 1);
         }
 
-        newScope[kwArg.name] = evaluateOnce(value);
+        newScope[kwArg.name] = value;
     }
 
     // bind auxiliary arguments
     foreach (PairedArgument auxArg; fun.auxArguments) {
-        newScope[auxArg.name] = auxArg.defaultValue is null ? new Value(new BooleanToken(false)) : evaluateOnce(auxArg.defaultValue);
+        newScope[auxArg.name] = auxArg.defaultValue is null ? new Value(new BooleanToken(false)) : evaluateOnce(auxArg.defaultValue.copy());
     }
 
     return newScope;
