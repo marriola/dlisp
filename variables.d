@@ -20,6 +20,10 @@ void enterScope () {
     scopeTable.insertBack(newScope);
 }
 
+void enterScope (Value[string] newScope) {
+    scopeTable.insertBack(newScope);
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 
