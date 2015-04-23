@@ -282,6 +282,32 @@ Value builtinMinus (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value builtinOnePlus (string name, Value[] args, Value[string] kwargs) {
+    if (args.length < 1) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Value result = evaluateOnce(args[0]).copy();
+    result.add(new Value(new IntegerToken(1)));
+
+    return result;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Value builtinOneMinus (string name, Value[] args, Value[string] kwargs) {
+    if (args.length < 1) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Value result = evaluateOnce(args[0]).copy();
+    result.subtract(new Value(new IntegerToken(1)));
+
+    return result;
+}
+///////////////////////////////////////////////////////////////////////////////
+
 Value builtinTimes (string name, Value[] args, Value[string] kwargs) {
     if (args.length < 1) {
         throw new NotEnoughArgumentsException(name);
@@ -418,7 +444,9 @@ BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable[">"] = &builtinLesser;
     builtinTable[">="] = &builtinLesserOrEqual;
     builtinTable["+"] = &builtinPlus;
+    builtinTable["1+"] = &builtinOnePlus;
     builtinTable["-"] = &builtinMinus;
+    builtinTable["1-"] = &builtinOneMinus;
     builtinTable["*"] = &builtinTimes;
     builtinTable["/"] = &builtinDivide;
     builtinTable["SQRT"] = &builtinSqrt;
