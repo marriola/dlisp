@@ -120,11 +120,39 @@ class LispParser {
                         c = getc(stream);
                         if (isWhite(c)) {
                             break;
+                        } else if (c == '(' || c == ')' || c == '[' || c == ']') {
+                            ungetc(c, stream);
+                            break;
                         }
                         functionName ~= c;
                     }
 
                     nextToken = getFunction(std.string.toUpper(functionName)).token;
+                    break;
+
+                case '\\':
+                    // character
+                    string characterDescriptor = "";
+                    while (true) {
+                        c = getc(stream);
+                        if (isWhite(c)) {
+                            break;
+                        } else if (c == '(' || c == ')' || c == '[' || c == ']') {
+                            ungetc(c, stream);
+                            break;
+                        }
+                        characterDescriptor ~= c;
+                    }
+
+                    char character;
+                    if (std.string.toLower(characterDescriptor) == "newline") {
+                        character = '\n';
+
+                    } else {
+                        character = characterDescriptor[0];
+                    }
+
+                    nextToken = new CharacterToken(character);
                     break;
 
                 default:
