@@ -161,14 +161,16 @@ void addFunction (string name, Value[] lambdaList, Value[] forms, string docStri
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void bindParameters (string name, LispFunction fun, Value[] parameters) {
+Value[string] bindParameters (string name, LispFunction fun, Value[] parameters) {
+    Value[string] newScope;
+
     // extract and bind required arguments
     foreach (string requiredArg; fun.requiredArguments) {
         if (parameters.length == 0) {
             throw new Exception("Too few arguments given to " ~ name);
         }
 
-        addVariable(requiredArg, evaluateOnce(parameters[0]));
+        newScope[requiredArg] = evaluateOnce(parameters[0]);
         parameters = remove(parameters, 0);
     }
 
@@ -184,7 +186,7 @@ void bindParameters (string name, LispFunction fun, Value[] parameters) {
             parameters = remove(parameters, 0);
         }
 
-        addVariable(optArg.name, evaluateOnce(value));
+        newScope[optArg.name] = evaluateOnce(value);
     }
 
     // if fun wants a rest parameter, grab all remaining parameters
@@ -201,7 +203,7 @@ void bindParameters (string name, LispFunction fun, Value[] parameters) {
             }
         }
 
-        addVariable(fun.restArgument, restParameters);
+        newScope[fun.restArgument] = restParameters;
     }
 
     // extract and bind keyword arguments
@@ -229,13 +231,15 @@ void bindParameters (string name, LispFunction fun, Value[] parameters) {
             parameters = remove(parameters, kwIndex, kwIndex + 1);
         }
 
-        addVariable(kwArg.name, evaluateOnce(value));
+        newScope[kwArg.name] = evaluateOnce(value);
     }
 
     // bind auxiliary arguments
     foreach (PairedArgument auxArg; fun.auxArguments) {
-        addVariable(auxArg.name, auxArg.defaultValue is null ? new Value(new BooleanToken(false)) : evaluateOnce(auxArg.defaultValue));
+        newScope[auxArg.name] = auxArg.defaultValue is null ? new Value(new BooleanToken(false)) : evaluateOnce(auxArg.defaultValue);
     }
+
+    return newScope;
 }
 
 
@@ -252,8 +256,7 @@ Value evaluateDefinedFunction (LispFunction fun, Value[] parameters, string name
     Value[] forms = fun.forms;
     Value returnValue;
 
-    enterScope();
-    bindParameters(name, fun, parameters.dup);
+    enterScope(bindParameters(name, fun, parameters.dup));
     foreach (Value form; forms) {
         returnValue = evaluateOnce(form);
     }
