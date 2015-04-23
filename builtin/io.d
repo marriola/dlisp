@@ -151,6 +151,14 @@ string format (string formatString, Value[] args) {
                     directiveOut = "\n";
                     break;
 
+                // strings, characters and numbers can all just be converted to strings and added to the output string
+                case 'A':
+                case 'C':
+                case 'D':
+                    directiveOut = args[0].toString();
+                    args = args[1 .. args.length];
+                    break;
+
                 default:
                     throw new Exception("Invalid format directive character '" ~ formatString[i] ~ "'");
             }
@@ -177,7 +185,7 @@ Value builtinFormat (string name, Value[] args, Value[string] kwargs) {
         throw new TypeMismatchException(name, formatString.token, "string");
     }
 
-    string output = format((cast(StringToken)formatString.token).stringValue, args[1 .. args.length]);
+    string output = format((cast(StringToken)formatString.token).stringValue, args[2 .. args.length]);
 
     if (Token.isNil(destination)) {
         return new Value(new StringToken(output));
