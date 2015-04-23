@@ -16,7 +16,7 @@ Value builtinPrint (string name, Value[] args, Value[string] kwargs) {
     Value lastResult;
 
     for (int i = 0; i < args.length; i++) {
-        lastResult = evaluate(args[i]);
+        lastResult = evaluateOnce(args[i]);
         std.stdio.writeln(lastResult);
     }
 
