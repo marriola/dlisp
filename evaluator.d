@@ -14,6 +14,7 @@ Value evaluateOnce (Value value) {
         case TokenType.boolean:
         case TokenType.integer:
         case TokenType.floating:
+        case TokenType.character:
         case TokenType.string:
         case TokenType.constant:
         case TokenType.fileStream:
