@@ -56,8 +56,12 @@ Value getVariable (string name) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void addVariable (string name, Value token) {
-    scopeTable.back()[name] = token;
+void addVariable (string name, Value token, int scopeLevel = -1) {
+    if (scopeLevel >= 0) {
+        scopeTable[scopeLevel][name] = token;
+    } else {
+        scopeTable.back()[name] = token;
+    }
 }
 
 
