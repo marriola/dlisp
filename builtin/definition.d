@@ -13,17 +13,15 @@ import variables;
 Value builtinLet (string name, Value[] args, Value[string] kwargs) {
     if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
-    }
-
-    if (args[0].token.type != TokenType.reference) {
+    } else if (args[0].token.type != TokenType.reference) {
         throw new TypeMismatchException(name, args[0].token, "reference");
     }
 
     Value[] bindings = toArray(args[0]);
     Value[] forms = args[1 .. args.length];
-
     string[] variables = new string[bindings.length];
     Value[] initialValues = new Value[bindings.length];
+
     foreach (int i, Value binding; bindings) {
         Value bindingName = getFirst(binding);
         Value bindingValue = evaluateOnce(getFirst(getRest(binding)));
@@ -35,18 +33,16 @@ Value builtinLet (string name, Value[] args, Value[string] kwargs) {
         initialValues[i] = bindingValue;
     }
 
-    enterScope();
-
+    Value[string] newScope;
     for (int i = 0; i < bindings.length; i++) {
-        addVariable(variables[i], initialValues[i]);
+        newScope[variables[i]] = initialValues[i];
     }
 
+    enterScope(newScope);
     Value lastResult = new Value(new BooleanToken(false));
-
     foreach (Value form; forms) {
         lastResult = evaluateOnce(form);
     }
-
     leaveScope();
 
     return lastResult;
@@ -58,9 +54,7 @@ Value builtinLet (string name, Value[] args, Value[string] kwargs) {
 Value builtinLetStar (string name, Value[] args, Value[string] kwargs) {
     if (args.length < 2) {
         throw new NotEnoughArgumentsException(name);
-    }
-
-    if (args[0].token.type != TokenType.reference) {
+    } else if (args[0].token.type != TokenType.reference) {
         throw new TypeMismatchException(name, args[0].token, "reference");
     }
 
@@ -68,7 +62,6 @@ Value builtinLetStar (string name, Value[] args, Value[string] kwargs) {
     Value[] forms = args[1 .. args.length];
 
     enterScope();
-
     foreach (Value bindingReference; bindings) {
         Value bindingName = getFirst(bindingReference);
         Value bindingValue = evaluateOnce(getFirst(getRest(bindingReference)));
@@ -81,11 +74,9 @@ Value builtinLetStar (string name, Value[] args, Value[string] kwargs) {
     }
 
     Value lastResult = new Value(new BooleanToken(false));
-
     foreach (Value form; forms) {
         lastResult = evaluateOnce(form);
     }
-
     leaveScope();
 
     return lastResult;
@@ -106,7 +97,7 @@ Value builtinSetq (string name, Value[] args, Value[string] kwargs) {
     }
 
     Value value = evaluateOnce(args[1]);
-    addVariable(identifier, value);
+    addVariable(identifier, value, 0);
     return value;
 }
 
