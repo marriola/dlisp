@@ -259,7 +259,7 @@ Value builtinConcatenate (string name, Value[] args, Value[string] kwargs) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Value result = evaluateOnce(args[1]);
+    Value result = evaluateOnce(args[1]).copy();
     if (result.token.type != TokenType.string) {
         throw new TypeMismatchException(name, result.token, "string");
     }
