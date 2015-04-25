@@ -250,8 +250,8 @@ Value[string] bindParameters (string name, LispFunction fun, Value[] parameters)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value evaluateBuiltinFunction (string name, Value[] arguments, Value[string] kwargs = null) {
-    return builtinFunctions[name](name, arguments, kwargs);
+Value evaluateBuiltinFunction (string name, Value[] arguments) {
+    return builtinFunctions[name](name, arguments, null);
 }
 
 
