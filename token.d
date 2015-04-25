@@ -45,13 +45,17 @@ class Value {
     /**
      * Appends an element to the encapsulated Token object. If its value is not
      * '() (aka NIL) or a list, it throws an UnsupportedOperationException.
+     *
+     * @param element   Element to add to the list
+     * @return          The last element added to the list
      */
-    void append (Value element) {
+    Value append (Value element) {
         if (token.type == TokenType.boolean && (cast(BooleanToken)token).boolValue == false) {
-            token = Token.makeReference(element).token;
+            token = element.token;
+            return getLast(element);
 
         } else if (token.type == TokenType.reference) {
-            (cast(ReferenceToken)token).append(element);
+            return (cast(ReferenceToken)token).append(element);
 
         } else {
             throw new UnsupportedOperationException(token, "Append");
@@ -367,7 +371,7 @@ class ReferenceToken : Token {
             last = (cast(ReferenceToken)last.cdr.token).reference;
         }
 
-        last.cdr = Token.makeReference(element);
+        last.cdr = element;
         return last.cdr;
     }
 
@@ -477,7 +481,7 @@ class VectorToken : Token {
 ///////////////////////////////////////////////////////////////////////////////
 
 abstract class FunctionToken : Token {
-    Value evaluate (Value[] args, Value[string] kwargs = null);
+    Value evaluate (Value[] args);
 }
 
 
@@ -491,8 +495,8 @@ class BuiltinFunctionToken : FunctionToken {
         this.name = name;
     }
 
-    override Value evaluate (Value[] args, Value[string] kwargs = null) {
-        return evaluateBuiltinFunction(name, args, kwargs);
+    override Value evaluate (Value[] args) {
+        return evaluateBuiltinFunction(name, args);
     }
 
     override Token copy () {
@@ -529,7 +533,7 @@ class DefinedFunctionToken : FunctionToken {
         this.name = name;
     }
 
-    override Value evaluate (Value[] args, Value[string] kwargs = null) {
+    override Value evaluate (Value[] args) {
         if (name is null) {
             // evaluate a lambda function
             return evaluateDefinedFunction(fun, args, name);

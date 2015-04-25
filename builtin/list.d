@@ -66,7 +66,7 @@ Value builtinList (string name, Value[] args, Value[string] kwargs) {
 
     Value head = Token.makeReference(evaluateOnce(args[0]));
     for (int i = 1; i < args.length; i++) {
-        (cast(ReferenceToken)head.token).append(evaluateOnce(args[i]));
+        (cast(ReferenceToken)head.token).append(Token.makeReference(evaluateOnce(args[i])));
     }
 
     return head;
@@ -213,37 +213,20 @@ Value builtinAppend (string name, Value[] args, Value[string] kwargs) {
     Value lastItem = result;
 
     foreach (int i, Value item; args) {
-        item = evaluateOnce(item);
+        item = evaluateOnce(item).copy();
 
-        if (Token.isNil(item)) {
-            // skip empty list
-            continue;
+        // skip empty lists
+        if (!Token.isNil(item)) {
+            if (item.token.type == TokenType.reference) {
+                // added item must be a list
+                lastItem = lastItem.append(item);
 
-        } else {
-            if (Token.isNil(lastItem)) {
-                // (append nil x) = x
-                result = lastItem = item.copy();
-
-                if (item.token.type == TokenType.reference) {
-                    lastItem = getLast(lastItem);
-
-                } else if (i < args.length - 1) {
-                    // all items but last must be a list
-                    throw new TypeMismatchException(name, item.token, "list");
-                }
+            } else if (i == args.length - 1) {
+                // ...unless it's the last argument
+                lastItem = lastItem.append(item);
 
             } else {
-                // appending to a list
-                if (item.token.type != TokenType.reference && i < args.length - 1) {
-                    // all items but last must be a list
-                    throw new TypeMismatchException(name, item.token, "list");
-                }
-
-                // attach this item to the result, then move down to the last item
-                (cast(ReferenceToken)lastItem.token).reference.cdr = item.copy();
-                if (item.token.type == TokenType.reference) {
-                    lastItem = getLast(lastItem);
-                }
+                throw new TypeMismatchException(name, item.token, "list");
             }
         }
     }

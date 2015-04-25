@@ -82,5 +82,4 @@ class Node {
 
         return builder;
     }
-
 }
