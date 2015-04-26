@@ -46,7 +46,7 @@ class Node {
             builder ~= node.car.token.toString();
 
             // If the CDR is NIL, this is the last element of the list.
-            if (Token.isNil(node.cdr)) {
+            if (node.cdr.isNil()) {
                 break;
 
             } else {
@@ -73,7 +73,7 @@ class Node {
         string builder;
 
         // If the CDR is a reference-type value or NIL, this is a list.
-        if (cdr.token.type == TokenType.reference || Token.isNil(cdr)) {
+        if (cdr.token.type == TokenType.reference || cdr.isNil()) {
             return listToString(this);
             
         } else {

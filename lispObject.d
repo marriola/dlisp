@@ -12,7 +12,7 @@ import token;
 size_t listLength (Value list) {
     size_t count = 0;
 
-    while (list !is null && !Token.isNil(list)) {
+    while (list !is null && !list.isNil()) {
         count++;
         list = (cast(ReferenceToken)list.token).reference.cdr;
     }
@@ -24,7 +24,7 @@ size_t listLength (Value list) {
 ///////////////////////////////////////////////////////////////////////////////
 
 bool hasMore (Value head) {
-    return head !is null && !Token.isNil(head);
+    return head !is null && !head.isNil();
 }
 
 
@@ -59,7 +59,7 @@ Value getItem (Value head, int index) {
  * Returns the first item (aka CAR) of a list.
  */
 Value getFirst (Value head) {
-    if (Token.isNil(head)) {
+    if (head.isNil()) {
         return head;
     } else if (head.token.type != TokenType.reference) {
         throw new TypeMismatchException("getFirst", head.token, "list");
@@ -74,7 +74,7 @@ Value getFirst (Value head) {
  * Returns the rest (aka CDR) of a list.
  */
 Value getRest (Value head) {
-    if (Token.isNil(head)) {
+    if (head.isNil()) {
         return head;
     } else if (head.token.type != TokenType.reference) {
         throw new TypeMismatchException("getRest", head.token, "list");
@@ -89,14 +89,14 @@ Value getRest (Value head) {
  * Returns the last item of a list.
  */
 Value getLast (Value head) {
-    if (Token.isNil(head)) {
+    if (head.isNil()) {
         return head;
     } else if (head.token.type != TokenType.reference) {
         throw new TypeMismatchException("getLast", head.token, "list");
     }
 
     Value lastItem = head;
-    while (!Token.isNil((cast(ReferenceToken)lastItem.token).reference.cdr)) {
+    while (!(cast(ReferenceToken)lastItem.token).reference.cdr.isNil()) {
         lastItem = (cast(ReferenceToken)lastItem.token).reference.cdr;
     }
 

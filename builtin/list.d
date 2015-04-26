@@ -45,7 +45,7 @@ Value builtinCopyList (string name, Value[] args, Value[string] kwargs) {
     }
 
     Value list = evaluateOnce(args[0]);
-    if (Token.isNil(list)) {
+    if (list.isNil()) {
         return new Value(new BooleanToken(false));
 
     } else if (list.token.type == TokenType.reference) {
@@ -216,7 +216,7 @@ Value builtinAppend (string name, Value[] args, Value[string] kwargs) {
         item = evaluateOnce(item).copy();
 
         // skip empty lists
-        if (!Token.isNil(item)) {
+        if (!item.isNil()) {
             if (item.token.type == TokenType.reference) {
                 // added item must be a list
                 lastItem = lastItem.append(item);
@@ -348,7 +348,7 @@ Value builtinRemoveIf (string name, Value[] args, Value[string] kwargs) {
         predicate = cast(FunctionToken)predicateToken.token;
     }
 
-    while (!Token.isNil(list)) {
+    while (!list.isNil()) {
         Value item = getFirst(list);
         Value testResult = predicate.evaluate([item]);
         if (!Token.isTrue(testResult)) {
@@ -380,7 +380,7 @@ Value builtinRemoveIfNot (string name, Value[] args, Value[string] kwargs) {
         predicate = cast(FunctionToken)predicateToken.token;
     }
 
-    while (!Token.isNil(list)) {
+    while (!list.isNil()) {
         Value item = getFirst(list);
         Value testResult = predicate.evaluate([item]);
         if (Token.isTrue(testResult)) {

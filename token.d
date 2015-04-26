@@ -36,6 +36,14 @@ class Value {
     }
 
     /**
+     * @param value a Token object to test.
+     * @return true if the Token object is a BooleanToken representing the value NIL.
+     */
+    bool isNil () {
+        return token.type == TokenType.boolean && (cast(BooleanToken)token).boolValue == false;
+    }
+
+    /**
      * Produces a new Value object with a copy of the encapsulated token.
      */
     Value copy () {
@@ -159,14 +167,6 @@ abstract class Token {
      */
     static Value makeReference (Value car, Value cdr = null) {
         return new Value(new ReferenceToken(new Node(car, cdr)));
-    }
-
-    /**
-     * @param value a Token object to test.
-     * @return true if the Token object is a BooleanToken representing the value NIL.
-     */
-    static bool isNil (Value value) {
-        return value.token.type == TokenType.boolean && (cast(BooleanToken)value.token).boolValue == false;
     }
 
     /**
@@ -367,7 +367,7 @@ class ReferenceToken : Token {
     override Value append (Value element) {
         Node last = reference;
 
-        while (!Token.isNil(last.cdr)) {
+        while (!last.cdr.isNil()) {
             last = (cast(ReferenceToken)last.cdr.token).reference;
         }
 

@@ -182,7 +182,7 @@ Value builtinDefun (string name, Value[] args, Value[string] kwargs) {
 
     if (identifierToken.token.type != TokenType.identifier) {
         throw new TypeMismatchException(name, identifierToken.token, "identifier");
-    } else if (!Token.isNil(lambdaListToken) && lambdaListToken.token.type != TokenType.reference) {
+    } else if (!lambdaListToken.isNil() && lambdaListToken.token.type != TokenType.reference) {
         throw new TypeMismatchException(name, lambdaListToken.token, "reference");
     }
 

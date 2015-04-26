@@ -14,7 +14,7 @@ Value builtinNull (string name, Value[] args, Value[string] kwargs) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    return new Value(new BooleanToken(Token.isNil(evaluateOnce(args[0]))));
+    return new Value(new BooleanToken(evaluateOnce(args[0]).isNil()));
 }
 
 
@@ -53,7 +53,7 @@ Value builtinCond (string name, Value[] args, Value[string] kwargs) {
         Value condition = getFirst(variant);
         Value[] forms = toArray(getRest(variant));
 
-        if (!Token.isNil(evaluateOnce(condition))) {
+        if (!evaluateOnce(condition).isNil()) {
             foreach (Value form; forms) {
                 result = evaluateOnce(form);
             }

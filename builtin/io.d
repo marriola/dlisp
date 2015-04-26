@@ -196,7 +196,7 @@ Value builtinFormat (string name, Value[] args, Value[string] kwargs) {
 
     string output = format((cast(StringToken)formatString.token).stringValue, args[2 .. args.length]);
 
-    if (Token.isNil(destination)) {
+    if (destination.isNil()) {
         return new Value(new StringToken(output));
 
     } else if (destination.token.type == TokenType.fileStream) {
