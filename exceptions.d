@@ -1,5 +1,7 @@
 module exceptions;
 
+import std.array : array, join;
+import std.algorithm : map;
 import std.conv;
 
 import token;
@@ -34,9 +36,22 @@ class NotEnoughArgumentsException : Exception {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+class WrongNumberOfIndicesException : Exception {
+    this (int rank) {
+        super("Wrong number of indices given (vector has rank " ~ to!string(rank) ~ ")");
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 class OutOfBoundsException : Exception {
     this (int index) {
         super("Index " ~ to!string(index) ~ " is out of bounds");
+    }
+
+    this (int[] indices) {
+        super("Index (" ~ join(map!(x => to!string(x))(indices).array(), ", ") ~ ") is out of bounds");
     }
 }
 

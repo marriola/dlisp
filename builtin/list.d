@@ -1,6 +1,7 @@
 module builtin.list;
 
-import std.conv;
+import std.array : array;
+import std.conv : to;
 
 import evaluator;
 import exceptions;
@@ -17,21 +18,16 @@ Value builtinMakeArray (string name, Value[] args, Value[string] kwargs) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Value arg = evaluateOnce(args[0]);
+    Value size = evaluateOnce(args[0]);
 
-    if (arg.token.type == TokenType.integer) {
-        return new Value(new VectorToken(to!int((cast(IntegerToken)arg.token).intValue)));
+    if (size.token.type == TokenType.integer) {
+        return new Value(new VectorToken(to!int((cast(IntegerToken)size.token).intValue)));
 
-    } else if (arg.token.type == TokenType.reference) {
-        Value[] list = toArray(evaluateOnce(arg));
-        Value vector = new Value(new VectorToken(list.length));
-        for (int i = 0; i < list.length; i++) {
-            (cast(VectorToken)vector.token).array[i] = list[i];
-        }
-        return vector;
+    } else if (size.token.type == TokenType.reference) {
+        return new Value(new VectorToken(map!(x => to!int((cast(IntegerToken)x.token).intValue))(toArray(size)).array()));
 
     } else {
-        throw new TypeMismatchException(name, arg.token, "integer or list");
+        throw new TypeMismatchException(name, size.token, "integer or list");
     }
 
 }
@@ -179,26 +175,30 @@ Value builtinElt (string name, Value[] args, Value[string] kwargs) {
     }
 
     Value indexToken = evaluateOnce(args[1]);
-    if (indexToken.token.type != TokenType.integer) {
-        throw new TypeMismatchException(name, indexToken.token, "integer");
-    }
-    int index = to!int((cast(IntegerToken)indexToken.token).intValue);
-
     Value obj = evaluateOnce(args[0]);
 
-    if (obj.token.type == TokenType.reference) {
-        return getItem(obj, index);
-
-    } else if (obj.token.type == TokenType.vector) {
-        Value[] array = (cast(VectorToken)obj.token).array;
-        if (index > array.length) {
-            throw new OutOfBoundsException(index);
+    if (indexToken.token.type == TokenType.integer) {
+        int index = to!int((cast(IntegerToken)indexToken.token).intValue);
+        if (obj.token.type == TokenType.reference) {
+            return getItem(obj, index);
+        } else if (obj.token.type == TokenType.vector) {
+            return (cast(VectorToken)obj.token).getItem(index);
+        } else {
+            throw new TypeMismatchException(name, obj.token, "reference or vector");
         }
-        return array[index];
-
+    } else if (indexToken.token.type == TokenType.reference) {
+        Value[] indicesArray = toArray(indexToken);
+        int[] indices = map!(x => to!int((cast(IntegerToken)x.token).intValue))(indicesArray).array();
+        if (obj.token.type == TokenType.vector) {
+            return (cast(VectorToken)obj.token).getItem(indices);
+        } else {
+            return null;
+        }
     } else {
-        throw new TypeMismatchException(name, obj.token, "reference or vector");
+        throw new TypeMismatchException(name, indexToken.token, "integer or list");
     }
+
+
 }
 
 

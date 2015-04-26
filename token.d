@@ -442,33 +442,105 @@ class FileStreamToken : Token {
 ///////////////////////////////////////////////////////////////////////////////
 
 class VectorToken : Token {
+    int[] dimensions;
     Value[] array;
 
+    /**
+     * Copy constructor.
+     */
+    this (VectorToken vector) {
+        this.dimensions = vector.dimensions.dup;
+        this.array = vector.array.dup;
+    }
+
+    /**
+     * Constructor for one-dimensional vector.
+     */
     this (int length) {
         type = TokenType.vector;
+        dimensions = [1];
         array = new Value[length];
         for (int i = 0; i < length; i++) {
             array[i] = new Value(new BooleanToken(false));
         }
     }
 
+    /**
+     * Constructor for multi-dimensional vector.
+     */
+    this (int[] dimensions) {
+        type = TokenType.vector;
+        this.dimensions = dimensions;
+        int length = reduce!((result, x) => x * result)(1, dimensions);
+        array = new Value[length];
+        for (int i = 0; i < length; i++) {
+            array[i] = new Value(new BooleanToken(false));
+        }
+    }
+
+    /**
+     * Converts an array of indices to a one-dimensional index.
+     */
+    int flatten (int[] indices) {
+        int index = 1;
+        for (int i = 0; i < indices.length; i++) {
+            if (indices[i] < 0 || indices[i] >= dimensions[i]) {
+                throw new OutOfBoundsException(indices);
+            } else if (i < indices.length - 1) {
+                index *= indices[i];
+            } else {
+                index += indices[i];
+            }
+        }
+        return index;        
+    }
+
+     /**
+     * Set item in one-dimensional vector.
+     */
     void setItem (int index, Value element) {
         if (index < 0 || index >= array.length) {
             throw new OutOfBoundsException(index);
+        } else if (dimensions.length > 1) {
+            throw new WrongNumberOfIndicesException(dimensions.length);
         }
         array[index] = element;
     }
     
+    /**
+     * Set item in multi-dimensional vector.
+     */
+    void setItem (int[] indices, Value element) {
+        if (dimensions.length != indices.length) {
+            throw new WrongNumberOfIndicesException(dimensions.length);
+        }        
+        array[flatten(indices)] = element;
+    }
+    
+    /**
+     * Retrieve item from one-dimensional vector.
+     */
     override Value getItem (int index) {
         if (index < 0 || index >= array.length) {
             throw new OutOfBoundsException(index);
+        } else if (dimensions.length > 1) {
+            throw new WrongNumberOfIndicesException(dimensions.length);
         }
         return array[index];
     }
 
+    /**
+     * Retrieve item from multi-dimensional vector.
+     */
+    Value getItem (int[] indices) {
+        if (dimensions.length != indices.length) {
+            throw new WrongNumberOfIndicesException(dimensions.length);
+        }
+        return array[flatten(indices)];
+    }
+
     override Token copy () {
-        VectorToken vectorCopy = new VectorToken(0);
-        vectorCopy.array = array[];
+        VectorToken vectorCopy = new VectorToken(this);
         return vectorCopy;
     }
 
