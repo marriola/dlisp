@@ -296,6 +296,27 @@ Value builtinOnePlus (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value builtinIncf (string name, Value[] args, Value[string] kwargs) {
+    if (args.length < 1) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Value result = evaluateOnce(args[0]);
+    Value delta;
+    if (args.length >= 2) {
+        delta = evaluateOnce(args[1]);
+    } else {
+        delta = new Value(new IntegerToken(1));
+    }
+
+    result.add(delta);
+
+    return result;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 Value builtinOneMinus (string name, Value[] args, Value[string] kwargs) {
     if (args.length < 1) {
         throw new NotEnoughArgumentsException(name);
@@ -306,6 +327,29 @@ Value builtinOneMinus (string name, Value[] args, Value[string] kwargs) {
 
     return result;
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Value builtinDecf (string name, Value[] args, Value[string] kwargs) {
+    if (args.length < 1) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
+    Value result = evaluateOnce(args[0]);
+    Value delta;
+    if (args.length >= 2) {
+        delta = evaluateOnce(args[1]);
+    } else {
+        delta = new Value(new IntegerToken(1));
+    }
+
+    result.subtract(delta);
+
+    return result;
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinTimes (string name, Value[] args, Value[string] kwargs) {
@@ -445,8 +489,10 @@ BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
     builtinTable[">="] = &builtinLesserOrEqual;
     builtinTable["+"] = &builtinPlus;
     builtinTable["1+"] = &builtinOnePlus;
+    builtinTable["INCF"] = &builtinIncf;
     builtinTable["-"] = &builtinMinus;
     builtinTable["1-"] = &builtinOneMinus;
+    builtinTable["DECF"] = &builtinDecf;
     builtinTable["*"] = &builtinTimes;
     builtinTable["/"] = &builtinDivide;
     builtinTable["SQRT"] = &builtinSqrt;
