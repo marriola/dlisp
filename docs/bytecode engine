@@ -18,7 +18,11 @@ Bytecode is stored in the dictionary, a 2 dimensional array of bytecode
 instructions. Each function is assigned a number and a table of constants and
 has a corresponding entry in the dictionary. It is defined as:
 
-alias BytecodeFunction Instruction[];
+struct BytecodeFunction {
+    Value[] constants;
+    Instruction[] instructions;
+}
+
 BytecodeFunction[int] dictionary;
 
 
@@ -69,8 +73,10 @@ function n. The result will be pushed onto the stack.
 pushconst n
 Loads constant n from the constant table and pushes it onto the stack
 
-pushparam n
-Loads parameter n and pushes it onto the stack
+pushvar n
+Loads constant n from the call stack, retrieves its value and pushes it on the
+stack. If the constant is not an identifier or it is undefined, an exception
+is thrown.
 
 jump n
 Unconditionally jumps to instruction in within the current function
@@ -100,27 +106,28 @@ builtin function IDs (tentative, for example purposes only)
 
 This function will be entered into the dictionary as defined function 0
 
-(defun fact (n)
-    (if (= n 0)
-        1
-        (* n (fact (1- n)))
-    )
-)
+1: (defun fact (n)
+2:     (if (= n 0)
+3:         1
+4:         (* n (fact (1- n)))
+5:     )
+6: )
 
 compiles to:
 
-Constant table = [0, 1]
-Required parameters = [0: n]
+Constant table = [ 0: IdentifierToken("N"),
+                   1: IntegerToken(0),
+                   2: IntegerToken(1) ]
 
-0:  pushconst 0
-1:  pushparam 0
-2:  builtin 0
-3:  jumpifnot 6
-4:  pushconst 1
-5:  return
-6:  pushparam 0
-7:  builtin 2
-8:  fun 0
-9:  pushparam 0
-10: builtin 1
-11: return
+0:  pushconst 1     line 2  push IntegerToken(0)
+1:  pushvar 0               push the value of N, which an argument was bound to at the time FACT was called
+2:  builtin 0               (= n 0) empties the stack and pushes a BooleanToken onto the stack
+3:  jumpifnot 6     
+4:  pushconst 2     line 3  push IntegerToken(1)
+5:  return                  return
+6:  pushvar 0       line 4  push the value of N
+7:  builtin 2               call builtin function 1-
+8:  fun 0                   call defined function FACT. The value of N, which has been incremented and pushed back onto the stack, is bound again to the variable N in a new scope.
+9:  pushparam 0             push the value of N
+10: builtin 1               call builtin function *
+11: return                  the result of that call is now the last thing on the stack, which is our return value. return.
