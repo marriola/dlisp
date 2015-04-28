@@ -1,0 +1,104 @@
+DLisp bytecode engine
+===============================================================================
+
+
+The stack
+===============================================================================
+
+A stack of Value objects is maintained by the bytecode engine for passing
+parameters and returning values from functions.
+
+
+Bytecode
+===============================================================================
+
+Bytecode is stored in the dictionary, a 2 dimensional array of bytecode
+instructions. Each function is assigned a number and a table of constants and
+has a corresponding entry in the dictionary.
+
+The bytecode engine keeps its place as a struct:
+
+struct ProgramCounter {
+    uint entry;
+    uint entryCounter;
+}
+
+The bytecode engine also maintains a call stack of ProgramCounter objects.
+Before a defined function calls another, it pushes a ProgramCounter object
+pointing to the next instruction on the call stack.
+
+
+Instructions
+===============================================================================
+
+Bytecode instructions are also stored internally as a struct, but may be
+serialized for permanent storage.
+
+struct Instruction {
+    ubyte instruction;
+    uint[] arguments;
+}
+
+
+call n
+Binds all applicable parameters, popping them off the stack, and calls
+function n. The result will be pushed onto the stack.
+
+pushconst n
+Loads constant n from the constant table and pushes it onto the stack
+
+pushparam n
+Loads parameter n and pushes it onto the stack
+
+jump n
+Unconditionally jumps to instruction in within the current function
+
+jumpif n
+Pops a Value from the top of the stack. If it is T, control is transferred to
+instruction n in the current function.
+
+jumpifnot n
+Pops a Value from the top of the stack. If it is not T, control is transferred
+to instruction n in the current function.
+
+return
+Retrieves the last ProgramCounter from the call stack and jumps to the
+instruction it points to. The token on top of the stack is the return value; if
+the stack is empty, an exception is thrown.
+
+
+Example
+===============================================================================
+
+builtin function IDs (tentative, for example purposes only)
+
+=       0
+*       1
+1-      2
+
+This function will be entered into the dictionary as function 1000.
+
+(defun fact (n)
+    (if (= n 0)
+        1
+        (* n (fact (1- n)))
+    )
+)
+
+compiles to:
+
+Constant table = [0, 1]
+Required parameters = [0: n]
+
+0:  pushconst 0
+1:  pushparam 0
+2:  call 0
+3:  jumpifnot 6
+4:  pushconst 1
+5:  return
+6:  pushparam 0
+7:  call 2
+8:  call 1000
+9:  pushparam 0
+10: call 1
+11: return
