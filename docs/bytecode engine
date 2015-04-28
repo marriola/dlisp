@@ -40,8 +40,12 @@ struct Instruction {
 }
 
 
-call n
-Binds all applicable parameters, popping them off the stack, and calls
+builtin n
+Binds all applicable parameters, popping them off the stack, and calls builtin
+function n. The result will be pushed onto the stack.
+
+fun n
+Binds all applicable parameters, popping them off the stack, and calls defined
 function n. The result will be pushed onto the stack.
 
 pushconst n
@@ -76,7 +80,7 @@ builtin function IDs (tentative, for example purposes only)
 *       1
 1-      2
 
-This function will be entered into the dictionary as function 1000.
+This function will be entered into the dictionary as defined function 0
 
 (defun fact (n)
     (if (= n 0)
@@ -92,13 +96,13 @@ Required parameters = [0: n]
 
 0:  pushconst 0
 1:  pushparam 0
-2:  call 0
+2:  builtin 0
 3:  jumpifnot 6
 4:  pushconst 1
 5:  return
 6:  pushparam 0
-7:  call 2
-8:  call 1000
+7:  builtin 2
+8:  fun 0
 9:  pushparam 0
-10: call 1
+10: builtin 1
 11: return
