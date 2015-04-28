@@ -33,7 +33,7 @@ The bytecode engine maintains a program counter, which is defined as:
 
 struct ProgramCounter {
     uint entry;         // dictionary entry
-    uint entryCounter;  // instruction within dictionary entry
+    uint pc;            // instruction within dictionary entry
 }
 
 
@@ -42,7 +42,7 @@ The call stack
 
 The bytecode engine also maintains a call stack of ProgramCounter objects.
 Before a defined function calls another, it pushes a ProgramCounter object
-pointing to the next instruction on the call stack. It is defined as:
+pointing to the next instruction onto the call stack. It is defined as:
 
 std.container.slist!ProgramCounter callStack;
 
@@ -62,13 +62,17 @@ struct Instruction {
 }
 
 
-builtin n
-Binds all applicable parameters, popping them off the stack, and calls builtin
-function n. The result will be pushed onto the stack.
+builtin0 n
+builtin1 n
+builtin m n
+Binds no parameters, a single parameter, or m parameters, popping them off the
+stack, and calls builtin function n. The result will be pushed onto the stack.
 
-fun n
-Binds all applicable parameters, popping them off the stack, and calls defined
-function n. The result will be pushed onto the stack.
+fun0 n
+fun1 n
+fun m n
+Binds no parameters, a single parameter, or m parameters, popping them off the
+stack, and calls defined function n. The result will be pushed onto the stack.
 
 pushconst n
 Loads constant n from the constant table and pushes it onto the stack
@@ -121,13 +125,13 @@ Constant table = [ 0: IdentifierToken("N"),
 
 0:  pushconst 1     line 2  push IntegerToken(0)
 1:  pushvar 0               push the value of N, which an argument was bound to at the time FACT was called
-2:  builtin 0               (= n 0) empties the stack and pushes a BooleanToken onto the stack
-3:  jumpifnot 6     
+2:  builtin 2 0             call builtin function = with 2 parameters, which are removed from the stack. the result is pushed onto the stack.
+3:  jumpifnot 6
 4:  pushconst 2     line 3  push IntegerToken(1)
 5:  return                  return
 6:  pushvar 0       line 4  push the value of N
-7:  builtin 2               call builtin function 1-
-8:  fun 0                   call defined function FACT. The value of N, which has been incremented and pushed back onto the stack, is bound again to the variable N in a new scope.
+7:  builtin1 2              call builtin function 1- with a single parameter.
+8:  fun1 0                  call defined function FACT with a single argument. The value of N, which has been incremented and pushed back onto the stack, is bound again to the variable N in a new scope.
 9:  pushparam 0             push the value of N
-10: builtin 1               call builtin function *
+10: builtin 2 1             call builtin function * with 2 parameters
 11: return                  the result of that call is now the last thing on the stack, which is our return value. return.
