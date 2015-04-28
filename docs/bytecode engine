@@ -2,30 +2,48 @@ DLisp bytecode engine
 ===============================================================================
 
 
-The stack
+The data stack
 ===============================================================================
 
-A stack of Value objects is maintained by the bytecode engine for passing
-parameters and returning values from functions.
+A data stack of Value objects is maintained by the bytecode engine for passing
+parameters and returning values from functions. It is defined as:
+
+std.container.slist!Value dataStack;
 
 
-Bytecode
+The dictionary
 ===============================================================================
 
 Bytecode is stored in the dictionary, a 2 dimensional array of bytecode
 instructions. Each function is assigned a number and a table of constants and
-has a corresponding entry in the dictionary.
+has a corresponding entry in the dictionary. It is defined as:
 
-The bytecode engine keeps its place as a struct:
+alias BytecodeFunction Instruction[];
+BytecodeFunction[int] dictionary;
+
+
+The program counter
+===============================================================================
+
+The bytecode engine maintains a program counter, which is defined as:
 
 struct ProgramCounter {
-    uint entry;
-    uint entryCounter;
+    uint entry;         // dictionary entry
+    uint entryCounter;  // instruction within dictionary entry
 }
+
+
+The call stack
+===============================================================================
 
 The bytecode engine also maintains a call stack of ProgramCounter objects.
 Before a defined function calls another, it pushes a ProgramCounter object
-pointing to the next instruction on the call stack.
+pointing to the next instruction on the call stack. It is defined as:
+
+std.container.slist!ProgramCounter callStack;
+
+Calling builtin functions may be treated as an atomic operation and does not
+involve the call stack.
 
 
 Instructions
