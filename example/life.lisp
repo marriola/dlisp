@@ -38,13 +38,14 @@
     )
 )
 
-(defun matrix-to-string (matrix &optional (out ""))
+(defun matrix-to-string (matrix &optional (out "") (width 0))
     "Converts a life matrix to a string to pass to format"
     (if (null matrix)
-        out
+        (concatenate 'string out (make-string width :initial-element #\=) "~%")
         (matrix-to-string
             (rest matrix)
             (concatenate 'string out (row-to-string (first matrix)))
+            (1+ width)
         )
     )
 )
@@ -158,9 +159,11 @@
     )
 )
 
-(defun print-and-advance (&optional (out-stream t))
-    (setq matrix (advance-matrix matrix-width matrix-height matrix matrix-coordinates))
-    (print-matrix matrix out-stream)
+(defun print-and-advance (&optional (times 1) (out-stream t))
+    (dotimes (i times nil)
+        (setq matrix (advance-matrix matrix-width matrix-height matrix matrix-coordinates))
+        (print-matrix matrix out-stream)
+    )
 )
 
 (defun start-life (height width)
@@ -172,7 +175,8 @@
 
 ; The following function is a convenient way to watch the game of life unfold,
 ; but it only works in CLISP. I honestly don't feel like going to the trouble
-; of implementing CLISP's random screen access and keyboard facilities.
+; of implementing CLISP's random screen access and keyboard facilities for what
+; is essentially a toy project.
 
 (defun life-loop (&optional (height 30) (width 30) (delay 0.05))
     "Starts a game of life with the specified dimensions and delay between generations. To exit, press escape. To restart with a new matrix, press enter."
@@ -190,7 +194,7 @@
                 )
             )
             (screen:set-window-cursor-position screen:*window* 0 0)
-            (print-and-advance screen:*window*)
+            (print-and-advance 1 screen:*window*)
             (sleep delay)
         )
     )
