@@ -64,32 +64,36 @@ struct Instruction {
 
 builtin0 n
 builtin1 n
-builtin m n
+builtin m, n
 Binds no parameters, a single parameter, or m parameters, popping them off the
 stack, and calls builtin function n. The result will be pushed onto the stack.
 
 fun0 n
 fun1 n
-fun m n
+fun m, n
 Binds no parameters, a single parameter, or m parameters, popping them off the
 stack, and calls defined function n. The result will be pushed onto the stack.
 
+pushnil
+pushnil n
+Pushes 1 or n NILs onto the stack.
+
 pushconst n
-Loads constant n from the constant table and pushes it onto the stack
+Pushes constant n from the constant table onto the stack.
 
 pushvar n
 Loads constant n from the call stack, retrieves its value and pushes it on the
 stack. If the constant is not an identifier or it is undefined, an exception
 is thrown.
 
-jump n
+goto pc
 Unconditionally jumps to instruction in within the current function
 
-jumpif n
+jumpif pc
 Pops a Value from the top of the stack. If it is T, control is transferred to
 instruction n in the current function.
 
-jumpifnot n
+jumpifnot pc
 Pops a Value from the top of the stack. If it is not T, control is transferred
 to instruction n in the current function.
 
@@ -99,7 +103,8 @@ instruction it points to. The token on top of the stack is the return value; if
 the stack is empty, an exception is thrown.
 
 
-Example
+Example 1
+Factorial
 ===============================================================================
 
 builtin function IDs (tentative, for example purposes only)
@@ -125,7 +130,7 @@ Constant table = [ 0: IdentifierToken("N"),
 
 0:  pushconst 1     line 2  push IntegerToken(0)
 1:  pushvar 0               push the value of N, which an argument was bound to at the time FACT was called
-2:  builtin 2 0             call builtin function = with 2 parameters, which are removed from the stack. the result is pushed onto the stack.
+2:  builtin 2, 0            call builtin function = with 2 parameters, which are removed from the stack. the result is pushed onto the stack.
 3:  jumpifnot 6
 4:  pushconst 2     line 3  push IntegerToken(1)
 5:  return                  return
@@ -133,5 +138,46 @@ Constant table = [ 0: IdentifierToken("N"),
 7:  builtin1 2              call builtin function 1- with a single parameter.
 8:  fun1 0                  call defined function FACT with a single argument. The value of N, which has been incremented and pushed back onto the stack, is bound again to the variable N in a new scope.
 9:  pushparam 0             push the value of N
-10: builtin 2 1             call builtin function * with 2 parameters
+10: builtin 2, 1            call builtin function * with 2 parameters
 11: return                  the result of that call is now the last thing on the stack, which is our return value. return.
+
+
+Example 2
+Range
+===============================================================================
+
+This function will be entered into the dictionary as defined function 0
+
+1   (defun range (start stop)
+2       "Returns a list covering the range (start, stop)"
+3       (if (< stop start)
+4           nil
+5           (append
+6               (list start)
+7               (range (1+ start) stop)
+8           )
+9       )
+10  )
+
+<       0
+APPEND  1
+LIST    2
+1+      3
+
+Constant table = [ 0: IdentifierToken("START"),
+                   1: IdentifierToken("STOP") ]
+
+0:  pushvar 1       line 3  push variable START
+1:  pushvar 0               push variable STOP
+2:  builtin 2, 0            call builtin < with 2 parameters                (< stop start)
+3:  jumpifnot 6             skip to 6 if true
+4:  push-nil        line 5  push NIL
+5:  return
+6:  pushvar 1       line 7  push variable STOP
+7:  pushvar 0               push variable START
+8:  builtin1 3              call builtin 1+ with one parameter              (1+ start)
+9:  fun 2, 0                call defined function RANGE with 2 parameters   (range (1+ start) stop)
+10: pushvar 0       line 6  push variable START
+11: builtin1 2              call builtin LIST with one parameters           (list start)
+12: builtin 2, 1    line 5  call builtin APPEND with two parameters         (append (list start) (range (1+ start) stop))
+13: return
