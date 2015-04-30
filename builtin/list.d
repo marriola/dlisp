@@ -391,7 +391,7 @@ void addBuiltins () {
 
     addFunction("ELT", &builtinElt, Parameters(["OBJECT", "INDEX"]));
     addFunction("APPEND", &builtinAppend, Parameters(null, null, null, null, "LISTS"));
-    addFunction("CONCATENATE", &builtinConcatenate, Parameters(["RESULT-TYPE"]), null, null, null, "SEQUENCES"));
+    addFunction("CONCATENATE", &builtinConcatenate, Parameters(["RESULT-TYPE"], null, null, null, "SEQUENCES"));
     addFunction("STRING", &builtinString, Parameters(["CHARACTER"]));
     addFunction("MAP", &builtinMap, Parameters(["RESULT-TYPE", "FUNCTION", "LIST"]));
     addFunction("MAPCAR", &builtinMapcar, Parameters(["FUNCTION", "LIST"]));
