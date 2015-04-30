@@ -43,27 +43,27 @@ Value builtinComparator (string name) {
 
         switch (name) {
             case "<":
-                result = currentValue < lastValue;
+                result = lastValue < currentValue;
                 break;
 
             case "<=":
-                result = currentValue <= lastValue;
+                result = lastValue <= currentValue;
                 break;
 
             case "=":
-                result = currentValue == lastValue;
+                result = lastValue == currentValue;
                 break;
 
             case "/=":
-                result = currentValue != lastValue;
+                result = lastValue != currentValue;
                 break;
 
             case ">=":
-                result = currentValue >= lastValue;
+                result = lastValue >= currentValue;;
                 break;
 
             case ">":
-                result = currentValue > lastValue;
+                result = lastValue > currentValue;;
                 break;
 
             default:
