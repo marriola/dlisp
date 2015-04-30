@@ -11,7 +11,7 @@ import variables;
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinDotimes (string name) {
-    Value[] loopSpec = toArray(getVariable("LOOPSPEC"));
+    Value[] loopSpec = toArray(getParameter("LOOPSPEC"));
     if (loopSpec.length < 3) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -19,7 +19,7 @@ Value builtinDotimes (string name) {
     Value loopVariable = loopSpec[0];
     Value count = loopSpec[1];
     Value result = loopSpec[2];
-    Value[] loopBody = toArray(getVariable("FORMS"));
+    Value[] loopBody = toArray(getParameter("FORMS"));
 
     if (count.token.type != TokenType.integer) {
         throw new TypeMismatchException(name, count.token, "integer");

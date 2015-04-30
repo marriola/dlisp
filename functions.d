@@ -165,6 +165,13 @@ PairedArgument[] extractKeywordArguments (ref Value[] lambdaList, string keyword
  */
 
 void addFunction (string name, FunctionHook hook, Parameters parameters, string docString = null) {
+    // Add colons to the beginning of each parameter's name to prevent naming conflicts in case an
+    // identifier with an otherwise identical name is passed for that parameter.
+    parameters.required = map!(x => ":" ~ x)(parameters.required).array();
+    parameters.optional = map!(x => PairedArgument(":" ~ x.name, x.defaultValue))(parameters.optional).array();
+    parameters.keyword = map!(x => PairedArgument(":" ~ x.name, x.defaultValue))(parameters.keyword).array();
+    parameters.rest = ":" ~ parameters.rest;
+    
     builtinFunctions[name] = BuiltinFunction(hook, docString, parameters);
 }
 

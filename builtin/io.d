@@ -14,7 +14,7 @@ import variables;
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinPrint (string name) {
-    Value result = evaluateOnce(getVariable("OBJECT"));
+    Value result = evaluateOnce(getParameter("OBJECT"));
     std.stdio.writeln(result);
     return result;
 }
@@ -23,7 +23,7 @@ Value builtinPrint (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinLoad (string name) {
-    Value sourceFileToken = evaluate(getVariable("FILESPEC"));
+    Value sourceFileToken = evaluate(getParameter("FILESPEC"));
     string sourceFile;
     if (sourceFileToken.token.type == TokenType.constant) {
         sourceFile = (cast(ConstantToken)sourceFileToken.token).stringValue;
@@ -51,7 +51,7 @@ Value builtinLoad (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinOpen (string name) {
-    Value fileSpecToken = evaluateOnce(getVariable("FILESPEC"));
+    Value fileSpecToken = evaluateOnce(getParameter("FILESPEC"));
     string fileSpec;
     if (fileSpecToken.token.type == TokenType.string) {
         fileSpec = (cast(StringToken)fileSpecToken.token).stringValue;
@@ -61,7 +61,7 @@ Value builtinOpen (string name) {
         throw new TypeMismatchException(name, fileSpecToken.token, "string or constant");
     }
 
-    Value direction = evaluateOnce(getVariable("DIRECTION"));
+    Value direction = evaluateOnce(getParameter("DIRECTION"));
     if (direction.token.type != TokenType.constant) {
         throw new TypeMismatchException(name, direction.token, "constant");
     }
@@ -73,7 +73,7 @@ Value builtinOpen (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinClose (string name) {
-    Value streamToken = evaluate(getVariable("STREAM"));
+    Value streamToken = evaluate(getParameter("STREAM"));
     if (streamToken.token.type != TokenType.fileStream) {
         throw new TypeMismatchException(name, streamToken.token, "file stream");
     }
@@ -86,7 +86,7 @@ Value builtinClose (string name) {
 
 Value builtinRead (string name) {
     LispParser parser;
-    Value stream = getVariable("STREAM");
+    Value stream = getParameter("STREAM");
 
     if (stream.isNil()) {
         Value streamToken = evaluate(stream);
@@ -169,9 +169,9 @@ string format (string formatString, Value[] args) {
 }
 
 Value builtinFormat (string name) {
-    Value destination = evaluateOnce(getVariable("DESTINATION"));
-    Value formatString = evaluateOnce(getVariable("FORMAT-STRING"));
-    Value[] args = toArray(getVariable("ARGS"));
+    Value destination = evaluateOnce(getParameter("DESTINATION"));
+    Value formatString = evaluateOnce(getParameter("FORMAT-STRING"));
+    Value[] args = toArray(getParameter("ARGS"));
 
     if (formatString.token.type != TokenType.string) {
         throw new TypeMismatchException(name, formatString.token, "string");

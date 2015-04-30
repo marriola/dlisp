@@ -15,7 +15,7 @@ import variables;
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinMakeArray (string name) {
-    Value size = evaluateOnce(getVariable("SIZE"));
+    Value size = evaluateOnce(getParameter("SIZE"));
 
     if (size.token.type == TokenType.integer) {
         return new Value(new VectorToken(to!int((cast(IntegerToken)size.token).intValue)));
@@ -33,8 +33,8 @@ Value builtinMakeArray (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinMakeList (string name) {
-    Value sizeToken = evaluateOnce(getVariable("SIZE"));
-    Value initialElement = evaluateOnce(getVariable("INITIAL-ELEMENT"));
+    Value sizeToken = evaluateOnce(getParameter("SIZE"));
+    Value initialElement = evaluateOnce(getParameter("INITIAL-ELEMENT"));
 
     if (sizeToken.token.type != TokenType.integer) {
         throw new TypeMismatchException(name, sizeToken.token, "integer");
@@ -61,7 +61,7 @@ Value builtinMakeList (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinCopyList (string name) {
-    Value list = evaluateOnce(getVariable("LIST"));
+    Value list = evaluateOnce(getParameter("LIST"));
     if (list.isNil()) {
         return Value.nil();
 
@@ -77,7 +77,7 @@ Value builtinCopyList (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinList (string name) {
-    Value[] objects = toArray(getVariable("OBJECTS"));
+    Value[] objects = toArray(getParameter("OBJECTS"));
     if (objects.length == 0){
         return Value.nil();
     }
@@ -94,7 +94,7 @@ Value builtinList (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinLength (string name) {
-    Value list = evaluateOnce(getVariable("LIST"));
+    Value list = evaluateOnce(getParameter("LIST"));
     return new Value(new IntegerToken(listLength(list)));
 }
 
@@ -102,7 +102,7 @@ Value builtinLength (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinProgn (string name) {
-    Value[] forms = toArray(getVariable("FORMS"));
+    Value[] forms = toArray(getParameter("FORMS"));
     Value lastResult = Value.nil();
     foreach (Value form; forms) {
         lastResult = evaluateOnce(form);
@@ -115,15 +115,15 @@ Value builtinProgn (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinQuote (string name) {
-    return getVariable("OBJECT");
+    return getParameter("OBJECT");
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinCons (string name) {
-    Value car = evaluateOnce(getVariable("CAR"));
-    Value cdr = evaluateOnce(getVariable("CDR"));
+    Value car = evaluateOnce(getParameter("CAR"));
+    Value cdr = evaluateOnce(getParameter("CDR"));
     return Token.makeReference(car, cdr);
 }
 
@@ -131,14 +131,14 @@ Value builtinCons (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinCar (string name) {
-    return getFirst(evaluateOnce(getVariable("LIST")));
+    return getFirst(evaluateOnce(getParameter("LIST")));
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinCdr (string name) {
-    return getRest(evaluateOnce(getVariable("LIST")));
+    return getRest(evaluateOnce(getParameter("LIST")));
 }
 
 
@@ -146,7 +146,7 @@ Value builtinCdr (string name) {
 
 Value builtinCompoundAccessor (string name) {
     string accessPath = name[1 .. name.length - 1];
-    Value x = evaluateOnce(getVariable("LIST"));
+    Value x = evaluateOnce(getParameter("LIST"));
 
     foreach_reverse (char c; accessPath) {
         if (x.token.type != TokenType.reference) {
@@ -168,8 +168,8 @@ Value builtinCompoundAccessor (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinElt (string name) {
-    Value object = evaluateOnce(getVariable("OBJECT"));
-    Value indexToken = evaluateOnce(getVariable("INDEX"));
+    Value object = evaluateOnce(getParameter("OBJECT"));
+    Value indexToken = evaluateOnce(getParameter("INDEX"));
 
     if (indexToken.token.type == TokenType.integer) {
         int index = to!int((cast(IntegerToken)indexToken.token).intValue);
@@ -203,7 +203,7 @@ Value builtinElt (string name) {
 Value builtinAppend (string name) {
     Value result = Value.nil();
     Value lastItem = result;
-    Value[] lists = toArray(getVariable("LISTS"));
+    Value[] lists = toArray(getParameter("LISTS"));
 
     foreach (int i, Value item; lists) {
         item = evaluateOnce(item).copy();
@@ -231,7 +231,7 @@ Value builtinAppend (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinConcatenate (string name) {
-    Value[] sequences = toArray(getVariable("SEQUENCES"));
+    Value[] sequences = toArray(getParameter("SEQUENCES"));
     Value result = evaluateOnce(sequences[0]).copy();
     if (result.token.type != TokenType.string) {
         throw new TypeMismatchException(name, result.token, "string");
@@ -253,7 +253,7 @@ Value builtinConcatenate (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinString (string name) {
-    Value character = evaluateOnce(getVariable("CHARACTER"));
+    Value character = evaluateOnce(getParameter("CHARACTER"));
     if (character.token.type != TokenType.character) {
         throw new TypeMismatchException(name, character.token, "character");
     }
@@ -265,9 +265,9 @@ Value builtinString (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinMap (string name) {
-    Value resultTypeToken = evaluateOnce(getVariable("RESULT-TYPE"));
-    Value mapFunction = evaluateOnce(getVariable("FUNCTION"));
-    Value[] sequences = toArray(getVariable("SEQUENCES"));
+    Value resultTypeToken = evaluateOnce(getParameter("RESULT-TYPE"));
+    Value mapFunction = evaluateOnce(getParameter("FUNCTION"));
+    Value[] sequences = toArray(getParameter("SEQUENCES"));
 
     TokenType resultType;
     if (resultTypeToken.token.type != TokenType.identifier) {
@@ -299,8 +299,8 @@ Value builtinMap (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinMapcar (string name) {
-    Value mapFunction = evaluateOnce(getVariable("FUNCTION"));
-    Value[] sequences = toArray(getVariable("SEQUENCES"));
+    Value mapFunction = evaluateOnce(getParameter("FUNCTION"));
+    Value[] sequences = toArray(getParameter("SEQUENCES"));
     if (mapFunction.token.type != TokenType.definedFunction && mapFunction.token.type != TokenType.builtinFunction) {
         throw new TypeMismatchException(name, mapFunction.token, "function");
     }
@@ -311,8 +311,8 @@ Value builtinMapcar (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinRemoveIf (string name) {
-    Value predicateToken = evaluateOnce(getVariable("PREDICATE"));
-    Value list = evaluateOnce(getVariable("LIST"));
+    Value predicateToken = evaluateOnce(getParameter("PREDICATE"));
+    Value list = evaluateOnce(getParameter("LIST"));
 
     FunctionToken predicate;
     Value result = Value.nil();
@@ -339,8 +339,8 @@ Value builtinRemoveIf (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinRemoveIfNot (string name) {
-    Value predicateToken = evaluateOnce(getVariable("PREDICATE"));
-    Value list = evaluateOnce(getVariable("LIST"));
+    Value predicateToken = evaluateOnce(getParameter("PREDICATE"));
+    Value list = evaluateOnce(getParameter("LIST"));
 
     FunctionToken predicate;
     Value result = Value.nil();

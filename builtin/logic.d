@@ -11,7 +11,7 @@ import variables;
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinNull (string name) {
-    return new Value(new BooleanToken(evaluateOnce(getVariable("OBJECT")).isNil()));
+    return new Value(new BooleanToken(evaluateOnce(getParameter("OBJECT")).isNil()));
 }
 
 
@@ -19,7 +19,7 @@ Value builtinNull (string name) {
 
 Value builtinIf (string name) {
     bool condition;
-    Value current = evaluate(getVariable("TEST"));
+    Value current = evaluate(getParameter("TEST"));
 
     if (current.token.type != TokenType.boolean) {
         throw new TypeMismatchException(name, current.token, "boolean");
@@ -27,8 +27,8 @@ Value builtinIf (string name) {
         condition = (cast(BooleanToken)current.token).boolValue;
     }
 
-    Value thenClause = getVariable("THEN");
-    Value elseClause = getVariable("ELSE");
+    Value thenClause = getParameter("THEN");
+    Value elseClause = getParameter("ELSE");
     return condition ? evaluateOnce(thenClause) : evaluateOnce(elseClause);
 }
 
@@ -36,7 +36,7 @@ Value builtinIf (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinCond (string name) {
-    Value[] variants = toArray(getVariable("VARIANTS"));
+    Value[] variants = toArray(getParameter("VARIANTS"));
     Value result = Value.nil();
 
     foreach (Value variant; variants) {
@@ -58,7 +58,7 @@ Value builtinCond (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinAnd (string name) {
-    Value[] forms = toArray(getVariable("FORMS"));
+    Value[] forms = toArray(getParameter("FORMS"));
     bool result = true;
 
     foreach (Value form; forms) {
@@ -81,7 +81,7 @@ Value builtinAnd (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinOr (string name) {
-    Value[] forms = toArray(getVariable("FORMS"));
+    Value[] forms = toArray(getParameter("FORMS"));
     bool result = false;
 
     foreach (Value form; forms) {
@@ -100,7 +100,7 @@ Value builtinOr (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinNot (string name) {
-    Value current = evaluate(getVariable("FORM"));
+    Value current = evaluate(getParameter("FORM"));
     if (current.token.type != TokenType.boolean) {
         throw new TypeMismatchException(name, current.token, "boolean");
     }
@@ -112,8 +112,8 @@ Value builtinNot (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinEq (string name) {
-    Value obj1 = evaluate(getVariable("OBJ1"));
-    Value obj2 = evaluate(getVariable("OBJ2"));
+    Value obj1 = evaluate(getParameter("OBJ1"));
+    Value obj2 = evaluate(getParameter("OBJ2"));
 
     return new Value(new BooleanToken(objectsEqual(obj1, obj2)));
 }
@@ -122,8 +122,8 @@ Value builtinEq (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinNeq (string name) {
-    Value obj1 = evaluate(getVariable("OBJ1"));
-    Value obj2 = evaluate(getVariable("OBJ2"));
+    Value obj1 = evaluate(getParameter("OBJ1"));
+    Value obj2 = evaluate(getParameter("OBJ2"));
 
     return new Value(new BooleanToken(!objectsEqual(obj1, obj2)));
 }

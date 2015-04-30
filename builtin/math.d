@@ -13,7 +13,7 @@ import variables;
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinComparator (string name) {
-    Value[] numbers = toArray(getVariable("NUMBERS"));
+    Value[] numbers = toArray(getParameter("NUMBERS"));
     if (numbers.length < 1) {
         throw new NotEnoughArgumentsException(name);
     }
@@ -80,7 +80,7 @@ Value builtinComparator (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinArithmeticOperation (string name) {
-    Value[] numbers = toArray(getVariable("NUMBERS"));
+    Value[] numbers = toArray(getParameter("NUMBERS"));
     int initialValue = (name == "*" || name == "/") ? 1 : 0;
     Value result = new Value(new IntegerToken(initialValue));
 
@@ -115,7 +115,7 @@ Value builtinArithmeticOperation (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinOnePlus (string name) {
-    Value result = evaluateOnce(getVariable("NUMBER")).copy();
+    Value result = evaluateOnce(getParameter("NUMBER")).copy();
     result.add(new Value(new IntegerToken(1)));
     return result;
 }
@@ -124,7 +124,7 @@ Value builtinOnePlus (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinOneMinus (string name) {
-    Value result = evaluateOnce(getVariable("NUMBER")).copy();
+    Value result = evaluateOnce(getParameter("NUMBER")).copy();
     result.subtract(new Value(new IntegerToken(1)));
     return result;
 }
@@ -133,8 +133,8 @@ Value builtinOneMinus (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinIncf (string name) {
-    Value place = evaluateOnce(getVariable("PLACE"));
-    Value delta = evaluateOnce(getVariable("DELTA"));
+    Value place = evaluateOnce(getParameter("PLACE"));
+    Value delta = evaluateOnce(getParameter("DELTA"));
     place.add(delta);
     return place;
 }
@@ -143,8 +143,8 @@ Value builtinIncf (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinDecf (string name) {
-    Value place = evaluateOnce(getVariable("PLACE"));
-    Value delta = evaluateOnce(getVariable("DELTA"));
+    Value place = evaluateOnce(getParameter("PLACE"));
+    Value delta = evaluateOnce(getParameter("DELTA"));
     place.subtract(delta);
     return place;
 }
@@ -153,7 +153,7 @@ Value builtinDecf (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinSqrt (string name) {
-    Value operand = evaluateOnce(getVariable("NUMBER"));
+    Value operand = evaluateOnce(getParameter("NUMBER"));
     float value = (operand.token.type == TokenType.floating) ? (cast(FloatToken)operand.token).floatValue : (cast(IntegerToken)operand.token).intValue;
     return new Value(new FloatToken(sqrt(value)));
 }
@@ -162,8 +162,8 @@ Value builtinSqrt (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinMod (string name) {
-    Value numberToken = evaluateOnce(getVariable("DIVIDEND"));
-    Value divisorToken = evaluateOnce(getVariable("DIVISOR"));
+    Value numberToken = evaluateOnce(getParameter("DIVIDEND"));
+    Value divisorToken = evaluateOnce(getParameter("DIVISOR"));
     long number, divisor;
 
     if (numberToken.token.type == TokenType.integer) {
@@ -189,7 +189,7 @@ Value builtinMod (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinEven (string name) {
-    Value numberToken = evaluateOnce(getVariable("NUMBER"));
+    Value numberToken = evaluateOnce(getParameter("NUMBER"));
     if (numberToken.token.type != TokenType.integer) {
         throw new TypeMismatchException(name, numberToken.token, "integer");
     }
@@ -202,7 +202,7 @@ Value builtinEven (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinOdd (string name) {
-    Value numberToken = evaluateOnce(getVariable("NUMBER"));
+    Value numberToken = evaluateOnce(getParameter("NUMBER"));
     if (numberToken.token.type != TokenType.integer) {
         throw new TypeMismatchException(name, numberToken.token, "integer");
     }
@@ -215,7 +215,7 @@ Value builtinOdd (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinRandom (string name) {
-    Value limitToken = evaluateOnce(getVariable("LIMIT"));
+    Value limitToken = evaluateOnce(getParameter("LIMIT"));
     long limit;
 
     if (limitToken.token.type != TokenType.integer) {

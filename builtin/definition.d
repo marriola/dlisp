@@ -11,8 +11,8 @@ import variables;
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinLet (string name) {
-    Value[] bindings = toArray(getVariable("BINDINGS"));
-    Value[] forms = toArray(getVariable("FORMS"));
+    Value[] bindings = toArray(getParameter("BINDINGS"));
+    Value[] forms = toArray(getParameter("FORMS"));
     string[] variables = new string[bindings.length];
     Value[] initialValues = new Value[bindings.length];
 
@@ -46,8 +46,8 @@ Value builtinLet (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinLetStar (string name) {
-    Value[] bindings = toArray(getVariable("BINDINGS"));
-    Value[] forms = toArray(getVariable("FORMS"));
+    Value[] bindings = toArray(getParameter("BINDINGS"));
+    Value[] forms = toArray(getParameter("FORMS"));
 
     enterScope();
     foreach (Value bindingReference; bindings) {
@@ -73,7 +73,7 @@ Value builtinLetStar (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinSetq (string name) {
-    Value identifierToken = getVariable("IDENTIFIER");
+    Value identifierToken = getParameter("IDENTIFIER");
     string identifier;
     if (identifierToken.token.type == TokenType.identifier) {
         identifier = (cast(IdentifierToken)identifierToken.token).stringValue;
@@ -81,7 +81,7 @@ Value builtinSetq (string name) {
         throw new TypeMismatchException(name, identifierToken.token, "identifier");
     }
 
-    Value value = evaluateOnce(getVariable("VALUE"));
+    Value value = evaluateOnce(getParameter("VALUE"));
     addVariable(identifier, value, 0);
     return value;
 }
@@ -90,8 +90,8 @@ Value builtinSetq (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinSetf (string name) {
-    Value place = evaluateOnce(getVariable("PLACE"));
-    Value value = evaluateOnce(getVariable("VALUE"));
+    Value place = evaluateOnce(getParameter("PLACE"));
+    Value value = evaluateOnce(getParameter("VALUE"));
     copyValue(value, place);
     return value;
 }
@@ -100,8 +100,8 @@ Value builtinSetf (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinLambda (string name) {
-    Value[] lambdaList = toArray(getVariable("LAMBDA-LIST"));
-    Value[] forms = toArray(getVariable("FORMS"));
+    Value[] lambdaList = toArray(getParameter("LAMBDA-LIST"));
+    Value[] forms = toArray(getParameter("FORMS"));
     string docString = null;
 
     if (forms[0].token.type == TokenType.string && forms.length > 1) {
@@ -116,8 +116,8 @@ Value builtinLambda (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinFuncall (string name) {
-    Value fun = evaluateOnce(getVariable("FUNCTION"));
-    Value[] funArgs = toArray(getVariable("ARGUMENTS"));
+    Value fun = evaluateOnce(getParameter("FUNCTION"));
+    Value[] funArgs = toArray(getParameter("ARGUMENTS"));
 
     if (fun.token.type == TokenType.identifier) {
         return evaluateFunction((cast(IdentifierToken)fun.token).stringValue, funArgs);
@@ -134,10 +134,10 @@ Value builtinFuncall (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinDefun (string name) {
-    Value identifier = getVariable("IDENTIFIER");
-    Value lambdaList = getVariable("LAMBDA-LIST");
+    Value identifier = getParameter("IDENTIFIER");
+    Value lambdaList = getParameter("LAMBDA-LIST");
 
-    Value[] forms = toArray(getVariable("FORMS"));
+    Value[] forms = toArray(getParameter("FORMS"));
     string docString = null;
 
     if (forms[0].token.type == TokenType.string && forms.length > 3) {
@@ -161,7 +161,7 @@ Value builtinDefun (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinFunction (string name) {
-    Value identifierToken = getVariable("IDENTIFIER");
+    Value identifierToken = getParameter("IDENTIFIER");
 
     if (identifierToken.token.type != TokenType.identifier) {
         throw new TypeMismatchException(name, identifierToken.token, "identifier");
@@ -175,7 +175,7 @@ Value builtinFunction (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinEval (string name) {
-    return evaluateOnce(evaluateOnce(getVariable("FORM")));
+    return evaluateOnce(evaluateOnce(getParameter("FORM")));
 }
 
 

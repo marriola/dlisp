@@ -56,6 +56,25 @@ Value getVariable (string name) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Retrieves a parameter as passed to a function. The difference from
+ * getVariable is that a colon is prepended to the name of the parameter to
+ * avoid naming conflicts in case an identifier with an otherwise identical
+ * name is passed as the value of the parameter.
+ */
+
+Value getParameter (string name) {
+    Value[string] currentScope = scopeTable.back();
+    name = ":" ~ name;
+    if (name in currentScope) {
+        return currentScope[name];
+    }
+    throw new UndefinedVariableException(name);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 void addVariable (string name, Value token, int scopeLevel = -1) {
     if (scopeLevel >= 0) {
         scopeTable[scopeLevel][name] = token;
