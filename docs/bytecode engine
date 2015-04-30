@@ -74,6 +74,12 @@ fun m, n
 Binds no parameters, a single parameter, or m parameters, popping them off the
 stack, and calls defined function n. The result will be pushed onto the stack.
 
+tailcall0
+tailcall1
+tailcall m
+Binds 0, 1 or m parameters to the current scope, rather than opening a new
+scope. Transfer is then controlled to instruction 0 in the current function.
+
 pushnil
 pushnil n
 Pushes 1 or n NILs onto the stack.
@@ -137,9 +143,25 @@ Constant table = [ 0: IdentifierToken("N"),
 6:  pushvar 0       line 4  push the value of N
 7:  builtin1 2              call builtin function 1- with a single parameter.
 8:  fun1 0                  call defined function FACT with a single argument. The value of N, which has been incremented and pushed back onto the stack, is bound again to the variable N in a new scope.
-9:  pushparam 0             push the value of N
+9:  pushvar 0               push the value of N
 10: builtin 2, 1            call builtin function * with 2 parameters
 11: return                  the result of that call is now the last thing on the stack, which is our return value. return.
+
+
+tail call optimized:
+
+0:  pushconst 1
+1:  pushvar 0
+2:  builtin 2, 0
+3:  jumpifnot 6
+4:  pushconst 2
+5:  return
+6:  pushvar 0               push value of N
+7:  builtin1 2              (1+ n)
+8:  pushvar 0               push value of N
+9:  builtin 2, 1            (* n (1+ n))
+10: tailcall1
+
 
 
 Example 2
