@@ -116,7 +116,7 @@ Value builtinLambda (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinFuncall (string name) {
-    Value fun = evaluateOnce(getParameter("FUNCTION"));
+    Value fun = evaluateOnce(getParameter("IDENTIFIER"));
     Value[] funArgs = toArray(getParameter("ARGUMENTS"));
 
     if (fun.token.type == TokenType.identifier) {
@@ -187,7 +187,7 @@ void addBuiltins () {
     addFunction("SETF", &builtinSetf, Parameters(["PLACE", "VALUE"]));
     addFunction("SETQ", &builtinSetq, Parameters(["IDENTIFIER", "VALUE"]));
     addFunction("LAMBDA", &builtinLambda, Parameters(["LAMBDA-LIST"], null, null, null, "FORMS"));
-    addFunction("FUNCALL", &builtinFuncall, Parameters(["IDENTIFIER", "ARGUMENTS"]));
+    addFunction("FUNCALL", &builtinFuncall, Parameters(["IDENTIFIER"], null, null, null, "ARGUMENTS"));
     addFunction("DEFUN", &builtinDefun, Parameters(["IDENTIFIER", "LAMBDA-LIST"], null, null, null, "FORMS"));
     addFunction("FUNCTION", &builtinFunction, Parameters(["IDENTIFIER"]));
     addFunction("EVAL", &builtinEval, Parameters(["FORM"]));
