@@ -182,8 +182,8 @@ Value builtinEval (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 void addBuiltins () {
-    addFunction("LET", &builtinLet, Parameters(["BINDINGS", "FORMS"]));
-    addFunction("LET*", &builtinLetStar, Parameters(["BINDINGS", "FORMS"]));
+    addFunction("LET", &builtinLet, Parameters(["BINDINGS"], null, null, null, "FORMS"));
+    addFunction("LET*", &builtinLetStar, Parameters(["BINDINGS"], null, null, null, "FORMS"));
     addFunction("SETF", &builtinSetf, Parameters(["PLACE", "VALUE"]));
     addFunction("SETQ", &builtinSetq, Parameters(["IDENTIFIER", "VALUE"]));
     addFunction("LAMBDA", &builtinLambda, Parameters(["LAMBDA-LIST"], null, null, null, "FORMS"));
