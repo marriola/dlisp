@@ -240,7 +240,7 @@ void addBuiltins () {
     }
 
     addFunction("1+", &builtinOnePlus, Parameters(["NUMBER"]));
-    addFunction("1-", &builtinOnePlus, Parameters(["NUMBER"]));
+    addFunction("1-", &builtinOneMinus, Parameters(["NUMBER"]));
     addFunction("INCF", &builtinIncf, Parameters(["PLACE"]));
     addFunction("DECF", &builtinDecf, Parameters(["PLACE"]));
     addFunction("SQRT", &builtinSqrt, Parameters(["NUMBER"]));
