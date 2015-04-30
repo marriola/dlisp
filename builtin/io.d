@@ -171,13 +171,13 @@ string format (string formatString, Value[] args) {
 Value builtinFormat (string name) {
     Value destination = evaluateOnce(getVariable("DESTINATION"));
     Value formatString = evaluateOnce(getVariable("FORMAT-STRING"));
-    Value[] rest = toArray(getVariable("REST"));
+    Value[] args = toArray(getVariable("ARGS"));
 
     if (formatString.token.type != TokenType.string) {
         throw new TypeMismatchException(name, formatString.token, "string");
     }
 
-    string output = format((cast(StringToken)formatString.token).stringValue, rest);
+    string output = format((cast(StringToken)formatString.token).stringValue, args);
 
     if (destination.isNil()) {
         return new Value(new StringToken(output));
@@ -201,5 +201,5 @@ void addBuiltins () {
     addFunction("CLOSE", &builtinClose, Parameters(["STREAM"]));
     addFunction("READ", &builtinRead, Parameters(null, [PairedArgument("STREAM", Value.nil())]));
     addFunction("PRINT", &builtinPrint, Parameters(["OBJECT"]));
-    addFunction("FORMAT", &builtinFormat, Parameters(["DESTINATION", "FORMAT-STRING"], null, null, null, "REST"));
+    addFunction("FORMAT", &builtinFormat, Parameters(["DESTINATION", "FORMAT-STRING"], null, null, null, "ARGS"));
 }
