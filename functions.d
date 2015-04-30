@@ -28,40 +28,61 @@ import builtin.system;
 
 ///////////////////////////////////////////////////////////////////////////////
 
+alias FunctionHook = Value function(string);
+
 struct PairedArgument {
     string name;
     Value defaultValue;
+
+    this (string name, Value defaultValue = null) {
+        this.name = name;
+        this.defaultValue = defaultValue;
+    }
+}
+
+struct Parameters {
+    string[] required;
+    PairedArgument[] optional;
+    PairedArgument[] keyword;
+    PairedArgument[] auxiliary;
+    string rest;
+
+    this (string[] required, PairedArgument[] optional = null, PairedArgument[] keyword = null, PairedArgument[] auxiliary = null, string rest = null) {
+        this.required = required;
+        this.optional = optional;
+        this.keyword = keyword;
+        this.auxiliary = auxiliary;
+        this.rest = rest;
+    }
+}
+
+struct BuiltinFunction {
+    FunctionHook hook;
+    string docString;
+    Parameters parameters;
 }
 
 struct LispFunction {
     string docString;
     Value[] lambdaList;
-
-    string[] requiredArguments;
-    PairedArgument[] optionalArguments;
-    PairedArgument[] keywordArguments;
-    PairedArgument[] auxArguments;
-    string restArgument;
-
+    Parameters parameters;
     Value[] forms;
 }
 
-alias BuiltinFunction = Value function(string, Value[], Value[string]);
-
-LispFunction[string] lispFunctions;
 BuiltinFunction[string] builtinFunctions;
+LispFunction[string] lispFunctions;
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
 void initializeBuiltins () {
-    builtinFunctions = builtin.definition.addBuiltins(builtinFunctions);
-    builtinFunctions = builtin.io.addBuiltins(builtinFunctions);
-    builtinFunctions = builtin.list.addBuiltins(builtinFunctions);
-    builtinFunctions = builtin.logic.addBuiltins(builtinFunctions);
-    builtinFunctions = builtin.loop.addBuiltins(builtinFunctions);
-    builtinFunctions = builtin.math.addBuiltins(builtinFunctions);
-    builtinFunctions = builtin.system.addBuiltins(builtinFunctions);
+    builtin.definition.addBuiltins();
+    builtin.io.addBuiltins();
+    builtin.list.addBuiltins();
+    builtin.logic.addBuiltins();
+    builtin.loop.addBuiltins();
+    builtin.math.addBuiltins();
+    builtin.system.addBuiltins();
 }
 
 
@@ -139,18 +160,33 @@ PairedArgument[] extractKeywordArguments (ref Value[] lambdaList, string keyword
 
 ///////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Adds a builtin function.
+ */
+
+void addFunction (string name, FunctionHook hook, Parameters parameters, string docString = null) {
+    builtinFunctions[name] = BuiltinFunction(hook, docString, parameters);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Constructs a LispFunction object from a lambda list and list of forms.
+ */
+
 LispFunction processFunctionDefinition (Value[] lambdaList, Value[] forms, string docString = null) {
     Value[] oldLambdaList = lambdaList[];
-    PairedArgument[] optionalArguments = extractKeywordArguments(lambdaList, "&OPTIONAL");
-    PairedArgument[] keywordArguments = extractKeywordArguments(lambdaList, "&KEY");
-    string restArgument = extractRestArgument(lambdaList);
-    PairedArgument[] auxArguments = extractKeywordArguments(lambdaList, "&AUX");
-    string[] requiredArguments = reduce!((result, x) => result ~= (cast(IdentifierToken)x.token).stringValue)(new string[0], lambdaList);
-    if (requiredArguments.length == 0) {
-        requiredArguments = null;
+    PairedArgument[] optional = extractKeywordArguments(lambdaList, "&OPTIONAL");
+    PairedArgument[] keyword = extractKeywordArguments(lambdaList, "&KEY");
+    string rest = extractRestArgument(lambdaList);
+    PairedArgument[] auxiliary = extractKeywordArguments(lambdaList, "&AUX");
+    string[] required = reduce!((result, x) => result ~= (cast(IdentifierToken)x.token).stringValue)(new string[0], lambdaList);
+    if (required.length == 0) {
+        required = null;
     }
 
-    return LispFunction(docString, oldLambdaList, requiredArguments, optionalArguments, keywordArguments, auxArguments, restArgument, forms);
+    return LispFunction(docString, oldLambdaList, Parameters(required, optional, keyword, auxiliary, rest), forms);
 }
 
 
@@ -163,67 +199,71 @@ void addFunction (string name, Value[] lambdaList, Value[] forms, string docStri
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value[string] bindParameters (string name, LispFunction fun, Value[] parameters) {
+Value[string] bindParameters (string name, Parameters parameters, Value[] arguments, bool evaluateArguments = true) {
     Value[string] newScope;
 
-    // evaluate all parameters
-    for (int i = 0; i < parameters.length; i++) {
-        parameters[i] = evaluateOnce(parameters[i]);
+    if (evaluateArguments) {
+        // evaluate all arguments
+        for (int i = 0; i < arguments.length; i++) {
+            arguments[i] = evaluateOnce(arguments[i]);
+        }
     }
 
     // extract and bind required arguments
-    foreach (string requiredArg; fun.requiredArguments) {
-        if (parameters.length == 0) {
+    foreach (string requiredArg; parameters.required) {
+        if (arguments.length == 0) {
             throw new Exception("Too few arguments given to " ~ name);
         }
 
-        newScope[requiredArg] = parameters[0];
-        parameters = remove(parameters, 0);
+        newScope[requiredArg] = arguments[0];
+        arguments = remove(arguments, 0);
     }
 
     // extract and bind optional arguments
-    foreach (PairedArgument optArg; fun.optionalArguments) {
+    foreach (PairedArgument optArg; parameters.optional) {
         Value value;
-        if (parameters.length == 0) {
+        if (arguments.length == 0) {
             // use default value if we're out of arguments
-            value = optArg.defaultValue is null ? new Value(new BooleanToken(false)) : evaluateOnce(optArg.defaultValue.copy());
+            value = optArg.defaultValue is null ? Value.nil() : evaluateOnce(optArg.defaultValue.copy());
         } else {
             // otherwise use and remove the next one
-            value = parameters[0];
-            parameters = remove(parameters, 0);
+            value = arguments[0];
+            arguments = remove(arguments, 0);
         }
 
         newScope[optArg.name] = value;
     }
 
-    // if fun wants a rest parameter, grab all remaining parameters
-    if (fun.restArgument !is null) {
-        Value restParameters;
+    // if fun wants a rest parameter, grab all remaining arguments
+    if (parameters.rest !is null) {
+        Value restArguments;
 
-        if (parameters.length == 0) {
-            restParameters = new Value(new BooleanToken(false));
+        if (arguments.length == 0) {
+            restArguments = Value.nil();
 
         } else {
-            restParameters = Token.makeReference(parameters[0]);
-            for (int i = 1; i < parameters.length; i++) {
-                (cast(ReferenceToken)restParameters.token).append(parameters[i]);
+            restArguments = Token.makeReference(arguments[0]);
+            Value lastArgument = restArguments;
+            for (int i = 1; i < arguments.length; i++) {
+                (cast(ReferenceToken)lastArgument.token).reference.cdr = Token.makeReference(arguments[i]);
+                lastArgument = (cast(ReferenceToken)lastArgument.token).reference.cdr;
             }
         }
 
-        newScope[fun.restArgument] = restParameters;
+        newScope[parameters.rest] = restArguments;
     }
 
     // extract and bind keyword arguments
-    foreach (PairedArgument kwArg; fun.keywordArguments) {
-        // find matching keyword argument in parameters
+    foreach (PairedArgument kwArg; parameters.keyword) {
+        // find matching keyword argument in arguments
         int kwIndex =
             countUntil!
                 (x => x.token.type == TokenType.constant &&
                       (cast(ConstantToken)x.token).stringValue == kwArg.name)
-                (parameters);
+                (arguments);
 
         Value value;
-        if (kwIndex == -1 || kwIndex == parameters.length - 1) {
+        if (kwIndex == -1 || kwIndex == arguments.length - 1) {
             // not found, or doesn't have a value after it
             if (kwArg.defaultValue is null) {
                 // no default value
@@ -234,16 +274,16 @@ Value[string] bindParameters (string name, LispFunction fun, Value[] parameters)
             }
         } else {
             // grab value following keyword argument and remove both
-            value = parameters[kwIndex + 1];
-            parameters = remove(parameters, kwIndex, kwIndex + 1);
+            value = arguments[kwIndex + 1];
+            arguments = remove(arguments, kwIndex, kwIndex + 1);
         }
 
         newScope[kwArg.name] = value;
     }
 
     // bind auxiliary arguments
-    foreach (PairedArgument auxArg; fun.auxArguments) {
-        newScope[auxArg.name] = auxArg.defaultValue is null ? new Value(new BooleanToken(false)) : evaluateOnce(auxArg.defaultValue.copy());
+    foreach (PairedArgument auxArg; parameters.auxiliary) {
+        newScope[auxArg.name] = auxArg.defaultValue is null ? Value.nil() : evaluateOnce(auxArg.defaultValue.copy());
     }
 
     return newScope;
@@ -253,7 +293,11 @@ Value[string] bindParameters (string name, LispFunction fun, Value[] parameters)
 ///////////////////////////////////////////////////////////////////////////////
 
 Value evaluateBuiltinFunction (string name, Value[] arguments) {
-    return builtinFunctions[name](name, arguments, null);
+    BuiltinFunction fun = builtinFunctions[name];
+    enterScope(bindParameters(name, fun.parameters, arguments, false)); // leave evaluation of arguments up to the called function
+    Value result = fun.hook(name);
+    leaveScope();
+    return result;
 }
 
 
@@ -263,7 +307,7 @@ Value evaluateDefinedFunction (LispFunction fun, Value[] parameters, string name
     Value[] forms = fun.forms;
     Value returnValue;
 
-    enterScope(bindParameters(name, fun, parameters.dup));
+    enterScope(bindParameters(name, fun.parameters, parameters.dup));
     foreach (Value form; forms) {
         returnValue = evaluateOnce(form);
     }

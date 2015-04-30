@@ -10,15 +10,9 @@ import variables;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinLet (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 2) {
-        throw new NotEnoughArgumentsException(name);
-    } else if (args[0].token.type != TokenType.reference) {
-        throw new TypeMismatchException(name, args[0].token, "reference");
-    }
-
-    Value[] bindings = toArray(args[0]);
-    Value[] forms = args[1 .. args.length];
+Value builtinLet (string name) {
+    Value[] bindings = toArray(getVariable("BINDINGS"));
+    Value[] forms = toArray(getVariable("FORMS"));
     string[] variables = new string[bindings.length];
     Value[] initialValues = new Value[bindings.length];
 
@@ -51,15 +45,9 @@ Value builtinLet (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinLetStar (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 2) {
-        throw new NotEnoughArgumentsException(name);
-    } else if (args[0].token.type != TokenType.reference) {
-        throw new TypeMismatchException(name, args[0].token, "reference");
-    }
-
-    Value[] bindings = toArray(args[0]);
-    Value[] forms = args[1 .. args.length];
+Value builtinLetStar (string name) {
+    Value[] bindings = toArray(getVariable("BINDINGS"));
+    Value[] forms = toArray(getVariable("FORMS"));
 
     enterScope();
     foreach (Value bindingReference; bindings) {
@@ -84,19 +72,16 @@ Value builtinLetStar (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinSetq (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 2) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
+Value builtinSetq (string name) {
+    Value identifierToken = getVariable("IDENTIFIER");
     string identifier;
-    if (args[0].token.type == TokenType.identifier) {
-        identifier = (cast(IdentifierToken)args[0].token).stringValue;
+    if (identifierToken.token.type == TokenType.identifier) {
+        identifier = (cast(IdentifierToken)identifierToken.token).stringValue;
     } else {
-        throw new TypeMismatchException(name, args[0].token, "identifier");
+        throw new TypeMismatchException(name, identifierToken.token, "identifier");
     }
 
-    Value value = evaluateOnce(args[1]);
+    Value value = evaluateOnce(getVariable("VALUE"));
     addVariable(identifier, value, 0);
     return value;
 }
@@ -104,28 +89,19 @@ Value builtinSetq (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinSetf (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 2) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value reference = evaluateOnce(args[0]);
-    Value value = evaluateOnce(args[1]);
-
-    copyValue(value, reference);
+Value builtinSetf (string name) {
+    Value place = evaluateOnce(getVariable("PLACE"));
+    Value value = evaluateOnce(getVariable("VALUE"));
+    copyValue(value, place);
     return value;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinLambda (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 1) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value[] lambdaList = toArray(args[0]);
-    Value[] forms = args[1 .. args.length];
+Value builtinLambda (string name) {
+    Value[] lambdaList = toArray(getVariable("LAMBDA-LIST"));
+    Value[] forms = toArray(getVariable("FORMS"));
     string docString = null;
 
     if (forms[0].token.type == TokenType.string && forms.length > 1) {
@@ -139,13 +115,9 @@ Value builtinLambda (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinFuncall (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 1) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value fun = evaluateOnce(args[0]);
-    Value[] funArgs = args[1 .. args.length];
+Value builtinFuncall (string name) {
+    Value fun = evaluateOnce(getVariable("FUNCTION"));
+    Value[] funArgs = toArray(getVariable("ARGUMENTS"));
 
     if (fun.token.type == TokenType.identifier) {
         return evaluateFunction((cast(IdentifierToken)fun.token).stringValue, funArgs);
@@ -161,48 +133,35 @@ Value builtinFuncall (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinDefun (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 3) {
-        throw new NotEnoughArgumentsException(name);
-    }
+Value builtinDefun (string name) {
+    Value identifier = getVariable("IDENTIFIER");
+    Value lambdaList = getVariable("LAMBDA-LIST");
 
-    Value identifierToken = args[0];
-    Value lambdaListToken = args[1];
-
-    Value[] forms;
+    Value[] forms = toArray(getVariable("FORMS"));
     string docString = null;
 
-    if (args[2].token.type == TokenType.string && args.length > 3) {
+    if (forms[0].token.type == TokenType.string && forms.length > 3) {
         // remove documentation string
-        docString = (cast(StringToken)args[2].token).stringValue;
-        forms = args[3 .. args.length];
-    } else {
-        forms = args[2 .. args.length];
+        docString = (cast(StringToken)forms[0].token).stringValue;
+        forms = forms[1 .. forms.length];
     }
 
-    if (identifierToken.token.type != TokenType.identifier) {
-        throw new TypeMismatchException(name, identifierToken.token, "identifier");
-    } else if (!lambdaListToken.isNil() && lambdaListToken.token.type != TokenType.reference) {
-        throw new TypeMismatchException(name, lambdaListToken.token, "reference");
+    if (identifier.token.type != TokenType.identifier) {
+        throw new TypeMismatchException(name, identifier.token, "identifier");
+    } else if (!lambdaList.isNil() && lambdaList.token.type != TokenType.reference) {
+        throw new TypeMismatchException(name, lambdaList.token, "reference");
     }
 
-    string identifier = (cast(IdentifierToken)identifierToken.token).stringValue;
-    Value[] lambdaList = toArray(lambdaListToken);
+    addFunction((cast(IdentifierToken)identifier.token).stringValue, toArray(lambdaList), forms, docString);
 
-    addFunction(identifier, lambdaList, forms, docString);
-
-    return identifierToken;
+    return identifier;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinFunction (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 1) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value identifierToken = args[0];
+Value builtinFunction (string name) {
+    Value identifierToken = getVariable("IDENTIFIER");
 
     if (identifierToken.token.type != TokenType.identifier) {
         throw new TypeMismatchException(name, identifierToken.token, "identifier");
@@ -215,26 +174,22 @@ Value builtinFunction (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinEval (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 1) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    return evaluateOnce(evaluateOnce(args[0]));
+Value builtinEval (string name) {
+    return evaluateOnce(evaluateOnce(getVariable("FORM")));
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
-    builtinTable["LET"] = &builtinLet;
-    builtinTable["LET*"] = &builtinLetStar;
-    builtinTable["SETF"] = &builtinSetf;
-    builtinTable["SETQ"] = &builtinSetq;
-    builtinTable["LAMBDA"] = &builtinLambda;
-    builtinTable["FUNCALL"] = &builtinFuncall;
-    builtinTable["DEFUN"] = &builtinDefun;
-    builtinTable["FUNCTION"] = &builtinFunction;
-    builtinTable["EVAL"] = &builtinEval;
-    return builtinTable;
+void addBuiltins () {
+    addFunction("LET", &builtinLet, Parameters(["BINDINGS", "FORMS"]));
+    addFunction("LET*", &builtinLetStar, Parameters(["BINDINGS", "FORMS"]));
+    addFunction("SETF", &builtinSetf, Parameters(["PLACE", "VALUE"]));
+    addFunction("SETQ", &builtinSetq, Parameters(["IDENTIFIER", "VALUE"]));
+    addFunction("LAMBDA", &builtinLambda, Parameters(["LAMBDA-LIST"], null, null, null, "FORMS"));
+    addFunction("FUNCALL", &builtinFuncall, Parameters(["IDENTIFIER", "ARGUMENTS"]));
+    addFunction("DEFUN", &builtinDefun, Parameters(["IDENTIFIER", "LAMBDA-LIST"], null, null, null, "FORMS"));
+    addFunction("FUNCTION", &builtinFunction, Parameters(["IDENTIFIER"]));
+    addFunction("EVAL", &builtinEval, Parameters(["FORM"]));
+
 }

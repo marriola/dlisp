@@ -6,22 +6,14 @@ import evaluator;
 import functions;
 import lispObject;
 import token;
+import variables;
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinExit (string name, Value[] args, Value[string] kwargs) {
-    int exitCode = 0;
-
-    if (args.length > 0) {
-        Value exitCodeToken = evaluate(args[0]);
-        if (exitCodeToken.token.type != TokenType.integer) {
-            throw new Exception("Exit code must be an integer");
-        } else {
-            exitCode = cast(int)(cast(IntegerToken)exitCodeToken.token).intValue;
-        }
-    }
-
+Value builtinExit (string name) {
+    Value exitCodeToken = evaluate(getVariable("EXIT-CODE"));
+    int exitCode = cast(int)(cast(IntegerToken)exitCodeToken.token).intValue;
     exit(exitCode);
     return null;
 }
@@ -29,7 +21,6 @@ Value builtinExit (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
-    builtinTable["EXIT"] = &builtinExit;
-    return builtinTable;
+void addBuiltins () {
+    addFunction("EXIT", &builtinExit, Parameters(null, [PairedArgument("EXIT-CODE", new Value(new IntegerToken(0)))]));
 }

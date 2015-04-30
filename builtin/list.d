@@ -9,16 +9,13 @@ import functions;
 import lispObject;
 import node;
 import token;
+import variables;
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinMakeArray (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 1) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value size = evaluateOnce(args[0]);
+Value builtinMakeArray (string name) {
+    Value size = evaluateOnce(getVariable("SIZE"));
 
     if (size.token.type == TokenType.integer) {
         return new Value(new VectorToken(to!int((cast(IntegerToken)size.token).intValue)));
@@ -35,14 +32,38 @@ Value builtinMakeArray (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinCopyList (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 1) {
-        throw new NotEnoughArgumentsException(name);
+Value builtinMakeList (string name) {
+    Value sizeToken = evaluateOnce(getVariable("SIZE"));
+    Value initialElement = evaluateOnce(getVariable("INITIAL-ELEMENT"));
+
+    if (sizeToken.token.type != TokenType.integer) {
+        throw new TypeMismatchException(name, sizeToken.token, "integer");
     }
 
-    Value list = evaluateOnce(args[0]);
+    long size = (cast(IntegerToken)sizeToken.token).intValue;
+
+    if (size == 0) {
+        return Value.nil();
+
+    } else {
+        Value head = Token.makeReference(initialElement.copy());
+        Value last = head;
+        size--;
+        for (int i = 0; i < size; i++) {
+            (cast(ReferenceToken)last.token).reference.cdr = Token.makeReference(initialElement.copy());
+            last = (cast(ReferenceToken)last.token).reference.cdr;
+        }
+        return head;
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Value builtinCopyList (string name) {
+    Value list = evaluateOnce(getVariable("LIST"));
     if (list.isNil()) {
-        return new Value(new BooleanToken(false));
+        return Value.nil();
 
     } else if (list.token.type == TokenType.reference) {
         return list.copy();
@@ -55,14 +76,15 @@ Value builtinCopyList (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinList (string name, Value[] args, Value[string] kwargs) {
-    if (args.length == 0) {
-        return new Value(new BooleanToken(false));
+Value builtinList (string name) {
+    Value[] objects = toArray(getVariable("OBJECTS"));
+    if (objects.length == 0){
+        return Value.nil();
     }
 
-    Value head = Token.makeReference(evaluateOnce(args[0]));
-    for (int i = 1; i < args.length; i++) {
-        (cast(ReferenceToken)head.token).append(Token.makeReference(evaluateOnce(args[i])));
+    Value head = Token.makeReference(evaluateOnce(objects[0]));
+    for (int i = 1; i < objects.length; i++) {
+        (cast(ReferenceToken)head.token).append(Token.makeReference(evaluateOnce(objects[i])));
     }
 
     return head;
@@ -71,84 +93,60 @@ Value builtinList (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinLength (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 1) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value list = evaluateOnce(args[0]);
+Value builtinLength (string name) {
+    Value list = evaluateOnce(getVariable("LIST"));
     return new Value(new IntegerToken(listLength(list)));
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinProgn (string name, Value[] args, Value[string] kwargs) {
-    Value lastResult = new Value(new BooleanToken(false));
+Value builtinProgn (string name) {
+    Value[] forms = toArray(getVariable("FORMS"));
+    Value lastResult = Value.nil();
+    foreach (Value form; forms) {
+        lastResult = evaluateOnce(form);
 
-    for (int i = 0; i < args.length; i++) {
-        lastResult = evaluateOnce(args[i]);
     }
-
     return lastResult;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinQuote (string name, Value[] args, Value[string] kwargs) {
-    if (args.length == 0) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    return args[0];
+Value builtinQuote (string name) {
+    return getVariable("OBJECT");
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinCons (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 2) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value car = evaluateOnce(args[0]);
-    Value cdr = evaluateOnce(args[1]);
+Value builtinCons (string name) {
+    Value car = evaluateOnce(getVariable("CAR"));
+    Value cdr = evaluateOnce(getVariable("CDR"));
     return Token.makeReference(car, cdr);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinCar (string name, Value[] args, Value[string] kwargs) {
-    if (args.length == 0) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    return getFirst(evaluateOnce(args[0]));
+Value builtinCar (string name) {
+    return getFirst(evaluateOnce(getVariable("LIST")));
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinCdr (string name, Value[] args, Value[string] kwargs) {
-    if (args.length == 0) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    return getRest(evaluateOnce(args[0]));
+Value builtinCdr (string name) {
+    return getRest(evaluateOnce(getVariable("LIST")));
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinCompoundAccessor (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 1) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
+Value builtinCompoundAccessor (string name) {
     string accessPath = name[1 .. name.length - 1];
-    Value x = evaluateOnce(args[0]);
+    Value x = evaluateOnce(getVariable("LIST"));
 
     foreach_reverse (char c; accessPath) {
         if (x.token.type != TokenType.reference) {
@@ -169,31 +167,29 @@ Value builtinCompoundAccessor (string name, Value[] args, Value[string] kwargs) 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinElt (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 2) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value indexToken = evaluateOnce(args[1]);
-    Value obj = evaluateOnce(args[0]);
+Value builtinElt (string name) {
+    Value object = evaluateOnce(getVariable("OBJECT"));
+    Value indexToken = evaluateOnce(getVariable("INDEX"));
 
     if (indexToken.token.type == TokenType.integer) {
         int index = to!int((cast(IntegerToken)indexToken.token).intValue);
-        if (obj.token.type == TokenType.reference) {
-            return getItem(obj, index);
-        } else if (obj.token.type == TokenType.vector) {
-            return (cast(VectorToken)obj.token).getItem(index);
+        if (object.token.type == TokenType.reference) {
+            return getItem(object, index);
+        } else if (object.token.type == TokenType.vector) {
+            return (cast(VectorToken)object.token).getItem(index);
         } else {
-            throw new TypeMismatchException(name, obj.token, "reference or vector");
+            throw new TypeMismatchException(name, object.token, "reference or vector");
         }
+
     } else if (indexToken.token.type == TokenType.reference) {
         Value[] indicesArray = toArray(indexToken);
         int[] indices = map!(x => to!int((cast(IntegerToken)x.token).intValue))(indicesArray).array();
-        if (obj.token.type == TokenType.vector) {
-            return (cast(VectorToken)obj.token).getItem(indices);
+        if (object.token.type == TokenType.vector) {
+            return (cast(VectorToken)object.token).getItem(indices);
         } else {
             return null;
         }
+
     } else {
         throw new TypeMismatchException(name, indexToken.token, "integer or list");
     }
@@ -204,15 +200,12 @@ Value builtinElt (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinAppend (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 2) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value result = new Value(new BooleanToken(false));
+Value builtinAppend (string name) {
+    Value result = Value.nil();
     Value lastItem = result;
+    Value[] lists = toArray(getVariable("LISTS"));
 
-    foreach (int i, Value item; args) {
+    foreach (int i, Value item; lists) {
         item = evaluateOnce(item).copy();
 
         // skip empty lists
@@ -221,7 +214,7 @@ Value builtinAppend (string name, Value[] args, Value[string] kwargs) {
                 // added item must be a list
                 lastItem = lastItem.append(item);
 
-            } else if (i == args.length - 1) {
+            } else if (i == lists.length - 1) {
                 // ...unless it's the last argument
                 lastItem = lastItem.append(item);
 
@@ -237,18 +230,15 @@ Value builtinAppend (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinConcatenate (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 2) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value result = evaluateOnce(args[1]).copy();
+Value builtinConcatenate (string name) {
+    Value[] sequences = toArray(getVariable("SEQUENCES"));
+    Value result = evaluateOnce(sequences[0]).copy();
     if (result.token.type != TokenType.string) {
         throw new TypeMismatchException(name, result.token, "string");
     }
 
-    foreach (Value arg; args[2 .. args.length]) {
-        Value str = evaluateOnce(arg);
+    foreach (Value sequence; sequences[1 .. sequences.length]) {
+        Value str = evaluateOnce(sequence);
         if (str.token.type != TokenType.string) {
             throw new TypeMismatchException(name, str.token, "string");
         }
@@ -262,28 +252,23 @@ Value builtinConcatenate (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinString (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 1) {
-        throw new NotEnoughArgumentsException(name);
+Value builtinString (string name) {
+    Value character = evaluateOnce(getVariable("CHARACTER"));
+    if (character.token.type != TokenType.character) {
+        throw new TypeMismatchException(name, character.token, "character");
     }
 
-    Value arg = evaluateOnce(args[0]);
-    if (arg.token.type != TokenType.character) {
-        throw new TypeMismatchException(name, arg.token, "character");
-    }
-
-    return new Value(new StringToken("" ~ (cast(CharacterToken)arg.token).charValue));
+    return new Value(new StringToken("" ~ (cast(CharacterToken)character.token).charValue));
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinMap (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 3) {
-        throw new NotEnoughArgumentsException(name);
-    }
+Value builtinMap (string name) {
+    Value resultTypeToken = evaluateOnce(getVariable("RESULT-TYPE"));
+    Value mapFunction = evaluateOnce(getVariable("FUNCTION"));
+    Value[] sequences = toArray(getVariable("SEQUENCES"));
 
-    Value resultTypeToken = evaluateOnce(args[0]);
     TokenType resultType;
     if (resultTypeToken.token.type != TokenType.identifier) {
         throw new TypeMismatchException(name, resultTypeToken.token, "identifier");
@@ -303,44 +288,34 @@ Value builtinMap (string name, Value[] args, Value[string] kwargs) {
     }
 
     // type check function argument
-    Value mapFunction = evaluateOnce(args[1]);
     if (mapFunction.token.type != TokenType.definedFunction && mapFunction.token.type != TokenType.builtinFunction) {
         throw new TypeMismatchException(name, mapFunction.token, "function");
     }
 
-    return map(resultType, mapFunction, args[2 .. args.length]);
+    return map(resultType, mapFunction, sequences);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinMapcar (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 2) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    // type check function argument
-    Value mapFunction = evaluateOnce(args[0]);
+Value builtinMapcar (string name) {
+    Value mapFunction = evaluateOnce(getVariable("FUNCTION"));
+    Value[] sequences = toArray(getVariable("SEQUENCES"));
     if (mapFunction.token.type != TokenType.definedFunction && mapFunction.token.type != TokenType.builtinFunction) {
         throw new TypeMismatchException(name, mapFunction.token, "function");
     }
-
-    return map(TokenType.reference, mapFunction, args[1 .. args.length]);
+    return map(TokenType.reference, mapFunction, sequences);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinRemoveIf (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 2) {
-        throw new NotEnoughArgumentsException(name);
-    }
+Value builtinRemoveIf (string name) {
+    Value predicateToken = evaluateOnce(getVariable("PREDICATE"));
+    Value list = evaluateOnce(getVariable("LIST"));
 
-    Value predicateToken = evaluateOnce(args[0]);
     FunctionToken predicate;
-
-    Value list = evaluateOnce(args[1]);
-    Value result = new Value(new BooleanToken(false));
+    Value result = Value.nil();
 
     if (predicateToken.token.type != TokenType.builtinFunction && predicateToken.token.type != TokenType.definedFunction) {
         throw new TypeMismatchException(name, predicateToken.token, "function");
@@ -363,16 +338,12 @@ Value builtinRemoveIf (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinRemoveIfNot (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 2) {
-        throw new NotEnoughArgumentsException(name);
-    }
+Value builtinRemoveIfNot (string name) {
+    Value predicateToken = evaluateOnce(getVariable("PREDICATE"));
+    Value list = evaluateOnce(getVariable("LIST"));
 
-    Value predicateToken = evaluateOnce(args[0]);
     FunctionToken predicate;
-
-    Value list = evaluateOnce(args[1]);
-    Value result = new Value(new BooleanToken(false));
+    Value result = Value.nil();
 
     if (predicateToken.token.type != TokenType.builtinFunction && predicateToken.token.type != TokenType.definedFunction) {
         throw new TypeMismatchException(name, predicateToken.token, "function");
@@ -395,18 +366,19 @@ Value builtinRemoveIfNot (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
-    builtinTable["MAKE-ARRAY"] = &builtinMakeArray;
-    builtinTable["COPY-LIST"] = &builtinCopyList;
-    builtinTable["LIST"] = &builtinList;
-    builtinTable["LENGTH"] = &builtinLength;
-    builtinTable["PROGN"] = &builtinProgn;
-    builtinTable["QUOTE"] = &builtinQuote;
-    builtinTable["CONS"] = &builtinCons;
-    builtinTable["CAR"] = &builtinCar;
-    builtinTable["FIRST"] = &builtinCar;
-    builtinTable["CDR"] = &builtinCdr;
-    builtinTable["REST"] = &builtinCdr;
+void addBuiltins () {
+    addFunction("MAKE-ARRAY", &builtinMakeArray, Parameters(["SIZE"]));
+    addFunction("MAKE-LIST", &builtinMakeList, Parameters(["SIZE"], null, [PairedArgument("INITIAL-ELEMENT", Value.nil())]));
+    addFunction("COPY-LIST", &builtinMakeArray, Parameters(["LIST"]));
+    addFunction("LIST", &builtinList, Parameters(["LIST"]));
+    addFunction("LENGTH", &builtinList, Parameters(["LIST"]));
+    addFunction("PROGN", &builtinProgn, Parameters(["FORMS"]));
+    addFunction("QUOTE", &builtinQuote, Parameters(["OBJECT"]));
+    addFunction("CONS", &builtinCons, Parameters(["CAR", "CDR"]));
+    addFunction("CAR", &builtinCar, Parameters(["LIST"]));
+    addFunction("FIRST", &builtinCar, Parameters(["LIST"]));
+    addFunction("CDR", &builtinCdr, Parameters(["LIST"]));
+    addFunction("REST", &builtinCdr, Parameters(["LIST"]));
 
     foreach (string fun; ["CAAR", "CADR", "CDAR", "CDDR", "CAAAR", "CAADR",
                           "CADAR", "CADDR", "CDAAR", "CDADR", "CDDAR",
@@ -414,16 +386,15 @@ BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
                           "CADAAR", "CADADR", "CADDAR", "CADDDR", "CDAAAR",
                           "CDAADR", "CDADAR", "CDADDR", "CDDAAR", "CDDADR",
                           "CDDDAR", "CDDDDR"]) {
-        builtinTable[fun] = &builtinCompoundAccessor;
+        addFunction(fun, &builtinCompoundAccessor, Parameters(["LIST"]));
     }
 
-    builtinTable["ELT"] = &builtinElt;
-    builtinTable["APPEND"] = &builtinAppend;
-    builtinTable["CONCATENATE"] = &builtinConcatenate;
-    builtinTable["STRING"] = &builtinString;
-    builtinTable["MAP"] = &builtinMap;
-    builtinTable["MAPCAR"] = &builtinMapcar;
-    builtinTable["REMOVE-IF"] = &builtinRemoveIf;
-    builtinTable["REMOVE-IF-NOT"] = &builtinRemoveIfNot;
-    return builtinTable;
+    addFunction("ELT", &builtinElt, Parameters(["OBJECT", "INDEX"]));
+    addFunction("APPEND", &builtinAppend, Parameters(["LISTS"]));
+    addFunction("CONCATENATE", &builtinConcatenate, Parameters(["RESULT-TYPE", "SEQUENCES"]));
+    addFunction("STRING", &builtinString, Parameters(["CHARACTER"]));
+    addFunction("MAP", &builtinMap, Parameters(["RESULT-TYPE", "FUNCTION", "LIST"]));
+    addFunction("MAPCAR", &builtinMapcar, Parameters(["FUNCTION", "LIST"]));
+    addFunction("REMOVE-IF", &builtinRemoveIf, Parameters(["PREDICATE", "LIST"]));
+    addFunction("REMOVE-IF-NOT", &builtinRemoveIfNot, Parameters(["PREDICATE", "LIST"]));
 }

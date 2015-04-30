@@ -7,24 +7,21 @@ import exceptions;
 import functions;
 import lispObject;
 import token;
-
-
-///////////////////////////////////////////////////////////////////////////////
-// TODO: factor out repeated code in these builtin functions
-///////////////////////////////////////////////////////////////////////////////
+import variables;
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinGreaterOrEqual (string name, Value[] args, Value[string] kwargs) {
+Value builtinComparator (string name) {
+    Value[] numbers = toArray(getVariable("NUMBERS"));
+    if (numbers.length < 1) {
+        throw new NotEnoughArgumentsException(name);
+    }
+
     bool result = true;
     float lastValue = float.min_normal;
+    Value current = evaluateOnce(numbers[0]);
 
-    if (args.length == 0) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value current = evaluateOnce(args[0]);
     if (current.token.type == TokenType.floating) {
         lastValue = (cast(FloatToken)current.token).floatValue;
     } else if (current.token.type == TokenType.integer) {
@@ -33,8 +30,8 @@ Value builtinGreaterOrEqual (string name, Value[] args, Value[string] kwargs) {
         throw new TypeMismatchException(name, current.token, "integer or floating point");
     }
 
-    for (int i = 1; i < args.length; i++) {
-        current = evaluateOnce(args[i]);
+    for (int i = 1; i < numbers.length; i++) {
+        current = evaluateOnce(numbers[i]);
         float currentValue;
         if (current.token.type == TokenType.floating) {
             currentValue = (cast(FloatToken)current.token).floatValue;
@@ -44,45 +41,35 @@ Value builtinGreaterOrEqual (string name, Value[] args, Value[string] kwargs) {
             throw new TypeMismatchException(name, current.token, "integer or floating point");
         }
 
-        result = currentValue >= lastValue;
-        lastValue = currentValue;
-    }
+        switch (name) {
+            case "<":
+                result = currentValue < lastValue;
+                break;
 
-    return new Value(new BooleanToken(result));
-}
+            case "<=":
+                result = currentValue <= lastValue;
+                break;
 
+            case "=":
+                result = currentValue == lastValue;
+                break;
 
-///////////////////////////////////////////////////////////////////////////////
+            case "/=":
+                result = currentValue != lastValue;
+                break;
 
-Value builtinGreater (string name, Value[] args, Value[string] kwargs) {
-    bool result = true;
-    float lastValue = float.min_normal;
+            case ">=":
+                result = currentValue >= lastValue;
+                break;
 
-    if (args.length == 0) {
-        throw new NotEnoughArgumentsException(name);
-    }
+            case ">":
+                result = currentValue > lastValue;
+                break;
 
-    Value current = evaluateOnce(args[0]);
-    if (current.token.type == TokenType.floating) {
-        lastValue = (cast(FloatToken)current.token).floatValue;
-    } else if (current.token.type == TokenType.integer) {
-        lastValue = (cast(IntegerToken)current.token).intValue;
-    } else {
-        throw new TypeMismatchException(name, current.token, "integer or floating point");
-    }
-
-    for (int i = 1; i < args.length; i++) {
-        current = evaluateOnce(args[i]);
-        float currentValue;
-        if (current.token.type == TokenType.floating) {
-            currentValue = (cast(FloatToken)current.token).floatValue;
-        } else if (current.token.type == TokenType.integer) {
-            currentValue = (cast(IntegerToken)current.token).intValue;
-        } else {
-            throw new TypeMismatchException(name, current.token, "integer or floating point");
+            default:
+                throw new Exception("Invalid comparator function " ~ name);
         }
-
-        result = currentValue > lastValue;
+        
         lastValue = currentValue;
     }
 
@@ -92,166 +79,33 @@ Value builtinGreater (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinEqual (string name, Value[] args, Value[string] kwargs) {
-    bool result = true;
-    float lastValue = float.max;
+Value builtinArithmeticOperation (string name) {
+    Value[] numbers = toArray(getVariable("NUMBERS"));
+    int initialValue = (name == "*" || name == "/") ? 1 : 0;
+    Value result = new Value(new IntegerToken(initialValue));
 
-    if (args.length == 0) {
-        throw new NotEnoughArgumentsException(name);
-    }
+    foreach (Value number; numbers) {
+        switch (name) {
+            case "+":
+                result.add(evaluateOnce(number));
+                break;
 
-    Value current = evaluateOnce(args[0]);
-    if (current.token.type == TokenType.floating) {
-        lastValue = (cast(FloatToken)current.token).floatValue;
-    } else if (current.token.type == TokenType.integer) {
-        lastValue = (cast(IntegerToken)current.token).intValue;
-    } else {
-        throw new TypeMismatchException(name, current.token, "integer or floating point");
-    }
+            case "-":
+                result.subtract(evaluateOnce(number));
+                break;
 
-    for (int i = 1; i < args.length; i++) {
-        current = evaluateOnce(args[i]);
-        float currentValue;
-        if (current.token.type == TokenType.floating) {
-            currentValue = (cast(FloatToken)current.token).floatValue;
-        } else if (current.token.type == TokenType.integer) {
-            currentValue = (cast(IntegerToken)current.token).intValue;
-        } else {
-            throw new TypeMismatchException(name, current.token, "integer or floating point");
+            case "*":
+                result.multiply(evaluateOnce(number));
+                break;
+
+            case "/":
+                result.divide(evaluateOnce(number));
+                break;
+
+            default:
+                throw new Exception("Invalid arithmetic operation " ~ name);
         }
-
-        result = currentValue == lastValue;
-        lastValue = currentValue;
-    }
-
-    return new Value(new BooleanToken(result));
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-
-Value builtinNotEqual (string name, Value[] args, Value[string] kwargs) {
-    bool result = true;
-    float lastValue = float.max;
-
-    if (args.length == 0) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value current = evaluateOnce(args[0]);
-    if (current.token.type == TokenType.floating) {
-        lastValue = (cast(FloatToken)current.token).floatValue;
-    } else if (current.token.type == TokenType.integer) {
-        lastValue = (cast(IntegerToken)current.token).intValue;
-    } else {
-        throw new TypeMismatchException(name, current.token, "integer or floating point");
-    }
-
-    for (int i = 1; i < args.length; i++) {
-        current = evaluateOnce(args[i]);
-        float currentValue;
-        if (current.token.type == TokenType.floating) {
-            currentValue = (cast(FloatToken)current.token).floatValue;
-        } else if (current.token.type == TokenType.integer) {
-            currentValue = (cast(IntegerToken)current.token).intValue;
-        } else {
-            throw new TypeMismatchException(name, current.token, "integer or floating point");
-        }
-
-        result = currentValue != lastValue;
-        lastValue = currentValue;
-    }
-
-    return new Value(new BooleanToken(result));
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-
-Value builtinLesser (string name, Value[] args, Value[string] kwargs) {
-    bool result = true;
-    float lastValue = float.max;
-
-    if (args.length == 0) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value current = evaluateOnce(args[0]);
-    if (current.token.type == TokenType.floating) {
-        lastValue = (cast(FloatToken)current.token).floatValue;
-    } else if (current.token.type == TokenType.integer) {
-        lastValue = (cast(IntegerToken)current.token).intValue;
-    } else {
-        throw new TypeMismatchException(name, current.token, "integer or floating point");
-    }
-
-    for (int i = 1; i < args.length; i++) {
-        current = evaluateOnce(args[i]);
-        float currentValue;
-        if (current.token.type == TokenType.floating) {
-            currentValue = (cast(FloatToken)current.token).floatValue;
-        } else if (current.token.type == TokenType.integer) {
-            currentValue = (cast(IntegerToken)current.token).intValue;
-        } else {
-            throw new TypeMismatchException(name, current.token, "integer or floating point");
-        }
-
-        result = currentValue < lastValue;
-        lastValue = currentValue;
-    }
-
-    return new Value(new BooleanToken(result));
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-
-Value builtinLesserOrEqual (string name, Value[] args, Value[string] kwargs) {
-    bool result = true;
-    float lastValue = float.max;
-
-    if (args.length == 0) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value current = evaluateOnce(args[0]);
-    if (current.token.type == TokenType.floating) {
-        lastValue = (cast(FloatToken)current.token).floatValue;
-    } else if (current.token.type == TokenType.integer) {
-        lastValue = (cast(IntegerToken)current.token).intValue;
-    } else {
-        throw new TypeMismatchException(name, current.token, "integer or floating point");
-    }
-
-    for (int i = 1; i < args.length; i++) {
-        current = evaluateOnce(args[i]);
-        float currentValue;
-        if (current.token.type == TokenType.floating) {
-            currentValue = (cast(FloatToken)current.token).floatValue;
-        } else if (current.token.type == TokenType.integer) {
-            currentValue = (cast(IntegerToken)current.token).intValue;
-        } else {
-            throw new TypeMismatchException(name, current.token, "integer or floating point");
-        }
-
-        result = currentValue <= lastValue;
-        lastValue = currentValue;
-    }
-
-    return new Value(new BooleanToken(result));
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-
-Value builtinPlus (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 1) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value result = evaluateOnce(args[0]).copy();
-    foreach (Value addend; args[1 .. args.length]) {
-        result.add(evaluateOnce(addend));
+        
     }
 
     return result;
@@ -260,156 +114,56 @@ Value builtinPlus (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinMinus (string name, Value[] args, Value[string] kwargs) {
-    Value result;
-
-    if (args.length < 1) {
-        throw new NotEnoughArgumentsException(name);
-    } else if (args.length == 1) {
-        result = new Value(new IntegerToken(0));
-    } else {
-        result = evaluateOnce(args[0]).copy();
-        args = args[1 .. args.length];
-    }
-
-    foreach (Value subtrahend; args) {
-        result.subtract(evaluateOnce(subtrahend));
-    }
-
-    return result;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-
-Value builtinOnePlus (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 1) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value result = evaluateOnce(args[0]).copy();
+Value builtinOnePlus (string name) {
+    Value result = evaluateOnce(getVariable("NUMBER")).copy();
     result.add(new Value(new IntegerToken(1)));
-
     return result;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinIncf (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 1) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value result = evaluateOnce(args[0]);
-    Value delta;
-    if (args.length >= 2) {
-        delta = evaluateOnce(args[1]);
-    } else {
-        delta = new Value(new IntegerToken(1));
-    }
-
-    result.add(delta);
-
-    return result;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-
-Value builtinOneMinus (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 1) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value result = evaluateOnce(args[0]).copy();
+Value builtinOneMinus (string name) {
+    Value result = evaluateOnce(getVariable("NUMBER")).copy();
     result.subtract(new Value(new IntegerToken(1)));
-
     return result;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinDecf (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 1) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value result = evaluateOnce(args[0]);
-    Value delta;
-    if (args.length >= 2) {
-        delta = evaluateOnce(args[1]);
-    } else {
-        delta = new Value(new IntegerToken(1));
-    }
-
-    result.subtract(delta);
-
-    return result;
+Value builtinIncf (string name) {
+    Value place = evaluateOnce(getVariable("PLACE"));
+    Value delta = evaluateOnce(getVariable("DELTA"));
+    place.add(delta);
+    return place;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinTimes (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 1) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value result = evaluateOnce(args[0]).copy();
-    foreach (Value multiplicand; args[1 .. args.length]) {
-        result.multiply(evaluateOnce(multiplicand));
-    }
-
-    return result;
+Value builtinDecf (string name) {
+    Value place = evaluateOnce(getVariable("PLACE"));
+    Value delta = evaluateOnce(getVariable("DELTA"));
+    place.subtract(delta);
+    return place;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinDivide (string name, Value[] args, Value[string] kwargs) {
-    Value result;
-
-    if (args.length < 1) {
-        throw new NotEnoughArgumentsException(name);
-    } else if (args.length == 1) {
-        result = new Value(new FloatToken(1));
-    } else {
-        result = evaluateOnce(args[0]).copy();
-        args = args[1 .. args.length];
-    }
-
-    foreach (Value divisor; args) {
-        result.divide(evaluateOnce(divisor));
-    }
-
-    return result;
+Value builtinSqrt (string name) {
+    Value operand = evaluateOnce(getVariable("NUMBER"));
+    float value = (operand.token.type == TokenType.floating) ? (cast(FloatToken)operand.token).floatValue : (cast(IntegerToken)operand.token).intValue;
+    return new Value(new FloatToken(sqrt(value)));
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinSqrt (string name, Value[] args, Value[string] kwargs) {
-    if (args.length == 0) {
-        throw new NotEnoughArgumentsException(name);
-    } else {
-        Value operand = evaluateOnce(args[0]);
-        float value = (operand.token.type == TokenType.floating) ? (cast(FloatToken)operand.token).floatValue : (cast(IntegerToken)operand.token).intValue;
-        return new Value(new FloatToken(sqrt(value)));
-    }
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-
-Value builtinMod (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 2) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value numberToken = evaluateOnce(args[0]);
-    Value divisorToken = evaluateOnce(args[1]);
+Value builtinMod (string name) {
+    Value numberToken = evaluateOnce(getVariable("DIVIDEND"));
+    Value divisorToken = evaluateOnce(getVariable("DIVISOR"));
     long number, divisor;
 
     if (numberToken.token.type == TokenType.integer) {
@@ -434,8 +188,8 @@ Value builtinMod (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinEven (string name, Value[] args, Value[string] kwargs) {
-    Value numberToken = evaluateOnce(args[0]);
+Value builtinEven (string name) {
+    Value numberToken = evaluateOnce(getVariable("NUMBER"));
     if (numberToken.token.type != TokenType.integer) {
         throw new TypeMismatchException(name, numberToken.token, "integer");
     }
@@ -447,8 +201,8 @@ Value builtinEven (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinOdd (string name, Value[] args, Value[string] kwargs) {
-    Value numberToken = evaluateOnce(args[0]);
+Value builtinOdd (string name) {
+    Value numberToken = evaluateOnce(getVariable("NUMBER"));
     if (numberToken.token.type != TokenType.integer) {
         throw new TypeMismatchException(name, numberToken.token, "integer");
     }
@@ -460,12 +214,8 @@ Value builtinOdd (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinRandom (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 1) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value limitToken = evaluateOnce(args[0]);
+Value builtinRandom (string name) {
+    Value limitToken = evaluateOnce(getVariable("LIMIT"));
     long limit;
 
     if (limitToken.token.type != TokenType.integer) {
@@ -480,25 +230,22 @@ Value builtinRandom (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
-    builtinTable["<="] = &builtinGreaterOrEqual;
-    builtinTable["<"] = &builtinGreater;
-    builtinTable["="] = &builtinEqual;
-    builtinTable["/="] = &builtinNotEqual;
-    builtinTable[">"] = &builtinLesser;
-    builtinTable[">="] = &builtinLesserOrEqual;
-    builtinTable["+"] = &builtinPlus;
-    builtinTable["1+"] = &builtinOnePlus;
-    builtinTable["INCF"] = &builtinIncf;
-    builtinTable["-"] = &builtinMinus;
-    builtinTable["1-"] = &builtinOneMinus;
-    builtinTable["DECF"] = &builtinDecf;
-    builtinTable["*"] = &builtinTimes;
-    builtinTable["/"] = &builtinDivide;
-    builtinTable["SQRT"] = &builtinSqrt;
-    builtinTable["MOD"] = &builtinMod;
-    builtinTable["EVEN"] = &builtinEven;
-    builtinTable["ODD"] = &builtinOdd;
-    builtinTable["RANDOM"] = &builtinRandom;
-    return builtinTable;
+void addBuiltins () {
+    foreach (string fun; ["<=", "<", "=", "/=", ">", ">="]) {
+        addFunction(fun, &builtinComparator, Parameters(null, null, null, null, "NUMBERS"));
+    }
+
+    foreach (string fun; ["+", "-", "*", "/"]) {
+        addFunction(fun, &builtinArithmeticOperation, Parameters(null, null, null, null, "NUMBERS"));
+    }
+
+    addFunction("1+", &builtinOnePlus, Parameters(["NUMBER"]));
+    addFunction("1-", &builtinOnePlus, Parameters(["NUMBER"]));
+    addFunction("INCF", &builtinIncf, Parameters(["PLACE"]));
+    addFunction("DECF", &builtinDecf, Parameters(["PLACE"]));
+    addFunction("SQRT", &builtinSqrt, Parameters(["NUMBER"]));
+    addFunction("MOD", &builtinMod, Parameters(["DIVIDEND", "DIVISOR"]));
+    addFunction("EVEN", &builtinEven, Parameters(["NUMBER"]));
+    addFunction("ODD", &builtinOdd, Parameters(["NUMBER"]));
+    addFunction("RANDOM", &builtinRandom, Parameters(["LIMIT"]));
 }

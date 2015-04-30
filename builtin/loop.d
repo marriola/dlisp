@@ -5,19 +5,21 @@ import exceptions;
 import functions;
 import lispObject;
 import token;
+import variables;
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinDotimes (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 2) {
+Value builtinDotimes (string name) {
+    Value[] loopSpec = toArray(getVariable("LOOPSPEC"));
+    if (loopSpec.length < 3) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Value loopVariable = getItem(args[0], 0);
-    Value count = evaluate(getItem(args[0], 1));
-    Value result = evaluate(getItem(args[0], 2));
-    Value[] loopBody = args[1 .. args.length];
+    Value loopVariable = loopSpec[0];
+    Value count = loopSpec[1];
+    Value result = loopSpec[2];
+    Value[] loopBody = toArray(getVariable("FORMS"));
 
     if (count.token.type != TokenType.integer) {
         throw new TypeMismatchException(name, count.token, "integer");
@@ -36,7 +38,6 @@ Value builtinDotimes (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
-    builtinTable["DOTIMES"] = &builtinDotimes;
-    return builtinTable;
+void addBuiltins () {
+    addFunction("DOTIMES", &builtinDotimes, Parameters(["LOOPSPEC"], null, null, null, "FORMS"));
 }

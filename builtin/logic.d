@@ -5,28 +5,21 @@ import exceptions;
 import functions;
 import lispObject;
 import token;
+import variables;
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinNull (string name, Value[] args, Value[string] kwargs) {
-    if (args.length == 0) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    return new Value(new BooleanToken(evaluateOnce(args[0]).isNil()));
+Value builtinNull (string name) {
+    return new Value(new BooleanToken(evaluateOnce(getVariable("OBJECT")).isNil()));
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinIf (string name, Value[] args, Value[string] kwargs) {
-    if (args.length == 0) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
+Value builtinIf (string name) {
     bool condition;
-    Value current = evaluate(args[0]);
+    Value current = evaluate(getVariable("TEST"));
 
     if (current.token.type != TokenType.boolean) {
         throw new TypeMismatchException(name, current.token, "boolean");
@@ -34,22 +27,19 @@ Value builtinIf (string name, Value[] args, Value[string] kwargs) {
         condition = (cast(BooleanToken)current.token).boolValue;
     }
 
-    if (args.length < 3) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value thenClause = args[1];
-    Value elseClause = args[2];
+    Value thenClause = getVariable("THEN");
+    Value elseClause = getVariable("ELSE");
     return condition ? evaluateOnce(thenClause) : evaluateOnce(elseClause);
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinCond (string name, Value[] args, Value[string] kwargs) {
-    Value result = new Value(new BooleanToken(false));
+Value builtinCond (string name) {
+    Value[] variants = toArray(getVariable("VARIANTS"));
+    Value result = Value.nil();
 
-    foreach (Value variant; args) {
+    foreach (Value variant; variants) {
         Value condition = getFirst(variant);
         Value[] forms = toArray(getRest(variant));
 
@@ -67,15 +57,16 @@ Value builtinCond (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinAnd (string name, Value[] args, Value[string] kwargs) {
+Value builtinAnd (string name) {
+    Value[] forms = toArray(getVariable("FORMS"));
     bool result = true;
 
-    for (int i = 0; i < args.length; i++) {
+    foreach (Value form; forms) {
         if (!result) {
             break;
         }
 
-        Value current = evaluate(args[i]);
+        Value current = evaluate(form);
         if (current.token.type != TokenType.boolean) {
             throw new TypeMismatchException(name, current.token, "boolean");
         } else {
@@ -89,11 +80,12 @@ Value builtinAnd (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinOr (string name, Value[] args, Value[string] kwargs) {
+Value builtinOr (string name) {
+    Value[] forms = toArray(getVariable("FORMS"));
     bool result = false;
 
-    for (int i = 0; i < args.length; i++) {
-        Value current = evaluate(args[i]);
+    foreach (Value form; forms) {
+        Value current = evaluate(form);
         if (current.token.type != TokenType.boolean) {
             throw new TypeMismatchException(name, current.token, "boolean");
         } else {
@@ -107,12 +99,8 @@ Value builtinOr (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinNot (string name, Value[] args, Value[string] kwargs) {
-    if (args.length == 0) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value current = evaluate(args[0]);
+Value builtinNot (string name) {
+    Value current = evaluate(getVariable("FORM"));
     if (current.token.type != TokenType.boolean) {
         throw new TypeMismatchException(name, current.token, "boolean");
     }
@@ -123,13 +111,9 @@ Value builtinNot (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinEq (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 2) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value obj1 = evaluate(args[0]);
-    Value obj2 = evaluate(args[1]);
+Value builtinEq (string name) {
+    Value obj1 = evaluate(getVariable("OBJ1"));
+    Value obj2 = evaluate(getVariable("OBJ2"));
 
     return new Value(new BooleanToken(objectsEqual(obj1, obj2)));
 }
@@ -137,13 +121,9 @@ Value builtinEq (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value builtinNeq (string name, Value[] args, Value[string] kwargs) {
-    if (args.length < 2) {
-        throw new NotEnoughArgumentsException(name);
-    }
-
-    Value obj1 = evaluate(args[0]);
-    Value obj2 = evaluate(args[1]);
+Value builtinNeq (string name) {
+    Value obj1 = evaluate(getVariable("OBJ1"));
+    Value obj2 = evaluate(getVariable("OBJ2"));
 
     return new Value(new BooleanToken(!objectsEqual(obj1, obj2)));
 }
@@ -151,14 +131,13 @@ Value builtinNeq (string name, Value[] args, Value[string] kwargs) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-BuiltinFunction[string] addBuiltins (BuiltinFunction[string] builtinTable) {
-    builtinTable["NULL"] = &builtinNull;
-    builtinTable["IF"] = &builtinIf;
-    builtinTable["COND"] = &builtinCond;
-    builtinTable["AND"] = &builtinAnd;
-    builtinTable["OR"] = &builtinOr;
-    builtinTable["NOT"] = &builtinNot;
-    builtinTable["EQ"] = &builtinEq;
-    builtinTable["NEQ"] = &builtinNeq;
-    return builtinTable;
+void addBuiltins () {
+    addFunction("NULL", &builtinNull, Parameters(["OBJECT"]));
+    addFunction("IF", &builtinIf, Parameters(["TEST", "THEN", "ELSE"]));
+    addFunction("COND", &builtinCond, Parameters(null, null, null, null, "VARIANTS"));
+    addFunction("AND", &builtinAnd, Parameters(null, null, null, null, "FORMS"));
+    addFunction("OR", &builtinOr, Parameters(null, null, null, null, "FORMS"));
+    addFunction("NOT", &builtinNot, Parameters(["FORM"]));
+    addFunction("EQ", &builtinEq, Parameters(["OBJ1", "OBJ2"]));
+    addFunction("NEQ", &builtinNeq, Parameters(["OBJ1", "OBJ2"]));
 }

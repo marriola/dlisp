@@ -36,6 +36,13 @@ class Value {
     }
 
     /**
+     * Constructs a Value containing a new NIL token.
+     */
+    static Value nil () {
+        return new Value(new BooleanToken(false));
+    }
+
+    /**
      * @param value a Token object to test.
      * @return true if the Token object is a BooleanToken representing the value NIL.
      */
@@ -404,10 +411,10 @@ class FileStreamToken : Token {
     LispParser streamParser;
 
     this (string fileSpec, Value direction) {
-        static enum char[][string] openModes = [ "input" : cast(char[])"r", "output" : cast(char[])"w", "io" : cast(char[])"rw" ];
+        static enum char[][string] openModes = [ "INPUT" : cast(char[])"r", "OUTPUT" : cast(char[])"w", "IO" : cast(char[])"rw" ];
 
         type = TokenType.fileStream;
-        this.direction = direction is null ? "input" : (cast(ConstantToken)direction.token).stringValue;
+        this.direction = (cast(ConstantToken)direction.token).stringValue;
         stream = File(fileSpec, openModes[this.direction]);
         this.fileSpec = fileSpec;
         isOpen = true;
