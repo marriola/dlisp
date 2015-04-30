@@ -372,7 +372,7 @@ void addBuiltins () {
     addFunction("COPY-LIST", &builtinMakeArray, Parameters(["LIST"]));
     addFunction("LIST", &builtinList, Parameters(["LIST"]));
     addFunction("LENGTH", &builtinList, Parameters(["LIST"]));
-    addFunction("PROGN", &builtinProgn, Parameters(["FORMS"]));
+    addFunction("PROGN", &builtinProgn, Parameters(null, null, null, null, "FORMS"));
     addFunction("QUOTE", &builtinQuote, Parameters(["OBJECT"]));
     addFunction("CONS", &builtinCons, Parameters(["CAR", "CDR"]));
     addFunction("CAR", &builtinCar, Parameters(["LIST"]));
