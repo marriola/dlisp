@@ -327,7 +327,7 @@ Value builtinRemoveIf (string name) {
         Value item = getFirst(list);
         Value testResult = predicate.evaluate([item]);
         if (!Token.isTrue(testResult)) {
-            result.append(item);
+            result.append(Token.makeReference(item));
         }
         list = getRest(list);
     }
@@ -355,7 +355,7 @@ Value builtinRemoveIfNot (string name) {
         Value item = getFirst(list);
         Value testResult = predicate.evaluate([item]);
         if (Token.isTrue(testResult)) {
-            result.append(item);
+            result.append(Token.makeReference(item));
         }
         list = getRest(list);
     }
@@ -371,7 +371,7 @@ void addBuiltins () {
     addFunction("MAKE-LIST", &builtinMakeList, Parameters(["SIZE"], null, [PairedArgument("INITIAL-ELEMENT", Value.nil())]));
     addFunction("COPY-LIST", &builtinMakeArray, Parameters(["LIST"]));
     addFunction("LIST", &builtinList, Parameters(null, null, null, null, "OBJECTS"));
-    addFunction("LENGTH", &builtinList, Parameters(["LIST"]));
+    addFunction("LENGTH", &builtinLength, Parameters(["LIST"]));
     addFunction("PROGN", &builtinProgn, Parameters(null, null, null, null, "FORMS"));
     addFunction("QUOTE", &builtinQuote, Parameters(["OBJECT"]));
     addFunction("CONS", &builtinCons, Parameters(["CAR", "CDR"]));
