@@ -329,13 +329,10 @@ Value evaluateDefinedFunction (LispFunction fun, Value[] parameters, string name
 Value evaluateFunction (string name, Value[] arguments) {
     if (name in builtinFunctions) {
         return evaluateBuiltinFunction(name, arguments);
+    } else if (name in lispFunctions) {
+        return evaluateDefinedFunction(lispFunctions[name], arguments, name);
     }
-
-    if (name !in lispFunctions) {
-        throw new UndefinedFunctionException(name);
-    }
-
-    return evaluateDefinedFunction(lispFunctions[name], arguments, name);
+    throw new UndefinedFunctionException(name);
 }
 
 
