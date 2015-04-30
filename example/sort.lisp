@@ -2,7 +2,7 @@
     (if (= n 0)
         out
         (random-list
-            (- n 1)
+            (1- n)
             limit
             (append out (list (random limit)))
         )
