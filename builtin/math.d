@@ -81,8 +81,15 @@ Value builtinComparator (string name) {
 
 Value builtinArithmeticOperation (string name) {
     Value[] numbers = toArray(getParameter("NUMBERS"));
-    int initialValue = (name == "*" || name == "/") ? 1 : 0;
-    Value result = new Value(new IntegerToken(initialValue));
+    Value result;
+
+    if (numbers.length == 1) {
+        int initialValue = (name == "*" || name == "/") ? 1 : 0;
+        result = new Value(new IntegerToken(initialValue));
+    } else {
+        result = evaluateOnce(numbers[0]);
+        numbers = numbers[1 .. numbers.length];
+    }
 
     foreach (Value number; numbers) {
         switch (name) {

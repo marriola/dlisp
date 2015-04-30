@@ -137,11 +137,17 @@ class Value {
         }
 
         if (token.type == TokenType.floating) {
+            // floating point dividend
             (cast(FloatToken)token).floatValue /= divisor.token.type == TokenType.integer ? (cast(IntegerToken)divisor.token).intValue : (cast(FloatToken)divisor.token).floatValue;
         } else if (divisor.token.type == TokenType.floating) {
+            // floating point divisor
             token = new FloatToken((cast(IntegerToken)token).intValue / (cast(FloatToken)divisor.token).floatValue);
-        } else {
+        } else if ((cast(IntegerToken)token).intValue % (cast(IntegerToken)divisor.token).intValue == 0) {
+            // integer operands and integer result
             (cast(IntegerToken)token).intValue /= (cast(IntegerToken)divisor.token).intValue;
+        } else {
+            // integer operands and floating point result
+            token = new FloatToken(cast(double)(cast(IntegerToken)token).intValue / (cast(IntegerToken)divisor.token).intValue);
         }
     }
 }
