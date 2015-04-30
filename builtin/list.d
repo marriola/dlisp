@@ -370,7 +370,7 @@ void addBuiltins () {
     addFunction("MAKE-ARRAY", &builtinMakeArray, Parameters(["SIZE"]));
     addFunction("MAKE-LIST", &builtinMakeList, Parameters(["SIZE"], null, [PairedArgument("INITIAL-ELEMENT", Value.nil())]));
     addFunction("COPY-LIST", &builtinMakeArray, Parameters(["LIST"]));
-    addFunction("LIST", &builtinList, Parameters(["LIST"]));
+    addFunction("LIST", &builtinList, Parameters(null, null, null, null, "OBJECTS"));
     addFunction("LENGTH", &builtinList, Parameters(["LIST"]));
     addFunction("PROGN", &builtinProgn, Parameters(null, null, null, null, "FORMS"));
     addFunction("QUOTE", &builtinQuote, Parameters(["OBJECT"]));
