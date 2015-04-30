@@ -156,7 +156,7 @@ Value builtinCompoundAccessor (string name) {
         if (c == 'A') {
             x = (cast(ReferenceToken)x.token).reference.car;
 
-        } else if (c == 'R') {
+        } else if (c == 'D') {
             x = (cast(ReferenceToken)x.token).reference.cdr;
         }
     }
