@@ -17,6 +17,24 @@ Value builtinNull (string name) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value builtinZerop (string name) {
+    bool result;
+    Value obj = evaluateOnce(getParameter("OBJECT"));
+    if (obj.token.type == TokenType.integer) {
+        result = (cast(IntegerToken)obj.token).intValue == 0;
+    } else if (obj.token.type == TokenType.floating) {
+        result = (cast(FloatToken)obj.token).floatValue == 0;
+    } else {
+        result = false;
+    }
+
+    return new Value(new BooleanToken(result));
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 Value builtinIf (string name) {
     bool condition;
     Value current = evaluate(getParameter("TEST"));
@@ -133,6 +151,7 @@ Value builtinNeq (string name) {
 
 void addBuiltins () {
     addFunction("NULL", &builtinNull, Parameters(["OBJECT"]));
+    addFunction("ZEROP", &builtinZerop, Parameters(["OBJECT"]));
     addFunction("IF", &builtinIf, Parameters(["TEST", "THEN", "ELSE"]));
     addFunction("COND", &builtinCond, Parameters(null, null, null, null, "VARIANTS"));
     addFunction("AND", &builtinAnd, Parameters(null, null, null, null, "FORMS"));
