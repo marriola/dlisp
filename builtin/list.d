@@ -168,33 +168,43 @@ Value builtinCompoundAccessor (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinElt (string name) {
-    Value object = evaluateOnce(getParameter("OBJECT"));
+    Value list = evaluateOnce(getParameter("LIST"));
     Value indexToken = evaluateOnce(getParameter("INDEX"));
+
+    if (list.token.type != TokenType.reference) {
+        throw new TypeMismatchException(name, list.token, "list");
+    }
 
     if (indexToken.token.type == TokenType.integer) {
         int index = to!int((cast(IntegerToken)indexToken.token).intValue);
-        if (object.token.type == TokenType.reference) {
-            return getItem(object, index);
-        } else if (object.token.type == TokenType.vector) {
-            return (cast(VectorToken)object.token).getItem(index);
-        } else {
-            throw new TypeMismatchException(name, object.token, "reference or vector");
-        }
+        return getItem(list, index);
+
+    } else {
+        throw new TypeMismatchException(name, indexToken.token, "integer");
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Value builtinAref (string name) {
+    Value vector = evaluateOnce(getParameter("ARRAY"));
+    Value indexToken = evaluateOnce(getParameter("INDEX"));
+
+    if (vector.token.type != TokenType.vector) {
+        throw new TypeMismatchException(name, vector.token, "vector");
+
+    } else if (indexToken.token.type == TokenType.integer) {
+        int index = to!int((cast(IntegerToken)indexToken.token).intValue);
+        return (cast(VectorToken)vector.token).getItem(index);
 
     } else if (indexToken.token.type == TokenType.reference) {
         Value[] indicesArray = toArray(indexToken);
         int[] indices = map!(x => to!int((cast(IntegerToken)x.token).intValue))(indicesArray).array();
-        if (object.token.type == TokenType.vector) {
-            return (cast(VectorToken)object.token).getItem(indices);
-        } else {
-            return null;
-        }
-
-    } else {
-        throw new TypeMismatchException(name, indexToken.token, "integer or list");
+        return (cast(VectorToken)vector.token).getItem(indices);
     }
 
-
+    assert(0);
 }
 
 
@@ -389,7 +399,8 @@ void addBuiltins () {
         addFunction(fun, &builtinCompoundAccessor, Parameters(["LIST"]));
     }
 
-    addFunction("ELT", &builtinElt, Parameters(["OBJECT", "INDEX"]));
+    addFunction("ELT", &builtinElt, Parameters(["LIST", "INDEX"]));
+    addFunction("AREF", &builtinAref, Parameters(["ARRAY", "INDEX"]));
     addFunction("APPEND", &builtinAppend, Parameters(null, null, null, null, "LISTS"));
     addFunction("CONCATENATE", &builtinConcatenate, Parameters(["RESULT-TYPE"], null, null, null, "SEQUENCES"));
     addFunction("STRING", &builtinString, Parameters(["CHARACTER"]));
