@@ -8,6 +8,8 @@ import parser;
 import token;
 import variables;
 import vm.compiler;
+import vm.machine;
+import vm.lispmacro;
 
 void main (string args[]) {
     File input;
@@ -27,11 +29,8 @@ void main (string args[]) {
 
     initializeScopeTable();
     initializeBuiltins();
+    initializeMacros();
     LispParser lisp = new LispParser(input);
-
-    foreach (int index, vm.machine.Value constant; compile(lisp.read()).constants) {
-        writef("%d\t%s\n", index, constant.toString());
-    }
 
     while (true) {
         if (printPrompt) {
@@ -40,7 +39,9 @@ void main (string args[]) {
         
         try {
             Value tree = lisp.read();
+            BytecodeFunction fun = compile(tree);
             writef("%s\n\n", evaluateOnce(tree));
+            writef("Constants: %s\n%s\n\n", fun.constants, fun.code);
         } catch (SyntaxErrorException e) {
             writef("Syntax error: %s\n\n", e.msg);
         } catch (UndefinedFunctionException e) {
