@@ -7,6 +7,7 @@ import node;
 import parser;
 import token;
 import variables;
+import vm.compiler;
 
 void main (string args[]) {
     File input;
@@ -27,6 +28,10 @@ void main (string args[]) {
     initializeScopeTable();
     initializeBuiltins();
     LispParser lisp = new LispParser(input);
+
+    foreach (int index, vm.machine.Value constant; compile(lisp.read()).constants) {
+        writef("%d\t%s\n", index, constant.toString());
+    }
 
     while (true) {
         if (printPrompt) {

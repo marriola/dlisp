@@ -9,6 +9,7 @@ import lispObject;
 import token;
 import variables;
 
+import std.random : uniform;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -231,7 +232,7 @@ Value builtinRandom (string name) {
         limit = (cast(IntegerToken)limitToken.token).intValue;
     }
 
-    return new Value(new IntegerToken(std.random.uniform(0, limit)));
+    return new Value(new IntegerToken(uniform(0, limit)));
 }
 
 

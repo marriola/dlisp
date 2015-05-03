@@ -160,7 +160,7 @@ tail call optimized:
 7:  builtin1 2              (1+ n)
 8:  pushvar 0               push value of N
 9:  builtin 2, 1            (* n (1+ n))
-10: tailcall1
+10: tailcall1               (fact (* n (1+ n)))
 
 
 
@@ -193,7 +193,7 @@ Constant table = [ 0: IdentifierToken("START"),
 1:  pushvar 0               push variable STOP
 2:  builtin 2, 0            call builtin < with 2 parameters                (< stop start)
 3:  jumpifnot 6             skip to 6 if true
-4:  push-nil        line 5  push NIL
+4:  pushnil         line 5  push NIL
 5:  return
 6:  pushvar 1       line 7  push variable STOP
 7:  pushvar 0               push variable START
@@ -203,3 +203,16 @@ Constant table = [ 0: IdentifierToken("START"),
 11: builtin1 2              call builtin LIST with one parameters           (list start)
 12: builtin 2, 1    line 5  call builtin APPEND with two parameters         (append (list start) (range (1+ start) stop))
 13: return
+
+tail call optimized:
+
+0:  pushvar 0
+1:  pushvar 1
+2:  builtin 2, 0
+3:  jumpifnot 6
+4:  pushnil
+5:  return
+6:  pushvar 1
+7:  pushvar 0
+8:  builtin1 2
+9:  fun 2, 0

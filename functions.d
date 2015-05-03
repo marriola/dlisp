@@ -57,12 +57,14 @@ struct Parameters {
 }
 
 struct BuiltinFunction {
+    int id;
     FunctionHook hook;
     string docString;
     Parameters parameters;
 }
 
 struct LispFunction {
+    int id;
     string docString;
     Value[] lambdaList;
     Parameters parameters;
@@ -157,6 +159,15 @@ PairedArgument[] extractKeywordArguments (ref Value[] lambdaList, string keyword
     return keywordArguments.length == 0 ? null : keywordArguments;
 }
 
+uint hash (string str) {
+    uint h = 0;
+    foreach (char c; str) {
+        h = 37 * h + cast(uint)c;
+    }
+
+    return h;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -172,7 +183,7 @@ void addFunction (string name, FunctionHook hook, Parameters parameters, string 
     parameters.keyword = map!(x => PairedArgument(":" ~ x.name, x.defaultValue))(parameters.keyword).array();
     parameters.rest = ":" ~ parameters.rest;
     
-    builtinFunctions[name] = BuiltinFunction(hook, docString, parameters);
+    builtinFunctions[name] = BuiltinFunction(hash(name), hook, docString, parameters);
 }
 
 
@@ -193,7 +204,7 @@ LispFunction processFunctionDefinition (Value[] lambdaList, Value[] forms, strin
         required = null;
     }
 
-    return LispFunction(docString, oldLambdaList, Parameters(required, optional, keyword, auxiliary, rest), forms);
+    return LispFunction(lispFunctions.length, docString, oldLambdaList, Parameters(required, optional, keyword, auxiliary, rest), forms);
 }
 
 
@@ -333,6 +344,28 @@ Value evaluateFunction (string name, Value[] arguments) {
         return evaluateDefinedFunction(lispFunctions[name], arguments, name);
     }
     throw new UndefinedFunctionException(name);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+BuiltinFunction* getBuiltin (string name) {
+    if (name in builtinFunctions) {
+        return &builtinFunctions[name];
+    }
+
+    return null;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+LispFunction* getDefined (string name) {
+    if (name in lispFunctions) {
+        return &lispFunctions[name];
+    }
+
+    return null;
 }
 
 

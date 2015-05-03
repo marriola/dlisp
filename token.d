@@ -4,6 +4,7 @@ import exceptions;
 import functions;
 import lispObject;
 import node;
+import vm.compiler;
 
 import std.algorithm;
 import std.stdio;
@@ -149,6 +150,10 @@ class Value {
             // integer operands and floating point result
             token = new FloatToken(cast(double)(cast(IntegerToken)token).intValue / (cast(IntegerToken)divisor.token).intValue);
         }
+    }
+
+    void accept (LispVisitor visitor) {
+        visitor.visit(this, this.token);
     }
 }
 
@@ -566,6 +571,7 @@ class VectorToken : Token {
 ///////////////////////////////////////////////////////////////////////////////
 
 abstract class FunctionToken : Token {
+    int id;
     Value evaluate (Value[] args);
 }
 

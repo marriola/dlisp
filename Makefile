@@ -2,18 +2,18 @@
 # Variables
 
 COMPILER := dmd -c
-
 CFLAGS   := # -debug -g -gc -unittest
-
 LINKER   := dmd -v
 
 LISPCORE := lisp.obj exceptions.obj token.obj node.obj lispObject.obj parser.obj variables.obj evaluator.obj functions.obj
 LISPBUILTINS := builtin/definition.obj builtin/io.obj builtin/list.obj builtin/logic.obj builtin/loop.obj builtin/math.obj builtin/system.obj
+LISPVM := vm/bytecode.obj vm/machine.obj vm/compiler.obj
+OBJECT_FILES := $(LISPCORE) $(LISPBUILTINS) $(LISPVM)
 
 ########################################
 # Rules
 
-lisp: $(LISPCORE) $(LISPBUILTINS)
+lisp: $(OBJECT_FILES)
 
 all: lisp
 
@@ -27,7 +27,7 @@ all: lisp
 
 .PHONY: tidy
 tidy:
-	rm $(LISPCORE) $(LISPBUILTINS)
+	rm $(OBJECT_FILES)
 
 .PHONY: clean
 clean: tidy
