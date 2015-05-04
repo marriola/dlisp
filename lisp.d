@@ -39,9 +39,10 @@ void main (string args[]) {
         
         try {
             Value tree = lisp.read();
-            BytecodeFunction fun = compile(tree);
-            writef("%s\n\n", evaluateOnce(tree));
-            writef("Constants: %s\n%s\n\n", fun.constants, fun.code);
+            //BytecodeFunction fun = compile(tree);
+            //writef("%s\n\n", evaluateOnce(tree));
+            //writef("Constants: %s\n%s\n\n", fun.constants, fun.code);
+            writef("%s\n\n", vm.machine.evaluate(tree));
         } catch (SyntaxErrorException e) {
             writef("Syntax error: %s\n\n", e.msg);
         } catch (UndefinedFunctionException e) {

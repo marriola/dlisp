@@ -361,6 +361,8 @@ class CodeEmitterVisitor : LispVisitor {
 BytecodeFunction compile (Value form) {
     BytecodeFunction results;
 
+    results.entry = vm.machine.nextEntry;
+
     ConstantsVisitor constantsVisitor = new ConstantsVisitor(form);
     ConstantPair[string] constantPairs = constantsVisitor.getConstantPairs();
     results.constants = constantsVisitor.getConstants();

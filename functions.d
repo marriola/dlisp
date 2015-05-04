@@ -57,20 +57,22 @@ struct Parameters {
 }
 
 struct BuiltinFunction {
-    int id;
+    uint id;
+    string name;
     FunctionHook hook;
     string docString;
     Parameters parameters;
 }
 
 struct LispFunction {
-    int id;
+    uint id;
     string docString;
     Value[] lambdaList;
     Parameters parameters;
     Value[] forms;
 }
 
+BuiltinFunction[int] builtinTable;
 BuiltinFunction[string] builtinFunctions;
 LispFunction[string] lispFunctions;
 
@@ -183,7 +185,9 @@ void addFunction (string name, FunctionHook hook, Parameters parameters, string 
     parameters.keyword = map!(x => PairedArgument(":" ~ x.name, x.defaultValue))(parameters.keyword).array();
     parameters.rest = ":" ~ parameters.rest;
     
-    builtinFunctions[name] = BuiltinFunction(hash(name), hook, docString, parameters);
+    BuiltinFunction fun = BuiltinFunction(hash(name), name, hook, docString, parameters);
+    builtinFunctions[name] = fun;
+    builtinTable[fun.id] = fun;
 }
 
 

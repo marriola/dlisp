@@ -25,6 +25,7 @@ void macroDefun (string name, ref int nextConstant, ref ConstantPair[string] con
     Value identifier = arguments[0];
     Value lambdaList = arguments[1];
 
+    Value formsReference = getItemReference(value, 2);
     Value[] forms = arguments[2 .. arguments.length];
     string docString = null;
 
@@ -32,6 +33,7 @@ void macroDefun (string name, ref int nextConstant, ref ConstantPair[string] con
         // remove documentation string
         docString = (cast(StringToken)forms[0].token).stringValue;
         forms = forms[1 .. forms.length];
+        formsReference = getItemReference(value, 3);
     }
 
     if (identifier.token.type != TokenType.identifier) {
@@ -43,6 +45,9 @@ void macroDefun (string name, ref int nextConstant, ref ConstantPair[string] con
     string identifierString = (cast(IdentifierToken)identifier.token).stringValue;
     addFunction(identifierString, toArray(lambdaList), forms, docString);
     constants[identifierString] = ConstantPair(nextConstant, identifier);
+
+    addEntry(formsReference);
+
     code ~= Instruction(Opcode.pushconst, [cast(uint)nextConstant]);
     nextConstant++;
 }
