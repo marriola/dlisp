@@ -150,13 +150,13 @@ Value builtinNeq (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 void addBuiltins () {
-    addFunction("NULL", &builtinNull, Parameters(["OBJECT"]));
-    addFunction("ZEROP", &builtinZerop, Parameters(["OBJECT"]));
-    addFunction("IF", &builtinIf, Parameters(["TEST", "THEN", "ELSE"]));
-    addFunction("COND", &builtinCond, Parameters(null, null, null, null, "VARIANTS"));
-    addFunction("AND", &builtinAnd, Parameters(null, null, null, null, "FORMS"));
-    addFunction("OR", &builtinOr, Parameters(null, null, null, null, "FORMS"));
-    addFunction("NOT", &builtinNot, Parameters(["FORM"]));
-    addFunction("EQ", &builtinEq, Parameters(["OBJ1", "OBJ2"]));
-    addFunction("NEQ", &builtinNeq, Parameters(["OBJ1", "OBJ2"]));
+    addFunction("NULL", &builtinNull, [Parameter("OBJECT")]);
+    addFunction("ZEROP", &builtinZerop, [Parameter("OBJECT")]);
+    addFunction("IF", &builtinIf, [Parameter("TEST"), Parameter("THEN"), Parameter("ELSE")]);
+    addFunction("COND", &builtinCond, null, null, null, null, Parameter("VARIANTS"));
+    addFunction("AND", &builtinAnd, null, null, null, null, Parameter("FORMS"));
+    addFunction("OR", &builtinOr, null, null, null, null, Parameter("FORMS"));
+    addFunction("NOT", &builtinNot, [Parameter("FORM")]);
+    addFunction("EQ", &builtinEq, [Parameter("OBJ1"), Parameter("OBJ2")]);
+    addFunction("NEQ", &builtinNeq, [Parameter("OBJ1"), Parameter("OBJ2")]);
 }

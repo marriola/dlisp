@@ -39,5 +39,5 @@ Value builtinDotimes (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 void addBuiltins () {
-    addFunction("DOTIMES", &builtinDotimes, Parameters(["LOOPSPEC"], null, null, null, "FORMS"));
+    addFunction("DOTIMES", &builtinDotimes, [Parameter("LOOPSPEC")], null, null, null, Parameter("FORMS"));
 }

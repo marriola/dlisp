@@ -1,5 +1,6 @@
 module builtin.definition;
 
+
 import evaluator;
 import exceptions;
 import functions;
@@ -182,14 +183,14 @@ Value builtinEval (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 void addBuiltins () {
-    addFunction("LET", &builtinLet, Parameters(["BINDINGS"], null, null, null, "FORMS"));
-    addFunction("LET*", &builtinLetStar, Parameters(["BINDINGS"], null, null, null, "FORMS"));
-    addFunction("SETF", &builtinSetf, Parameters(["PLACE", "VALUE"]));
-    addFunction("SETQ", &builtinSetq, Parameters(["IDENTIFIER", "VALUE"]));
-    addFunction("LAMBDA", &builtinLambda, Parameters(["LAMBDA-LIST"], null, null, null, "FORMS"));
-    addFunction("FUNCALL", &builtinFuncall, Parameters(["IDENTIFIER"], null, null, null, "ARGUMENTS"));
-    addFunction("DEFUN", &builtinDefun, Parameters(["IDENTIFIER", "LAMBDA-LIST"], null, null, null, "FORMS"));
-    addFunction("FUNCTION", &builtinFunction, Parameters(["IDENTIFIER"]));
-    addFunction("EVAL", &builtinEval, Parameters(["FORM"]));
+    addFunction("LET", &builtinLet, [Parameter("BINDINGS")], null, null, null, Parameter("FORMS"));
+    addFunction("LET*", &builtinLetStar, [Parameter("BINDINGS")], null, null, null, Parameter("FORMS"));
+    addFunction("SETF", &builtinSetf, [Parameter("PLACE"), Parameter("VALUE")]);
+    addFunction("SETQ", &builtinSetq, [Parameter("IDENTIFIER", false), Parameter("VALUE")]);
+    addFunction("LAMBDA", &builtinLambda, [Parameter("LAMBDA-LIST", false)], null, null, null, Parameter("FORMS"));
+    addFunction("FUNCALL", &builtinFuncall, [Parameter("IDENTIFIER")], null, null, null, Parameter("ARGUMENTS"));
+    addFunction("DEFUN", &builtinDefun, [Parameter("IDENTIFIER"), Parameter("LAMBDA-LIST")], null, null, null, Parameter("FORMS"));
+    addFunction("FUNCTION", &builtinFunction, [Parameter("IDENTIFIER")]);
+    addFunction("EVAL", &builtinEval, [Parameter("FORM")]);
 
 }

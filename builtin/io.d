@@ -196,10 +196,10 @@ Value builtinFormat (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 void addBuiltins () {
-    addFunction("LOAD", &builtinLoad, Parameters(["FILESPEC"]));
-    addFunction("OPEN", &builtinOpen, Parameters(["FILESPEC"], [PairedArgument("DIRECTION", new Value(new ConstantToken("INPUT")))]));
-    addFunction("CLOSE", &builtinClose, Parameters(["STREAM"]));
-    addFunction("READ", &builtinRead, Parameters(null, [PairedArgument("STREAM", Value.nil())]));
-    addFunction("PRINT", &builtinPrint, Parameters(["OBJECT"]));
-    addFunction("FORMAT", &builtinFormat, Parameters(["DESTINATION", "FORMAT-STRING"], null, null, null, "ARGS"));
+    addFunction("LOAD", &builtinLoad, [Parameter("FILESPEC")]);
+    addFunction("OPEN", &builtinOpen, [Parameter("FILESPEC")], [Parameter("DIRECTION", new Value(new ConstantToken("INPUT")))]);
+    addFunction("CLOSE", &builtinClose, [Parameter("STREAM")]);
+    addFunction("READ", &builtinRead, null, [Parameter("STREAM", Value.nil())]);
+    addFunction("PRINT", &builtinPrint, [Parameter("OBJECT")]);
+    addFunction("FORMAT", &builtinFormat, [Parameter("DESTINATION"), Parameter("FORMAT-STRING")], null, null, null, Parameter("ARGS"));
 }

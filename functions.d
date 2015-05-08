@@ -4,6 +4,7 @@ module functions;
 ///////////////////////////////////////////////////////////////////////////////
 
 import std.algorithm;
+import std.typecons;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -30,29 +31,47 @@ import builtin.system;
 
 alias FunctionHook = Value function(string);
 
-struct PairedArgument {
-    string name;
+struct Parameter {
+	string name;
     Value defaultValue;
+	bool evaluate;
 
-    this (string name, Value defaultValue = null) {
+    this (string name, Value defaultValue, bool evaluate = true) {
         this.name = name;
         this.defaultValue = defaultValue;
+		this.evaluate = evaluate;
+    }
+
+    this (string name, bool evaluate = true) {
+        this.name = name;
+        this.defaultValue = null;
+		this.evaluate = evaluate;
     }
 }
 
 struct Parameters {
-    string[] required;
-    PairedArgument[] optional;
-    PairedArgument[] keyword;
-    PairedArgument[] auxiliary;
-    string rest;
+    Parameter[] required;
+    Parameter[] optional;
+    Parameter[] keyword;
+    Parameter[] auxiliary;
+    Parameter rest;
+	bool hasRest;
 
-    this (string[] required, PairedArgument[] optional = null, PairedArgument[] keyword = null, PairedArgument[] auxiliary = null, string rest = null) {
+    this (Parameter[] required, Parameter[] optional, Parameter[] keyword, Parameter[] auxiliary, Parameter rest) {
         this.required = required;
         this.optional = optional;
         this.keyword = keyword;
         this.auxiliary = auxiliary;
         this.rest = rest;
+		this.hasRest = true;
+    }
+
+    this (Parameter[] required, Parameter[] optional = null, Parameter[] keyword = null, Parameter[] auxiliary = null) {
+        this.required = required;
+        this.optional = optional;
+        this.keyword = keyword;
+        this.auxiliary = auxiliary;
+		this.hasRest = false;
     }
 }
 
@@ -92,8 +111,9 @@ void initializeBuiltins () {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-string extractRestArgument (ref Value[] lambdaList) {
+Nullable!Parameter extractRestArgument (ref Value[] lambdaList) {
     int firstArgument = -1;
+	Nullable!Parameter rest;
 
     // look for the &key keyword, exit if not found
     foreach (int i, Value arg; lambdaList) {
@@ -104,20 +124,19 @@ string extractRestArgument (ref Value[] lambdaList) {
                 throw new InvalidLambdaListElementException(lambdaList[i + 1].token, "identifier");
             }
 
-            string restArgument = (cast(IdentifierToken)lambdaList[i + 1].token).stringValue;
+            rest = Parameter((cast(IdentifierToken)lambdaList[i + 1].token).stringValue);
             lambdaList = remove(lambdaList, i, i + 1);
-
-            return restArgument;
+			break;
         }
     }
 
-    return null;
+    return rest;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-PairedArgument[] extractKeywordArguments (ref Value[] lambdaList, string keyword) {
+Parameter[] extractKeywordArguments (ref Value[] lambdaList, string keyword) {
     int firstArgument = -1;
     int lastArgument = lambdaList.length;
 
@@ -133,7 +152,7 @@ PairedArgument[] extractKeywordArguments (ref Value[] lambdaList, string keyword
         return null;
     }
 
-    PairedArgument[] keywordArguments = new PairedArgument[0];
+    Parameter[] keywordArguments;
     foreach (int i, Value arg; lambdaList[firstArgument .. lambdaList.length]) {
         // keep going until we reach another keyword
         if (arg.token.type == TokenType.identifier && (cast(IdentifierToken)arg.token).stringValue[0] == '&') {
@@ -147,10 +166,10 @@ PairedArgument[] extractKeywordArguments (ref Value[] lambdaList, string keyword
             if (argumentName.token.type != TokenType.identifier) {
                 throw new InvalidLambdaListElementException(argumentName.token, "expected identifier");
             }
-            keywordArguments ~= PairedArgument((cast(IdentifierToken)argumentName.token).stringValue, argumentValue);
+            keywordArguments ~= Parameter((cast(IdentifierToken)argumentName.token).stringValue, argumentValue);
 
         } else if (arg.token.type == TokenType.identifier) {
-            keywordArguments ~= PairedArgument((cast(IdentifierToken)arg.token).stringValue, null);
+            keywordArguments ~= Parameter((cast(IdentifierToken)arg.token).stringValue, null);
 
         } else {
             throw new InvalidLambdaListElementException(arg.token, "expected identifier or list");
@@ -175,17 +194,26 @@ uint hash (string str) {
 
 /**
  * Adds a builtin function.
+ *
+ * @param	name		The name of the function
+ * @param	hook		A pointer to a function to call when this function is invoked
+ * @param	required	Required parameters
+ * @param	optional	Optional parameters
+ * @param	keyword		Keyword parameters
+ * @param	auxiliary	Auxiliary parameters
+ * @param	rest		A rest parameter
+ * @param	docString	Documentation string
  */
 
-void addFunction (string name, FunctionHook hook, Parameters parameters, string docString = null) {
+void addFunction (string name, FunctionHook hook, Parameter[] required, Parameter[] optional = null, Parameter[] keyword = null, Parameter[] auxiliary = null, Parameter rest = null, string docString = null) {
     // Add colons to the beginning of each parameter's name to prevent naming conflicts in case an
     // identifier with an otherwise identical name is passed for that parameter.
-    parameters.required = map!(x => ":" ~ x)(parameters.required).array();
-    parameters.optional = map!(x => PairedArgument(":" ~ x.name, x.defaultValue))(parameters.optional).array();
-    parameters.keyword = map!(x => PairedArgument(":" ~ x.name, x.defaultValue))(parameters.keyword).array();
-    parameters.rest = ":" ~ parameters.rest;
+    required = map!(x => Parameter(":" ~ x.name))(required).array();
+    optional = map!(x => Parameter(":" ~ x.name, x.defaultValue))(optional).array();
+    keyword = map!(x => Parameter(":" ~ x.name, x.defaultValue))(keyword).array();
+    rest = Parameter(":" ~ rest.name);
     
-    BuiltinFunction fun = BuiltinFunction(hash(name), name, hook, docString, parameters);
+    BuiltinFunction fun = BuiltinFunction(hash(name), name, hook, docString, Parameters(required, optional, keyword, auxiliary, rest));
     builtinFunctions[name] = fun;
     builtinTable[fun.id] = fun;
 }
@@ -199,16 +227,22 @@ void addFunction (string name, FunctionHook hook, Parameters parameters, string 
 
 LispFunction processFunctionDefinition (Value[] lambdaList, Value[] forms, string docString = null) {
     Value[] oldLambdaList = lambdaList[];
-    PairedArgument[] optional = extractKeywordArguments(lambdaList, "&OPTIONAL");
-    PairedArgument[] keyword = extractKeywordArguments(lambdaList, "&KEY");
-    string rest = extractRestArgument(lambdaList);
-    PairedArgument[] auxiliary = extractKeywordArguments(lambdaList, "&AUX");
-    string[] required = reduce!((result, x) => result ~= (cast(IdentifierToken)x.token).stringValue)(new string[0], lambdaList);
+    Parameter[] optional = extractKeywordArguments(lambdaList, "&OPTIONAL");
+    Parameter[] keyword = extractKeywordArguments(lambdaList, "&KEY");
+    Nullable!Parameter rest = extractRestArgument(lambdaList);
+    Parameter[] auxiliary = extractKeywordArguments(lambdaList, "&AUX");
+    Parameter[] required = reduce!((result, x) => result ~= Parameter((cast(IdentifierToken)x.token).stringValue))(new Parameter[0], lambdaList);
     if (required.length == 0) {
         required = null;
     }
 
-    return LispFunction(lispFunctions.length, docString, oldLambdaList, Parameters(required, optional, keyword, auxiliary, rest), forms);
+    if (rest.isNull) {
+		return LispFunction(lispFunctions.length, docString, oldLambdaList,
+							Parameters(required, optional, keyword, auxiliary), forms);
+	} else {
+		return LispFunction(lispFunctions.length, docString, oldLambdaList,
+							Parameters(required, optional, keyword, auxiliary, rest), forms);
+	}
 }
 
 
@@ -232,17 +266,17 @@ Value[string] bindParameters (string name, Parameters parameters, Value[] argume
     }
 
     // extract and bind required arguments
-    foreach (string requiredArg; parameters.required) {
+    foreach (Parameter requiredParam; parameters.required) {
         if (arguments.length == 0) {
             throw new Exception("Too few arguments given to " ~ name);
         }
 
-        newScope[requiredArg] = arguments[0];
+        newScope[requiredParam.name] = arguments[0];
         arguments = remove(arguments, 0);
     }
 
     // extract and bind optional arguments
-    foreach (PairedArgument optArg; parameters.optional) {
+    foreach (Parameter optArg; parameters.optional) {
         Value value;
         if (arguments.length == 0) {
             // use default value if we're out of arguments
@@ -257,7 +291,7 @@ Value[string] bindParameters (string name, Parameters parameters, Value[] argume
     }
 
     // if fun wants a rest parameter, grab all remaining arguments
-    if (parameters.rest !is null) {
+    if (parameters.hasRest) {
         Value restArguments;
 
         if (arguments.length == 0) {
@@ -272,11 +306,11 @@ Value[string] bindParameters (string name, Parameters parameters, Value[] argume
             }
         }
 
-        newScope[parameters.rest] = restArguments;
+        newScope[parameters.rest.name] = restArguments;
     }
 
     // extract and bind keyword arguments
-    foreach (PairedArgument kwArg; parameters.keyword) {
+    foreach (Parameter kwArg; parameters.keyword) {
         // find matching keyword argument in arguments
         int kwIndex =
             countUntil!
@@ -304,7 +338,7 @@ Value[string] bindParameters (string name, Parameters parameters, Value[] argume
     }
 
     // bind auxiliary arguments
-    foreach (PairedArgument auxArg; parameters.auxiliary) {
+    foreach (Parameter auxArg; parameters.auxiliary) {
         newScope[auxArg.name] = auxArg.defaultValue is null ? Value.nil() : evaluateOnce(auxArg.defaultValue.copy());
     }
 

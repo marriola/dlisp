@@ -22,5 +22,5 @@ Value builtinExit (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 void addBuiltins () {
-    addFunction("EXIT", &builtinExit, Parameters(null, [PairedArgument("EXIT-CODE", new Value(new IntegerToken(0)))]));
+    addFunction("EXIT", &builtinExit, null, [Parameter("EXIT-CODE", new Value(new IntegerToken(0)))]);
 }

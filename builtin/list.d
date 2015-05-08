@@ -377,18 +377,18 @@ Value builtinRemoveIfNot (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 void addBuiltins () {
-    addFunction("MAKE-ARRAY", &builtinMakeArray, Parameters(["SIZE"]));
-    addFunction("MAKE-LIST", &builtinMakeList, Parameters(["SIZE"], null, [PairedArgument("INITIAL-ELEMENT", Value.nil())]));
-    addFunction("COPY-LIST", &builtinMakeArray, Parameters(["LIST"]));
-    addFunction("LIST", &builtinList, Parameters(null, null, null, null, "OBJECTS"));
-    addFunction("LENGTH", &builtinLength, Parameters(["LIST"]));
-    addFunction("PROGN", &builtinProgn, Parameters(null, null, null, null, "FORMS"));
-    addFunction("QUOTE", &builtinQuote, Parameters(["OBJECT"]));
-    addFunction("CONS", &builtinCons, Parameters(["CAR", "CDR"]));
-    addFunction("CAR", &builtinCar, Parameters(["LIST"]));
-    addFunction("FIRST", &builtinCar, Parameters(["LIST"]));
-    addFunction("CDR", &builtinCdr, Parameters(["LIST"]));
-    addFunction("REST", &builtinCdr, Parameters(["LIST"]));
+    addFunction("MAKE-ARRAY", &builtinMakeArray, [Parameter("SIZE")]);
+    addFunction("MAKE-LIST", &builtinMakeList, [Parameter("SIZE")], null, [Parameter("INITIAL-ELEMENT", Value.nil())]);
+    addFunction("COPY-LIST", &builtinMakeArray, [Parameter("LIST")]);
+    addFunction("LIST", &builtinList, null, null, null, null, Parameter("OBJECTS"));
+    addFunction("LENGTH", &builtinLength, [Parameter("LIST")]);
+    addFunction("PROGN", &builtinProgn, null, null, null, null, Parameter("FORMS"));
+    addFunction("QUOTE", &builtinQuote, [Parameter("OBJECT")]);
+    addFunction("CONS", &builtinCons, [Parameter("CAR"), Parameter("CDR")]);
+    addFunction("CAR", &builtinCar, [Parameter("LIST")]);
+    addFunction("FIRST", &builtinCar, [Parameter("LIST")]);
+    addFunction("CDR", &builtinCdr, [Parameter("LIST")]);
+    addFunction("REST", &builtinCdr, [Parameter("LIST")]);
 
     foreach (string fun; ["CAAR", "CADR", "CDAR", "CDDR", "CAAAR", "CAADR",
                           "CADAR", "CADDR", "CDAAR", "CDADR", "CDDAR",
@@ -396,16 +396,16 @@ void addBuiltins () {
                           "CADAAR", "CADADR", "CADDAR", "CADDDR", "CDAAAR",
                           "CDAADR", "CDADAR", "CDADDR", "CDDAAR", "CDDADR",
                           "CDDDAR", "CDDDDR"]) {
-        addFunction(fun, &builtinCompoundAccessor, Parameters(["LIST"]));
+        addFunction(fun, &builtinCompoundAccessor, [Parameter("LIST")]);
     }
 
-    addFunction("ELT", &builtinElt, Parameters(["LIST", "INDEX"]));
-    addFunction("AREF", &builtinAref, Parameters(["ARRAY", "INDEX"]));
-    addFunction("APPEND", &builtinAppend, Parameters(null, null, null, null, "LISTS"));
-    addFunction("CONCATENATE", &builtinConcatenate, Parameters(["RESULT-TYPE"], null, null, null, "SEQUENCES"));
-    addFunction("STRING", &builtinString, Parameters(["CHARACTER"]));
-    addFunction("MAP", &builtinMap, Parameters(["RESULT-TYPE", "FUNCTION", "LIST"]));
-    addFunction("MAPCAR", &builtinMapcar, Parameters(["FUNCTION", "LIST"]));
-    addFunction("REMOVE-IF", &builtinRemoveIf, Parameters(["PREDICATE", "LIST"]));
-    addFunction("REMOVE-IF-NOT", &builtinRemoveIfNot, Parameters(["PREDICATE", "LIST"]));
+    addFunction("ELT", &builtinElt, [Parameter("LIST"), Parameter("INDEX")]);
+    addFunction("AREF", &builtinAref, [Parameter("ARRAY"), Parameter("INDEX")]);
+    addFunction("APPEND", &builtinAppend, null, null, null, null, Parameter("LISTS"));
+    addFunction("CONCATENATE", &builtinConcatenate, [Parameter("RESULT-TYPE")], null, null, null, Parameter("SEQUENCES"));
+    addFunction("STRING", &builtinString, [Parameter("CHARACTER")]);
+    addFunction("MAP", &builtinMap, [Parameter("RESULT-TYPE"), Parameter("FUNCTION"), Parameter("LIST")]);
+    addFunction("MAPCAR", &builtinMapcar, [Parameter("FUNCTION"), Parameter("LIST")]);
+    addFunction("REMOVE-IF", &builtinRemoveIf, [Parameter("PREDICATE"), Parameter("LIST")]);
+    addFunction("REMOVE-IF-NOT", &builtinRemoveIfNot, [Parameter("PREDICATE"), Parameter("LIST")]);
 }

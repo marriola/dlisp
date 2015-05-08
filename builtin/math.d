@@ -240,20 +240,20 @@ Value builtinRandom (string name) {
 
 void addBuiltins () {
     foreach (string fun; ["<=", "<", "=", "/=", ">", ">="]) {
-        addFunction(fun, &builtinComparator, Parameters(null, null, null, null, "NUMBERS"));
+        addFunction(fun, &builtinComparator, null, null, null, null, Parameter("NUMBERS"));
     }
 
     foreach (string fun; ["+", "-", "*", "/"]) {
-        addFunction(fun, &builtinArithmeticOperation, Parameters(null, null, null, null, "NUMBERS"));
+        addFunction(fun, &builtinArithmeticOperation, null, null, null, null, Parameter("NUMBERS"));
     }
 
-    addFunction("1+", &builtinOnePlus, Parameters(["NUMBER"]));
-    addFunction("1-", &builtinOneMinus, Parameters(["NUMBER"]));
-    addFunction("INCF", &builtinIncf, Parameters(["PLACE"]));
-    addFunction("DECF", &builtinDecf, Parameters(["PLACE"]));
-    addFunction("SQRT", &builtinSqrt, Parameters(["NUMBER"]));
-    addFunction("MOD", &builtinMod, Parameters(["DIVIDEND", "DIVISOR"]));
-    addFunction("EVEN", &builtinEven, Parameters(["NUMBER"]));
-    addFunction("ODD", &builtinOdd, Parameters(["NUMBER"]));
-    addFunction("RANDOM", &builtinRandom, Parameters(["LIMIT"]));
+    addFunction("1+", &builtinOnePlus, [Parameter("NUMBER")]);
+    addFunction("1-", &builtinOneMinus, [Parameter("NUMBER")]);
+    addFunction("INCF", &builtinIncf, [Parameter("PLACE")]);
+    addFunction("DECF", &builtinDecf, [Parameter("PLACE")]);
+    addFunction("SQRT", &builtinSqrt, [Parameter("NUMBER")]);
+    addFunction("MOD", &builtinMod, [Parameter("DIVIDEND"), Parameter("DIVISOR")]);
+    addFunction("EVEN", &builtinEven, [Parameter("NUMBER")]);
+    addFunction("ODD", &builtinOdd, [Parameter("NUMBER")]);
+    addFunction("RANDOM", &builtinRandom, [Parameter("LIMIT")]);
 }
