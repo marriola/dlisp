@@ -11,14 +11,14 @@ import vm.machine;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-alias MacroFunction = void function(string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value value);
+alias MacroFunction = void function(CodeEmitterVisitor visitor, string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value value);
 
 struct CompilerMacro {
     string name;
     MacroFunction evaluate;
 }
 
-void macroDefun (string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value value) {
+void macroDefun (CodeEmitterVisitor visitor, string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value value) {
     std.stdio.writef("macro %s:%s\n", name, value);
 
     Value[] arguments = toArray(value);
@@ -52,6 +52,29 @@ void macroDefun (string name, ref int nextConstant, ref ConstantPair[string] con
     nextConstant++;
 }
 
+void macroIf (CodeEmitterVisitor visitor, string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value value) {
+    Value[] arguments = toArray(value);
+    if (arguments.length < 2) {
+        throw new NotEnoughArgumentsException("macroIf");
+    }
+
+    Value test = arguments[0];
+    Value thenStatement = arguments[1];
+    Value elseStatement = arguments.length > 2 ? arguments[2] : Value.nil();
+
+    test.accept(visitor);
+
+    Instruction* op = new Instruction(Opcode.jumpifnot, [0]);
+    code ~= *op;
+    thenStatement.accept(visitor);
+    op.operands[0] = code.length + 1;
+
+    op = new Instruction(Opcode.jump, [0]);
+    code ~= *op;
+    elseStatement.accept(visitor);
+    op.operands[0] = code.length;
+}
+
 CompilerMacro[string] compilerMacros;
 
 void addMacro (string name, MacroFunction fun) {
@@ -60,4 +83,5 @@ void addMacro (string name, MacroFunction fun) {
 
 void initializeMacros () {
     addMacro("DEFUN", &macroDefun);
+    addMacro("IF", &macroIf);
 }

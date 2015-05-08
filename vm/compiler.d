@@ -100,7 +100,7 @@ class ConstantsVisitor : LispVisitor {
 
     this (Value form) {
         this.form = form;
-        firstElement.insert(true);
+        firstElement.insert(false);
         lastValue.insert(true);
         quoted = false;
     }
@@ -109,6 +109,7 @@ class ConstantsVisitor : LispVisitor {
         if (!value.isNil()) {
             string asString = value.toString();
             if (asString !in constants) {
+                std.stdio.writef("addConstant %s\n", asString);
                 constants[asString] = ConstantPair(nextConstant, value);
                 nextConstant++;
             }
@@ -168,6 +169,7 @@ class ConstantsVisitor : LispVisitor {
 
     override public void visit (Value value, ReferenceToken token) {
         if (quoted) {
+            std.stdio.writeln("QUOTING:");
             addConstant(token.reference.car);
             return;
         }
@@ -234,7 +236,7 @@ class CodeEmitterVisitor : LispVisitor {
             code ~= Instruction(Opcode.pushnil1);
         } else {
             string asString = value.toString();
-            //std.stdio.writef("pushConstant %s\n", asString);
+            std.stdio.writef("pushConstant %s\n", asString);
             if (asString in constants) {
                 Instruction push = Instruction(Opcode.pushconst, [constants[asString].index]);
                 //std.stdio.writef("%s\n", push);
@@ -245,33 +247,39 @@ class CodeEmitterVisitor : LispVisitor {
         }
     }
 
-    private void pushCall (string name, Value arguments) {
-        //std.stdio.writef("pushCall(%s, %s)\n", name, arguments);
+    private void pushCall (string name, Value arguments, bool evaluate = true) {
+        std.stdio.writef("pushCall(%s, %s) {\n", name, arguments);
 
         if (name in compilerMacros) {
-            compilerMacros[name].evaluate(name, nextConstant, constants, code, arguments);
+            compilerMacros[name].evaluate(this, name, nextConstant, constants, code, arguments);
             return;
         }
 
-        int argCount = 0;
-        foreach_reverse (Value argument; toArray(arguments)) {
-            //std.stdio.writef("next %s\n", argument);
-            argument.accept(this);
-            argCount++;
-        }
-
+        uint argCount = 0;
         BuiltinFunction* builtin = getBuiltin(name);
         Instruction call;
         if (builtin !is null && builtin.id > 0) {
+            foreach_reverse (Value argument; toArray(arguments)) {
+                std.stdio.writef("%s: next %s\n", name, argument);
+                pushConstant(argument);
+                argCount++;
+            }
+
             if (argCount == 0) {
                 call = Instruction(Opcode.builtin0, [cast(uint)builtin.id]);
             } else if (argCount == 1) {
                 call = Instruction(Opcode.builtin1, [cast(uint)builtin.id]);
             } else {
-                call = Instruction(Opcode.builtin, [cast(uint)builtin.id, cast(uint)argCount]);
+                call = Instruction(Opcode.builtin, [cast(uint)builtin.id, argCount]);
             }
 
         } else {
+            foreach_reverse (Value argument; toArray(arguments)) {
+                std.stdio.writef("%s: next %s\n", name, argument);
+                argument.accept(this);
+                argCount++;
+            }
+
             LispFunction* fun = getDefined(name);
             if (fun !is null) {
                 if (argCount == 0) {
@@ -287,7 +295,7 @@ class CodeEmitterVisitor : LispVisitor {
         }
 
         code ~= call;
-        //std.stdio.writef("%s\n", call.toString());
+        std.stdio.writef("}\n");
     }
 
     override public void visit (Value value, BooleanToken token) {
@@ -295,20 +303,22 @@ class CodeEmitterVisitor : LispVisitor {
     }
 
     override public void visit (Value value, ReferenceToken token) {
-        //std.stdio.writef("visit %s\n", token);
-        if ((token.reference.car.token.type == TokenType.identifier && (cast(IdentifierToken)token.reference.car.token).stringValue == "QUOTE")) {
-            //std.stdio.writef("%s is quoted\n", token.reference.cdr);
-            pushConstant(value);
-            return;
-        }
+        std.stdio.writef("ref visit %s\n", token);
+        //if ((token.reference.car.token.type == TokenType.identifier && (cast(IdentifierToken)token.reference.car.token).stringValue == "QUOTE")) {
+        //    std.stdio.writef("%s is quoted\n", token.reference.cdr);
+        //    pushConstant(value);
+        //}
 
         if (token.reference.car.token.type == TokenType.identifier) {
-            //std.stdio.writef("function call %s\n", token.reference.car);
+//            std.stdio.writef("function call %s\n", token.reference.car);
             pushCall((cast(IdentifierToken)token.reference.car.token).stringValue, token.reference.cdr);
+        } else {
+            pushConstant(value);
         }
     }
 
     override public void visit (Value value, IntegerToken token) {
+        std.stdio.writef("visit integer %d\n", token.intValue);
         pushConstant(value);
     }
 
@@ -350,6 +360,7 @@ class CodeEmitterVisitor : LispVisitor {
     }
 
     public Instruction[] compile () {
+        std.stdio.writef("inner COMPILE %s\n", form);
         form.accept(this);
         return code;
     }
@@ -359,6 +370,8 @@ class CodeEmitterVisitor : LispVisitor {
 ///////////////////////////////////////////////////////////////////////////////
 
 BytecodeFunction compile (Value form) {
+    std.stdio.writef("outer COMPILE %s\n", form);
+
     BytecodeFunction results;
 
     results.entry = vm.machine.nextEntry;
@@ -366,11 +379,12 @@ BytecodeFunction compile (Value form) {
     ConstantsVisitor constantsVisitor = new ConstantsVisitor(form);
     ConstantPair[string] constantPairs = constantsVisitor.getConstantPairs();
     results.constants = constantsVisitor.getConstants();
+    std.stdio.writeln(results.constants);
 
     //std.stdio.writeln("code");
     CodeEmitterVisitor codeEmitterVisitor = new CodeEmitterVisitor(constantsVisitor.nextConstant, constantPairs, form);
     results.code = codeEmitterVisitor.compile();
-    //std.stdio.writeln(results.code);
+    std.stdio.writeln(results.code);
 
     return results;
 }    
