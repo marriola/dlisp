@@ -11,21 +11,18 @@ import vm.machine;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-alias MacroFunction = void function(CodeEmitterVisitor visitor, string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value value);
+alias MacroFunction = void function(CodeEmitterVisitor visitor, string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value argsValue, Value[] arguments);
 
 struct CompilerMacro {
     string name;
     MacroFunction evaluate;
 }
 
-void macroDefun (CodeEmitterVisitor visitor, string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value value) {
-    std.stdio.writef("macro %s:%s\n", name, value);
-
-    Value[] arguments = toArray(value);
+void macroDefun (CodeEmitterVisitor visitor, string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value argsValue, Value[] arguments) {
     Value identifier = arguments[0];
     Value lambdaList = arguments[1];
 
-    Value formsReference = getItemReference(value, 2);
+    Value formsReference = getItemReference(argsValue, 2);
     Value[] forms = arguments[2 .. arguments.length];
     string docString = null;
 
@@ -33,7 +30,7 @@ void macroDefun (CodeEmitterVisitor visitor, string name, ref int nextConstant, 
         // remove documentation string
         docString = (cast(StringToken)forms[0].token).stringValue;
         forms = forms[1 .. forms.length];
-        formsReference = getItemReference(value, 3);
+        formsReference = getItemReference(argsValue, 3);
     }
 
     if (identifier.token.type != TokenType.identifier) {
@@ -52,8 +49,7 @@ void macroDefun (CodeEmitterVisitor visitor, string name, ref int nextConstant, 
     nextConstant++;
 }
 
-void macroIf (CodeEmitterVisitor visitor, string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value value) {
-    Value[] arguments = toArray(value);
+void macroIf (CodeEmitterVisitor visitor, string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value argsValue, Value[] arguments) {
     if (arguments.length < 2) {
         throw new NotEnoughArgumentsException("macroIf");
     }
@@ -75,6 +71,10 @@ void macroIf (CodeEmitterVisitor visitor, string name, ref int nextConstant, ref
     op.operands[0] = code.length;
 }
 
+void macroQuote (CodeEmitterVisitor visitor, string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value argsValue, Value[] arguments) {
+	visitor.pushConstant(arguments[0]);
+}
+
 CompilerMacro[string] compilerMacros;
 
 void addMacro (string name, MacroFunction fun) {
@@ -84,4 +84,5 @@ void addMacro (string name, MacroFunction fun) {
 void initializeMacros () {
     addMacro("DEFUN", &macroDefun);
     addMacro("IF", &macroIf);
+    addMacro("QUOTE", &macroQuote);
 }

@@ -19,7 +19,7 @@ Value builtinLet (string name) {
 
     foreach (int i, Value binding; bindings) {
         Value bindingName = getFirst(binding);
-        Value bindingValue = evaluateOnce(getFirst(getRest(binding)));
+        Value bindingValue = getFirst(getRest(binding));
 
         if (bindingName.token.type != TokenType.identifier) {
             throw new TypeMismatchException(name, binding.token, "identifier");
@@ -36,7 +36,7 @@ Value builtinLet (string name) {
     enterScope(newScope);
     Value lastResult = new Value(new BooleanToken(false));
     foreach (Value form; forms) {
-        lastResult = evaluateOnce(form);
+        lastResult = form;
     }
     leaveScope();
 
@@ -53,7 +53,7 @@ Value builtinLetStar (string name) {
     enterScope();
     foreach (Value bindingReference; bindings) {
         Value bindingName = getFirst(bindingReference);
-        Value bindingValue = evaluateOnce(getFirst(getRest(bindingReference)));
+        Value bindingValue = getFirst(getRest(bindingReference));
 
         if (bindingName.token.type != TokenType.identifier) {
             throw new TypeMismatchException(name, bindingName.token, "identifier");
@@ -64,7 +64,7 @@ Value builtinLetStar (string name) {
 
     Value lastResult = new Value(new BooleanToken(false));
     foreach (Value form; forms) {
-        lastResult = evaluateOnce(form);
+        lastResult = form;
     }
     leaveScope();
 
@@ -82,7 +82,7 @@ Value builtinSetq (string name) {
         throw new TypeMismatchException(name, identifierToken.token, "identifier");
     }
 
-    Value value = evaluateOnce(getParameter("VALUE"));
+    Value value = getParameter("VALUE");
     addVariable(identifier, value, 0);
     return value;
 }
@@ -91,8 +91,8 @@ Value builtinSetq (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinSetf (string name) {
-    Value place = evaluateOnce(getParameter("PLACE"));
-    Value value = evaluateOnce(getParameter("VALUE"));
+    Value place = getParameter("PLACE");
+    Value value = getParameter("VALUE");
     copyValue(value, place);
     return value;
 }
@@ -117,7 +117,7 @@ Value builtinLambda (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinFuncall (string name) {
-    Value fun = evaluateOnce(getParameter("IDENTIFIER"));
+    Value fun = getParameter("IDENTIFIER");
     Value[] funArgs = toArray(getParameter("ARGUMENTS"));
 
     if (fun.token.type == TokenType.identifier) {
@@ -176,7 +176,7 @@ Value builtinFunction (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinEval (string name) {
-    return evaluateOnce(evaluateOnce(getParameter("FORM")));
+    return getParameter("FORM");
 }
 
 

@@ -158,7 +158,7 @@ Value map (TokenType type, Value mapFunction, Value[] lists) {
 
     for (int i = 0; i < lists.length; i++) {
         Value argument;
-        argument = lists[i] = evaluateOnce(lists[i]);
+        argument = lists[i]; // = evaluate(lists[i]);
         if (argument.token.type != TokenType.reference) {
             throw new TypeMismatchException("map", argument.token, "reference");
         }

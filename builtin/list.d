@@ -15,7 +15,7 @@ import variables;
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinMakeArray (string name) {
-    Value size = evaluateOnce(getParameter("SIZE"));
+    Value size = getParameter("SIZE");
 
     if (size.token.type == TokenType.integer) {
         return new Value(new VectorToken(to!int((cast(IntegerToken)size.token).intValue)));
@@ -33,8 +33,8 @@ Value builtinMakeArray (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinMakeList (string name) {
-    Value sizeToken = evaluateOnce(getParameter("SIZE"));
-    Value initialElement = evaluateOnce(getParameter("INITIAL-ELEMENT"));
+    Value sizeToken = getParameter("SIZE");
+    Value initialElement = getParameter("INITIAL-ELEMENT");
 
     if (sizeToken.token.type != TokenType.integer) {
         throw new TypeMismatchException(name, sizeToken.token, "integer");
@@ -61,7 +61,7 @@ Value builtinMakeList (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinCopyList (string name) {
-    Value list = evaluateOnce(getParameter("LIST"));
+    Value list = getParameter("LIST");
     if (list.isNil()) {
         return Value.nil();
 
@@ -82,9 +82,9 @@ Value builtinList (string name) {
         return Value.nil();
     }
 
-    Value head = Token.makeReference(evaluateOnce(objects[0]));
+    Value head = Token.makeReference(objects[0]);
     for (int i = 1; i < objects.length; i++) {
-        (cast(ReferenceToken)head.token).append(Token.makeReference(evaluateOnce(objects[i])));
+        (cast(ReferenceToken)head.token).append(Token.makeReference(objects[i]));
     }
 
     return head;
@@ -94,7 +94,7 @@ Value builtinList (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinLength (string name) {
-    Value list = evaluateOnce(getParameter("LIST"));
+    Value list = getParameter("LIST");
     return new Value(new IntegerToken(listLength(list)));
 }
 
@@ -105,7 +105,7 @@ Value builtinProgn (string name) {
     Value[] forms = toArray(getParameter("FORMS"));
     Value lastResult = Value.nil();
     foreach (Value form; forms) {
-        lastResult = evaluateOnce(form);
+        lastResult = form;
 
     }
     return lastResult;
@@ -122,8 +122,8 @@ Value builtinQuote (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinCons (string name) {
-    Value car = evaluateOnce(getParameter("CAR"));
-    Value cdr = evaluateOnce(getParameter("CDR"));
+    Value car = getParameter("CAR");
+    Value cdr = getParameter("CDR");
     return Token.makeReference(car, cdr);
 }
 
@@ -131,14 +131,14 @@ Value builtinCons (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinCar (string name) {
-    return getFirst(evaluateOnce(getParameter("LIST")));
+    return getFirst(getParameter("LIST"));
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinCdr (string name) {
-    return getRest(evaluateOnce(getParameter("LIST")));
+    return getRest(getParameter("LIST"));
 }
 
 
@@ -146,7 +146,7 @@ Value builtinCdr (string name) {
 
 Value builtinCompoundAccessor (string name) {
     string accessPath = name[1 .. name.length - 1];
-    Value x = evaluateOnce(getParameter("LIST"));
+    Value x = getParameter("LIST");
 
     foreach_reverse (char c; accessPath) {
         if (x.token.type != TokenType.reference) {
@@ -168,8 +168,8 @@ Value builtinCompoundAccessor (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinElt (string name) {
-    Value list = evaluateOnce(getParameter("LIST"));
-    Value indexToken = evaluateOnce(getParameter("INDEX"));
+    Value list = getParameter("LIST");
+    Value indexToken = getParameter("INDEX");
 
     if (list.token.type != TokenType.reference) {
         throw new TypeMismatchException(name, list.token, "list");
@@ -188,8 +188,8 @@ Value builtinElt (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinAref (string name) {
-    Value vector = evaluateOnce(getParameter("ARRAY"));
-    Value indexToken = evaluateOnce(getParameter("INDEX"));
+    Value vector = getParameter("ARRAY");
+    Value indexToken = getParameter("INDEX");
 
     if (vector.token.type != TokenType.vector) {
         throw new TypeMismatchException(name, vector.token, "vector");
@@ -216,7 +216,7 @@ Value builtinAppend (string name) {
     Value[] lists = toArray(getParameter("LISTS"));
 
     foreach (int i, Value item; lists) {
-        item = evaluateOnce(item).copy();
+        item = item.copy();
 
         // skip empty lists
         if (!item.isNil()) {
@@ -242,13 +242,13 @@ Value builtinAppend (string name) {
 
 Value builtinConcatenate (string name) {
     Value[] sequences = toArray(getParameter("SEQUENCES"));
-    Value result = evaluateOnce(sequences[0]).copy();
+    Value result = sequences[0].copy();
     if (result.token.type != TokenType.string) {
         throw new TypeMismatchException(name, result.token, "string");
     }
 
     foreach (Value sequence; sequences[1 .. sequences.length]) {
-        Value str = evaluateOnce(sequence);
+        Value str = sequence;
         if (str.token.type != TokenType.string) {
             throw new TypeMismatchException(name, str.token, "string");
         }
@@ -263,7 +263,7 @@ Value builtinConcatenate (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinString (string name) {
-    Value character = evaluateOnce(getParameter("CHARACTER"));
+    Value character = getParameter("CHARACTER");
     if (character.token.type != TokenType.character) {
         throw new TypeMismatchException(name, character.token, "character");
     }
@@ -275,8 +275,8 @@ Value builtinString (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinMap (string name) {
-    Value resultTypeToken = evaluateOnce(getParameter("RESULT-TYPE"));
-    Value mapFunction = evaluateOnce(getParameter("FUNCTION"));
+    Value resultTypeToken = getParameter("RESULT-TYPE");
+    Value mapFunction = getParameter("FUNCTION");
     Value[] sequences = toArray(getParameter("SEQUENCES"));
 
     TokenType resultType;
@@ -309,7 +309,7 @@ Value builtinMap (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinMapcar (string name) {
-    Value mapFunction = evaluateOnce(getParameter("FUNCTION"));
+    Value mapFunction = getParameter("FUNCTION");
     Value[] sequences = toArray(getParameter("SEQUENCES"));
     if (mapFunction.token.type != TokenType.definedFunction && mapFunction.token.type != TokenType.builtinFunction) {
         throw new TypeMismatchException(name, mapFunction.token, "function");
@@ -321,8 +321,8 @@ Value builtinMapcar (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinRemoveIf (string name) {
-    Value predicateToken = evaluateOnce(getParameter("PREDICATE"));
-    Value list = evaluateOnce(getParameter("LIST"));
+    Value predicateToken = getParameter("PREDICATE");
+    Value list = getParameter("LIST");
 
     FunctionToken predicate;
     Value result = Value.nil();
@@ -349,8 +349,8 @@ Value builtinRemoveIf (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinRemoveIfNot (string name) {
-    Value predicateToken = evaluateOnce(getParameter("PREDICATE"));
-    Value list = evaluateOnce(getParameter("LIST"));
+    Value predicateToken = getParameter("PREDICATE");
+    Value list = getParameter("LIST");
 
     FunctionToken predicate;
     Value result = Value.nil();

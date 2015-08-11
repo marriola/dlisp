@@ -11,7 +11,7 @@ import variables;
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinNull (string name) {
-    return new Value(new BooleanToken(evaluateOnce(getParameter("OBJECT")).isNil()));
+    return new Value(new BooleanToken(getParameter("OBJECT").isNil()));
 }
 
 
@@ -19,7 +19,7 @@ Value builtinNull (string name) {
 
 Value builtinZerop (string name) {
     bool result;
-    Value obj = evaluateOnce(getParameter("OBJECT"));
+    Value obj = getParameter("OBJECT");
     if (obj.token.type == TokenType.integer) {
         result = (cast(IntegerToken)obj.token).intValue == 0;
     } else if (obj.token.type == TokenType.floating) {
@@ -47,7 +47,7 @@ Value builtinIf (string name) {
 
     Value thenClause = getParameter("THEN");
     Value elseClause = getParameter("ELSE");
-    return condition ? evaluateOnce(thenClause) : evaluateOnce(elseClause);
+    return condition ? thenClause : elseClause;
 }
 
 
@@ -61,9 +61,9 @@ Value builtinCond (string name) {
         Value condition = getFirst(variant);
         Value[] forms = toArray(getRest(variant));
 
-        if (!evaluateOnce(condition).isNil()) {
+        if (!condition.isNil()) {
             foreach (Value form; forms) {
-                result = evaluateOnce(form);
+                result = evaluate(form);
             }
             break;
         }

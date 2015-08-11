@@ -7,11 +7,11 @@ import token;
 import variables;
 import vm.machine;
 
-Value evaluateOnce (Value value) {
+Value evaluate (Value value) {
     return vm.machine.evaluate(value);
 }
 
-Value evaluate (Value token) {
+/* Value evaluate (Value token) {
     Value lastToken;
 
     do {
@@ -20,4 +20,4 @@ Value evaluate (Value token) {
     } while (lastToken.token != token.token);
 
     return token;
-}
+} */

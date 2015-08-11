@@ -1,6 +1,6 @@
 (defun collatz (n)
     (if (= n 1)
-        (list 1)
+        nil
         (let
             ((next-term
                 (if (even n)

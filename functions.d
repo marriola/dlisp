@@ -75,25 +75,48 @@ struct Parameters {
     }
 }
 
-struct BuiltinFunction {
-    uint id;
-    string name;
-    FunctionHook hook;
-    string docString;
-    Parameters parameters;
+class LispFunction {
+	uint id;
+	string name;
+	string docString;
+	Parameters parameters;
+	bool[] shouldBeEvaluated;
+
+	this (uint id, string name, string docString, Parameters parameters) {
+		this.id = id;
+		this.name = name;
+		this.docString = docString;
+		this.parameters = parameters;
+
+		foreach (Parameter param; parameters.required ~ parameters.optional ~ parameters.keyword ~ parameters.rest) {
+			shouldBeEvaluated ~= param.evaluate;
+		}
+	}
 }
 
-struct LispFunction {
-    uint id;
-    string docString;
+class BuiltinFunction : LispFunction {
+    FunctionHook hook;
+
+	this (uint id, string name, FunctionHook hook, string docString, Parameters parameters) {
+		super(id, name, docString, parameters);
+		this.hook = hook;
+	}
+}
+
+class CompiledFunction : LispFunction {
     Value[] lambdaList;
-    Parameters parameters;
     Value[] forms;
+
+	this (uint id, string docString, Value[] lambdaList, Parameters parameters, Value[] forms) {
+		super(id, "", docString, parameters);
+		this.lambdaList = lambdaList;
+		this.forms = forms;
+	}
 }
 
 BuiltinFunction[int] builtinTable;
 BuiltinFunction[string] builtinFunctions;
-LispFunction[string] lispFunctions;
+CompiledFunction[string] lispFunctions;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -161,8 +184,9 @@ Parameter[] extractKeywordArguments (ref Value[] lambdaList, string keyword) {
         }
 
         if (arg.token.type == TokenType.reference) {
+			// if this parameter is a reference, it's a pair of parameter name and default value
             Value argumentName = getFirst(arg);
-            Value argumentValue = evaluateOnce(getFirst(getRest(arg)));
+            Value argumentValue = evaluate(getFirst(getRest(arg)));
             if (argumentName.token.type != TokenType.identifier) {
                 throw new InvalidLambdaListElementException(argumentName.token, "expected identifier");
             }
@@ -213,7 +237,7 @@ void addFunction (string name, FunctionHook hook, Parameter[] required, Paramete
     keyword = map!(x => Parameter(":" ~ x.name, x.defaultValue))(keyword).array();
     rest = Parameter(":" ~ rest.name);
     
-    BuiltinFunction fun = BuiltinFunction(hash(name), name, hook, docString, Parameters(required, optional, keyword, auxiliary, rest));
+    BuiltinFunction fun = new BuiltinFunction(hash(name), name, hook, docString, Parameters(required, optional, keyword, auxiliary, rest));
     builtinFunctions[name] = fun;
     builtinTable[fun.id] = fun;
 }
@@ -222,10 +246,10 @@ void addFunction (string name, FunctionHook hook, Parameter[] required, Paramete
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * Constructs a LispFunction object from a lambda list and list of forms.
+ * Constructs a CompiledFunction object from a lambda list and list of forms.
  */
 
-LispFunction processFunctionDefinition (Value[] lambdaList, Value[] forms, string docString = null) {
+CompiledFunction processFunctionDefinition (Value[] lambdaList, Value[] forms, string docString = null) {
     Value[] oldLambdaList = lambdaList[];
     Parameter[] optional = extractKeywordArguments(lambdaList, "&OPTIONAL");
     Parameter[] keyword = extractKeywordArguments(lambdaList, "&KEY");
@@ -237,11 +261,11 @@ LispFunction processFunctionDefinition (Value[] lambdaList, Value[] forms, strin
     }
 
     if (rest.isNull) {
-		return LispFunction(lispFunctions.length, docString, oldLambdaList,
-							Parameters(required, optional, keyword, auxiliary), forms);
+		return new CompiledFunction(lispFunctions.length, docString, oldLambdaList,
+									Parameters(required, optional, keyword, auxiliary), forms);
 	} else {
-		return LispFunction(lispFunctions.length, docString, oldLambdaList,
-							Parameters(required, optional, keyword, auxiliary, rest), forms);
+		return new CompiledFunction(lispFunctions.length, docString, oldLambdaList,
+									Parameters(required, optional, keyword, auxiliary, rest), forms);
 	}
 }
 
@@ -258,12 +282,12 @@ void addFunction (string name, Value[] lambdaList, Value[] forms, string docStri
 Value[string] bindParameters (string name, Parameters parameters, Value[] arguments, bool evaluateArguments = true) {
     Value[string] newScope;
 
-    if (evaluateArguments) {
+    /* if (evaluateArguments) {
         // evaluate all arguments
         for (int i = 0; i < arguments.length; i++) {
             arguments[i] = evaluateOnce(arguments[i]);
         }
-    }
+    } */
 
     // extract and bind required arguments
     foreach (Parameter requiredParam; parameters.required) {
@@ -280,7 +304,7 @@ Value[string] bindParameters (string name, Parameters parameters, Value[] argume
         Value value;
         if (arguments.length == 0) {
             // use default value if we're out of arguments
-            value = optArg.defaultValue is null ? Value.nil() : evaluateOnce(optArg.defaultValue.copy());
+            value = optArg.defaultValue is null ? Value.nil() : optArg.defaultValue.copy();
         } else {
             // otherwise use and remove the next one
             value = arguments[0];
@@ -326,7 +350,7 @@ Value[string] bindParameters (string name, Parameters parameters, Value[] argume
                 throw new Exception("Missing keyword argument " ~ kwArg.name);
             } else {
                 // use the default value
-                value = evaluateOnce(kwArg.defaultValue.copy());
+                value = kwArg.defaultValue.copy();
             }
         } else {
             // grab value following keyword argument and remove both
@@ -339,7 +363,7 @@ Value[string] bindParameters (string name, Parameters parameters, Value[] argume
 
     // bind auxiliary arguments
     foreach (Parameter auxArg; parameters.auxiliary) {
-        newScope[auxArg.name] = auxArg.defaultValue is null ? Value.nil() : evaluateOnce(auxArg.defaultValue.copy());
+        newScope[auxArg.name] = auxArg.defaultValue is null ? Value.nil() : auxArg.defaultValue.copy();
     }
 
     return newScope;
@@ -359,13 +383,13 @@ Value evaluateBuiltinFunction (string name, Value[] arguments) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value evaluateDefinedFunction (LispFunction fun, Value[] parameters, string name = "lambda") {
+Value evaluateDefinedFunction (CompiledFunction fun, Value[] parameters, string name = "lambda") {
     Value[] forms = fun.forms;
     Value returnValue;
 
     enterScope(bindParameters(name, fun.parameters, parameters.dup));
     foreach (Value form; forms) {
-        returnValue = evaluateOnce(form);
+        returnValue = evaluate(form);
     }
     leaveScope();
 
@@ -387,9 +411,9 @@ Value evaluateFunction (string name, Value[] arguments) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-BuiltinFunction* getBuiltin (string name) {
+BuiltinFunction getBuiltin (string name) {
     if (name in builtinFunctions) {
-        return &builtinFunctions[name];
+        return builtinFunctions[name];
     }
 
     return null;
@@ -398,9 +422,9 @@ BuiltinFunction* getBuiltin (string name) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-LispFunction* getDefined (string name) {
+CompiledFunction getDefined (string name) {
     if (name in lispFunctions) {
-        return &lispFunctions[name];
+        return lispFunctions[name];
     }
 
     return null;

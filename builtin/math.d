@@ -1,6 +1,7 @@
 module builtin.math;
 
 import std.math;
+import std.random : uniform;
 
 import evaluator;
 import exceptions;
@@ -8,8 +9,6 @@ import functions;
 import lispObject;
 import token;
 import variables;
-
-import std.random : uniform;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -21,7 +20,7 @@ Value builtinComparator (string name) {
 
     bool result = true;
     float lastValue = float.min_normal;
-    Value current = evaluateOnce(numbers[0]);
+    Value current = numbers[0];
 
     if (current.token.type == TokenType.floating) {
         lastValue = (cast(FloatToken)current.token).floatValue;
@@ -32,7 +31,7 @@ Value builtinComparator (string name) {
     }
 
     for (int i = 1; i < numbers.length; i++) {
-        current = evaluateOnce(numbers[i]);
+        current = numbers[i];
         float currentValue;
         if (current.token.type == TokenType.floating) {
             currentValue = (cast(FloatToken)current.token).floatValue;
@@ -88,26 +87,26 @@ Value builtinArithmeticOperation (string name) {
         int initialValue = (name == "*" || name == "/") ? 1 : 0;
         result = new Value(new IntegerToken(initialValue));
     } else {
-        result = evaluateOnce(numbers[0]);
+        result = numbers[0];
         numbers = numbers[1 .. numbers.length];
     }
 
     foreach (Value number; numbers) {
         switch (name) {
             case "+":
-                result.add(evaluateOnce(number));
+                result.add(number);
                 break;
 
             case "-":
-                result.subtract(evaluateOnce(number));
+                result.subtract(number);
                 break;
 
             case "*":
-                result.multiply(evaluateOnce(number));
+                result.multiply(number);
                 break;
 
             case "/":
-                result.divide(evaluateOnce(number));
+                result.divide(number);
                 break;
 
             default:
@@ -123,7 +122,7 @@ Value builtinArithmeticOperation (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinOnePlus (string name) {
-    Value result = evaluateOnce(getParameter("NUMBER")).copy();
+    Value result = getParameter("NUMBER").copy();
     result.add(new Value(new IntegerToken(1)));
     return result;
 }
@@ -132,7 +131,7 @@ Value builtinOnePlus (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinOneMinus (string name) {
-    Value result = evaluateOnce(getParameter("NUMBER")).copy();
+    Value result = getParameter("NUMBER").copy();
     result.subtract(new Value(new IntegerToken(1)));
     return result;
 }
@@ -141,8 +140,8 @@ Value builtinOneMinus (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinIncf (string name) {
-    Value place = evaluateOnce(getParameter("PLACE"));
-    Value delta = evaluateOnce(getParameter("DELTA"));
+    Value place = getParameter("PLACE");
+    Value delta = getParameter("DELTA");
     place.add(delta);
     return place;
 }
@@ -151,8 +150,8 @@ Value builtinIncf (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinDecf (string name) {
-    Value place = evaluateOnce(getParameter("PLACE"));
-    Value delta = evaluateOnce(getParameter("DELTA"));
+    Value place = getParameter("PLACE");
+    Value delta = getParameter("DELTA");
     place.subtract(delta);
     return place;
 }
@@ -161,7 +160,7 @@ Value builtinDecf (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinSqrt (string name) {
-    Value operand = evaluateOnce(getParameter("NUMBER"));
+    Value operand = getParameter("NUMBER");
     float value = (operand.token.type == TokenType.floating) ? (cast(FloatToken)operand.token).floatValue : (cast(IntegerToken)operand.token).intValue;
     return new Value(new FloatToken(sqrt(value)));
 }
@@ -170,8 +169,8 @@ Value builtinSqrt (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinMod (string name) {
-    Value numberToken = evaluateOnce(getParameter("DIVIDEND"));
-    Value divisorToken = evaluateOnce(getParameter("DIVISOR"));
+    Value numberToken = getParameter("DIVIDEND");
+    Value divisorToken = getParameter("DIVISOR");
     long number, divisor;
 
     if (numberToken.token.type == TokenType.integer) {
@@ -197,7 +196,7 @@ Value builtinMod (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinEven (string name) {
-    Value numberToken = evaluateOnce(getParameter("NUMBER"));
+    Value numberToken = getParameter("NUMBER");
     if (numberToken.token.type != TokenType.integer) {
         throw new TypeMismatchException(name, numberToken.token, "integer");
     }
@@ -210,7 +209,7 @@ Value builtinEven (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinOdd (string name) {
-    Value numberToken = evaluateOnce(getParameter("NUMBER"));
+    Value numberToken = getParameter("NUMBER");
     if (numberToken.token.type != TokenType.integer) {
         throw new TypeMismatchException(name, numberToken.token, "integer");
     }
@@ -223,7 +222,7 @@ Value builtinOdd (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinRandom (string name) {
-    Value limitToken = evaluateOnce(getParameter("LIMIT"));
+    Value limitToken = getParameter("LIMIT");
     long limit;
 
     if (limitToken.token.type != TokenType.integer) {

@@ -93,7 +93,7 @@ class ConstantsVisitor : LispVisitor {
     ConstantPair[string] constants;
     int nextConstant = 0;
 
-    private SList!bool lastValue;
+    private SList!bool lastWasList;
     private SList!bool firstElement;
     private bool quoted = false;
     private int level = 0;
@@ -101,7 +101,7 @@ class ConstantsVisitor : LispVisitor {
     this (Value form) {
         this.form = form;
         firstElement.insert(false);
-        lastValue.insert(true);
+        lastWasList.insert(true);
         quoted = false;
     }
 
@@ -175,19 +175,19 @@ class ConstantsVisitor : LispVisitor {
         }
 
         level++;
-
-        bool isFirst = lastValue.front();
+        bool isFirst = lastWasList.front();
         firstElement.insert(isFirst);
         if (!quoted && isFirst && (token.reference.car.token.type == TokenType.identifier && (cast(IdentifierToken)token.reference.car.token).stringValue == "QUOTE")) {
             quoted = true;
         }
 
-        lastValue.insert(token.reference.car.token.type == TokenType.reference);
+        lastWasList.insert(token.reference.car.token.type == TokenType.reference);
         if (!quoted) {
+			// don't add the whole (QUOTE x) list to the constants table, just x.
             token.reference.car.accept(this);
         }
         token.reference.cdr.accept(this);
-        lastValue.removeFront();
+        lastWasList.removeFront();
 
         firstElement.removeFront();
         if (level == 1) {
@@ -231,71 +231,91 @@ class CodeEmitterVisitor : LispVisitor {
         this.nextConstant = nextConstant;
     }
 
-    private void pushConstant (Value value) {
+    /**
+	 * Pushes a value onto the stack. If the value is not in the constants
+	 * table, an exception is thrown.
+	 *
+	 * @param value		The value to be pushed onto the stack
+	 * @param evaluate	If true, a pushvalue opcode is emitted, which causes
+	 *                  the virtual machine to evaluate its value and push that
+	 *                  on the stack. Otherwise, a pushconst opcode is emitted
+	 *                  and only the literal value is pushed onto the stack.
+	 */
+	void pushConstant (Value value, bool evaluate = false) {
         if (value.isNil()) {
             code ~= Instruction(Opcode.pushnil1);
+
         } else {
             string asString = value.toString();
             std.stdio.writef("pushConstant %s\n", asString);
             if (asString in constants) {
-                Instruction push = Instruction(Opcode.pushconst, [constants[asString].index]);
+                Instruction push = Instruction(evaluate ? Opcode.pushvalue : Opcode.pushconst, [constants[asString].index]);
                 //std.stdio.writef("%s\n", push);
                 code ~= push;
             } else {
-                throw new Exception("Can't find " ~ value.toString() ~ " in constants table");
+                throw new VirtualMachineException("Can't find " ~ value.toString() ~ " in constants table");
             }
         }
     }
 
-    private void pushCall (string name, Value arguments, bool evaluate = true) {
-        std.stdio.writef("pushCall(%s, %s) {\n", name, arguments);
+    /**
+	 * Emits bytecode to execute a function call.
+	 */
+	private void emitFunctionCall (string name, Value arguments) {
+		Value[] argsArray = toArray(arguments);
 
-        if (name in compilerMacros) {
-            compilerMacros[name].evaluate(this, name, nextConstant, constants, code, arguments);
+		if (name in compilerMacros) {
+			// macro looks like a function call
+            compilerMacros[name].evaluate(this, name, nextConstant, constants, code, arguments, argsArray);
             return;
         }
 
-        uint argCount = 0;
-        BuiltinFunction* builtin = getBuiltin(name);
-        Instruction call;
-        if (builtin !is null && builtin.id > 0) {
-            foreach_reverse (Value argument; toArray(arguments)) {
-                std.stdio.writef("%s: next %s\n", name, argument);
-                pushConstant(argument);
-                argCount++;
-            }
+		// retrieve function definition and choose proper opcode to emit
+		uint argCount = argsArray.length;
+		uint[] opcodeArgs;
+        LispFunction fun;
+        Instruction functionCall;
 
+		fun = getBuiltin(name);
+        if (fun !is null) {
             if (argCount == 0) {
-                call = Instruction(Opcode.builtin0, [cast(uint)builtin.id]);
+                functionCall = Instruction(Opcode.builtin0, [cast(uint)fun.id]);
             } else if (argCount == 1) {
-                call = Instruction(Opcode.builtin1, [cast(uint)builtin.id]);
+                functionCall = Instruction(Opcode.builtin1, [cast(uint)fun.id]);
             } else {
-                call = Instruction(Opcode.builtin, [cast(uint)builtin.id, argCount]);
+                functionCall = Instruction(Opcode.builtin, [cast(uint)fun.id, argCount]);
             }
 
         } else {
-            foreach_reverse (Value argument; toArray(arguments)) {
-                std.stdio.writef("%s: next %s\n", name, argument);
-                argument.accept(this);
-                argCount++;
-            }
-
-            LispFunction* fun = getDefined(name);
+            fun = getDefined(name);
             if (fun !is null) {
                 if (argCount == 0) {
-                    call = Instruction(Opcode.fun0, [cast(uint)fun.id]);
+                    functionCall = Instruction(Opcode.fun0, [cast(uint)fun.id]);
                 } else if (argCount == 1) {
-                    call = Instruction(Opcode.fun1, [cast(uint)fun.id]);
+                    functionCall = Instruction(Opcode.fun1, [cast(uint)fun.id]);
                 } else {
-                    call = Instruction(Opcode.fun, [cast(uint)fun.id, cast(uint)argCount]);
+                    functionCall = Instruction(Opcode.fun, [cast(uint)fun.id, cast(uint)argCount]);
                 }
             } else {
                 throw new UndefinedFunctionException(name);
             }
         }
 
-        code ~= call;
-        std.stdio.writef("}\n");
+		// <strike>
+        // So at this point we have the definition of the function we're calling and a list
+		// of arguments to pass to it. Now we push each argument on the stack in reverse
+		// order so that when the function retrieves its arguments from the stack, it gets
+		// them in the correct order.
+        // </strike>
+
+		// Scratch that. I'm turning the stack into a queue so we can push the arguments onto
+        // it in correct order.
+		
+		// push arguments onto the stack, evaluating or not where appropriate
+		foreach (Value argument; argsArray) {
+		}
+
+        code ~= functionCall;
     }
 
     override public void visit (Value value, BooleanToken token) {
@@ -311,7 +331,7 @@ class CodeEmitterVisitor : LispVisitor {
 
         if (token.reference.car.token.type == TokenType.identifier) {
 //            std.stdio.writef("function call %s\n", token.reference.car);
-            pushCall((cast(IdentifierToken)token.reference.car.token).stringValue, token.reference.cdr);
+            emitFunctionCall((cast(IdentifierToken)token.reference.car.token).stringValue, token.reference.cdr);
         } else {
             pushConstant(value);
         }
@@ -328,7 +348,7 @@ class CodeEmitterVisitor : LispVisitor {
 
     override public void visit (Value value, IdentifierToken token) {
         // Don't add list initial identifier tokens in function calls. These won't be referenced.
-        pushConstant(value);
+        pushConstant(value, true);
     }
 
     override public void visit (Value value, CharacterToken token) {

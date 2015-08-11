@@ -99,3 +99,12 @@ class UnsupportedOperationException : Exception {
         super(operation ~ " operation is unsupported on " ~ tokenTypeName(token.type) ~ " token");
     }
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+class VirtualMachineException : Exception {
+	this (string message) {
+		super(message);
+	}
+}

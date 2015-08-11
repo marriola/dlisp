@@ -1,15 +1,14 @@
 import std.stdio;
 
-import evaluator;
+//import evaluator;
 import exceptions;
 import functions;
 import node;
 import parser;
 import token;
 import variables;
-import vm.compiler;
-import vm.machine;
 import vm.lispmacro;
+import vm.machine;
 
 void main (string args[]) {
     File input;
@@ -39,15 +38,15 @@ void main (string args[]) {
         
         try {
             Value tree = lisp.read();
-            writef("%s\n\n", vm.machine.evaluate(tree));
+            writef("%s\n\n", evaluate(tree));
         } catch (SyntaxErrorException e) {
             writef("Syntax error: %s\n\n", e.msg);
         } catch (UndefinedFunctionException e) {
             writef("Undefined function: %s\n\n", e.msg);
         } catch (UndefinedVariableException e) {
             writef("Undefined variable: %s\n\n", e.msg);
-        } catch (EvaluationException e) {
-            writef("Error: %s\n\n", e.msg);
+        } catch (VirtualMachineException e) {
+            writef("Virtual machine error: %s\n\n", e.msg);
         } catch (Exception e) {
             writef("Error: %s\n\n", e.msg);            
         }

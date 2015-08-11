@@ -604,7 +604,7 @@ class BuiltinFunctionToken : FunctionToken {
 
 class DefinedFunctionToken : FunctionToken {
     string name;
-    LispFunction fun;
+    CompiledFunction fun;
 
     // Constructor for a lambda function
     this (Value[] lambdaList, Value[] forms, string docString = null) {
@@ -613,7 +613,7 @@ class DefinedFunctionToken : FunctionToken {
         this.fun = processFunctionDefinition(lambdaList, forms, docString);
     }
 
-    this (string name, LispFunction fun) {
+    this (string name, CompiledFunction fun) {
         this.type = TokenType.definedFunction;
         this.name = name;
         this.fun = fun;

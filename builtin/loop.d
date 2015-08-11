@@ -28,7 +28,7 @@ Value builtinDotimes (string name) {
     long n = (cast(IntegerToken)count.token).intValue;
     for (long i = 0; i < n; i++) {
         foreach (Value form; loopBody) {
-            evaluateOnce(form);
+            evaluate(form);
         }
     }
 

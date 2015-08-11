@@ -14,7 +14,7 @@ import variables;
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinPrint (string name) {
-    Value result = evaluateOnce(getParameter("OBJECT"));
+    Value result = getParameter("OBJECT");
     std.stdio.writeln(result);
     return result;
 }
@@ -23,7 +23,7 @@ Value builtinPrint (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinLoad (string name) {
-    Value sourceFileToken = evaluate(getParameter("FILESPEC"));
+    Value sourceFileToken = getParameter("FILESPEC");
     string sourceFile;
     if (sourceFileToken.token.type == TokenType.constant) {
         sourceFile = (cast(ConstantToken)sourceFileToken.token).stringValue;
@@ -39,7 +39,7 @@ Value builtinLoad (string name) {
     while (true) {
         try {
             Value form = parser.read();
-            evaluateOnce(form);
+            evaluate(form);
         } catch (EndOfFile eof) {
             source.close();
             return new Value(new BooleanToken(true));
@@ -51,7 +51,7 @@ Value builtinLoad (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinOpen (string name) {
-    Value fileSpecToken = evaluateOnce(getParameter("FILESPEC"));
+    Value fileSpecToken = getParameter("FILESPEC");
     string fileSpec;
     if (fileSpecToken.token.type == TokenType.string) {
         fileSpec = (cast(StringToken)fileSpecToken.token).stringValue;
@@ -61,7 +61,7 @@ Value builtinOpen (string name) {
         throw new TypeMismatchException(name, fileSpecToken.token, "string or constant");
     }
 
-    Value direction = evaluateOnce(getParameter("DIRECTION"));
+    Value direction = getParameter("DIRECTION");
     if (direction.token.type != TokenType.constant) {
         throw new TypeMismatchException(name, direction.token, "constant");
     }
@@ -73,7 +73,7 @@ Value builtinOpen (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinClose (string name) {
-    Value streamToken = evaluate(getParameter("STREAM"));
+    Value streamToken = getParameter("STREAM");
     if (streamToken.token.type != TokenType.fileStream) {
         throw new TypeMismatchException(name, streamToken.token, "file stream");
     }
@@ -89,14 +89,13 @@ Value builtinRead (string name) {
     Value stream = getParameter("STREAM");
 
     if (stream.isNil()) {
-        Value streamToken = evaluate(stream);
-        if (streamToken.token.type != TokenType.fileStream) {
-            throw new TypeMismatchException(name, streamToken.token, "file stream");
-        } else if (!(cast(FileStreamToken)streamToken.token).isOpen) {
-            throw new BuiltinException(name, "Attempt to read from " ~ streamToken.toString());
+        if (stream.token.type != TokenType.fileStream) {
+            throw new TypeMismatchException(name, stream.token, "file stream");
+        } else if (!(cast(FileStreamToken)stream.token).isOpen) {
+            throw new BuiltinException(name, "Attempt to read from closed stream " ~ stream.toString());
         }
 
-        parser = (cast(FileStreamToken)streamToken.token).getParser();
+        parser = (cast(FileStreamToken)stream.token).getParser();
     } else {
         parser = new LispParser(stdin);
     }
@@ -136,13 +135,13 @@ string format (string formatString, Value[] args) {
                 // strings and numbers can all just be converted to strings and added to the output string
                 case 'A':
                 case 'D':
-                    Value param = evaluateOnce(args[0]);
+                    Value param = args[0];
                     directiveOut = param.toString();
                     args = args[1 .. args.length];
                     break;
 
                 case 'C':
-                    Value param = evaluateOnce(args[0]);
+                    Value param = args[0];
                     if (param.token.type != TokenType.character) {
                         throw new TypeMismatchException("format", param.token, "character");
                     }
@@ -169,8 +168,8 @@ string format (string formatString, Value[] args) {
 }
 
 Value builtinFormat (string name) {
-    Value destination = evaluateOnce(getParameter("DESTINATION"));
-    Value formatString = evaluateOnce(getParameter("FORMAT-STRING"));
+    Value destination = getParameter("DESTINATION");
+    Value formatString = getParameter("FORMAT-STRING");
     Value[] args = toArray(getParameter("ARGS"));
 
     if (formatString.token.type != TokenType.string) {

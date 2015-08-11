@@ -12,7 +12,7 @@ import variables;
 ///////////////////////////////////////////////////////////////////////////////
 
 Value builtinExit (string name) {
-    Value exitCodeToken = evaluate(getParameter("EXIT-CODE"));
+    Value exitCodeToken = getParameter("EXIT-CODE");
     int exitCode = cast(int)(cast(IntegerToken)exitCodeToken.token).intValue;
     exit(exitCode);
     return null;
