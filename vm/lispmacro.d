@@ -41,12 +41,20 @@ void macroDefun (CodeEmitterVisitor visitor, string name, ref int nextConstant, 
 
     string identifierString = (cast(IdentifierToken)identifier.token).stringValue;
     addFunction(identifierString, toArray(lambdaList), forms, docString);
-    constants[identifierString] = ConstantPair(nextConstant, identifier);
 
-    addEntry(formsReference);
+	uint funConstant;
+	ConstantPair* constant = identifierString in constants;
+	if (constant is null) {
+		constants[identifierString] = ConstantPair(nextConstant, identifier);
+		funConstant = cast(uint)nextConstant;
+		nextConstant++;
+	} else {
+		funConstant = constant.index;
+	}
 
-    code ~= Instruction(Opcode.pushconst, [cast(uint)nextConstant]);
-    nextConstant++;
+    //addEntry(formsReference);
+
+    code ~= Instruction(Opcode.pushconst, [cast(uint)funConstant]);
 }
 
 void macroIf (CodeEmitterVisitor visitor, string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value argsValue, Value[] arguments) {

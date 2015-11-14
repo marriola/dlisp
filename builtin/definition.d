@@ -110,7 +110,7 @@ Value builtinLambda (string name) {
         forms = forms[1 .. forms.length];
     }
 
-    return new Value(new DefinedFunctionToken(lambdaList, forms, docString));
+    return new Value(new CompiledFunctionToken(lambdaList, forms, docString));
 }
 
 
@@ -123,7 +123,7 @@ Value builtinFuncall (string name) {
     if (fun.token.type == TokenType.identifier) {
         return evaluateFunction((cast(IdentifierToken)fun.token).stringValue, funArgs);
 
-    } else if (fun.token.type == TokenType.definedFunction || fun.token.type == TokenType.builtinFunction) {
+    } else if (fun.token.type == TokenType.compiledFunction || fun.token.type == TokenType.builtinFunction) {
         return (cast(FunctionToken)fun.token).evaluate(funArgs);
 
     } else {

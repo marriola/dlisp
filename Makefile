@@ -2,7 +2,7 @@
 # Variables
 
 COMPILER := dmd -c
-CFLAGS   := -debug -g -gc -unittest
+CFLAGS   := -debug -gc -unittest
 LINKER   := dmd -v
 
 LISPCORE := lisp.obj exceptions.obj token.obj node.obj lispObject.obj parser.obj variables.obj evaluator.obj functions.obj

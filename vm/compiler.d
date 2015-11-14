@@ -1,6 +1,8 @@
 module vm.compiler;
 
+import std.algorithm;
 import std.container.slist;
+import std.typecons;
 
 import exceptions;
 import functions;
@@ -58,8 +60,8 @@ abstract class LispVisitor {
                 visit(value, cast(BuiltinFunctionToken)token);
                 break;
 
-            case TokenType.definedFunction:
-                visit(value, cast(DefinedFunctionToken)token);
+            case TokenType.compiledFunction:
+                visit(value, cast(CompiledFunctionToken)token);
                 break;
 
             default:
@@ -78,7 +80,7 @@ abstract class LispVisitor {
     public void visit (Value value, FileStreamToken token);
     public void visit (Value value, VectorToken token);
     public void visit (Value value, BuiltinFunctionToken token);
-    public void visit (Value value, DefinedFunctionToken token);
+    public void visit (Value value, CompiledFunctionToken token);
 }
 
 
@@ -105,7 +107,7 @@ class ConstantsVisitor : LispVisitor {
         quoted = false;
     }
 
-    private void addConstant (Value value) {
+    public void addConstant (Value value) {
         if (!value.isNil()) {
             string asString = value.toString();
             if (asString !in constants) {
@@ -152,7 +154,7 @@ class ConstantsVisitor : LispVisitor {
         addConstant(value);
     }
 
-    override public void visit (Value value, DefinedFunctionToken token) {
+    override public void visit (Value value, CompiledFunctionToken token) {
         addConstant(value);
     }
 
@@ -249,7 +251,8 @@ class CodeEmitterVisitor : LispVisitor {
             string asString = value.toString();
             std.stdio.writef("pushConstant %s\n", asString);
             if (asString in constants) {
-                Instruction push = Instruction(evaluate ? Opcode.pushvalue : Opcode.pushconst, [constants[asString].index]);
+				//Instruction push = Instruction(evaluate ? Opcode.pushvalue : Opcode.pushconst, [constants[asString].index]);
+                Instruction push = Instruction(Opcode.pushconst, [constants[asString].index]);
                 //std.stdio.writef("%s\n", push);
                 code ~= push;
             } else {
@@ -297,22 +300,22 @@ class CodeEmitterVisitor : LispVisitor {
                     functionCall = Instruction(Opcode.fun, [cast(uint)fun.id, cast(uint)argCount]);
                 }
             } else {
-                throw new UndefinedFunctionException(name);
+                throw new UncompiledFunctionException(name);
             }
         }
 
-		// <strike>
-        // So at this point we have the definition of the function we're calling and a list
-		// of arguments to pass to it. Now we push each argument on the stack in reverse
-		// order so that when the function retrieves its arguments from the stack, it gets
-		// them in the correct order.
-        // </strike>
+		// Create a lambda list of the supplied arguments onto the function parameters.
+		Evaluable[] lambdaList = bindParametersList(fun.name, fun.parameters, argsArray);
+		reverse(lambdaList);
 
-		// Scratch that. I'm turning the stack into a queue so we can push the arguments onto
-        // it in correct order.
-		
-		// push arguments onto the stack, evaluating or not where appropriate
-		foreach (Value argument; argsArray) {
+		// push lambda list elements onto the stack, evaluating where appropriate
+		foreach (Evaluable argument; lambdaList) {
+			std.stdio.writeln("arg: " ~ argument.value.toString());
+			if (argument.evaluate) {
+				argument.value.accept(this);
+			} else {
+				pushConstant(argument.value);
+			}
 		}
 
         code ~= functionCall;
@@ -375,7 +378,7 @@ class CodeEmitterVisitor : LispVisitor {
         pushConstant(value);
     }
 
-    override public void visit (Value value, DefinedFunctionToken token) {
+    override public void visit (Value value, CompiledFunctionToken token) {
         pushConstant(value);
     }
 

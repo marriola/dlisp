@@ -31,6 +31,21 @@ import builtin.system;
 
 alias FunctionHook = Value function(string);
 
+// Evaluable objects are passed to the code emitter. evaluate comes from a
+// function parameter's value for evaluate, which determines whether the
+// code emitter pushes the argument on the stack verbatim, or emits code to
+// get its value at runtime.
+
+class Evaluable {
+	bool evaluate;
+	Value value;
+
+	this (bool evaluate, Value value) {
+		this.evaluate = evaluate;
+		this.value = value;
+	}
+}
+
 struct Parameter {
 	string name;
     Value defaultValue;
@@ -92,6 +107,10 @@ class LispFunction {
 			shouldBeEvaluated ~= param.evaluate;
 		}
 	}
+
+	public bool isCompiled() {
+		return false;
+	}
 }
 
 class BuiltinFunction : LispFunction {
@@ -101,21 +120,26 @@ class BuiltinFunction : LispFunction {
 		super(id, name, docString, parameters);
 		this.hook = hook;
 	}
+
 }
 
 class CompiledFunction : LispFunction {
     Value[] lambdaList;
     Value[] forms;
 
-	this (uint id, string docString, Value[] lambdaList, Parameters parameters, Value[] forms) {
-		super(id, "", docString, parameters);
+	this (uint id, string name, string docString, Value[] lambdaList, Parameters parameters, Value[] forms) {
+		super(id, name, docString, parameters);
 		this.lambdaList = lambdaList;
 		this.forms = forms;
 	}
-}
+
+	public override bool isCompiled() {
+		return true;
+	}}
 
 BuiltinFunction[int] builtinTable;
 BuiltinFunction[string] builtinFunctions;
+CompiledFunction[int] compiledTable;
 CompiledFunction[string] lispFunctions;
 
 
@@ -249,7 +273,7 @@ void addFunction (string name, FunctionHook hook, Parameter[] required, Paramete
  * Constructs a CompiledFunction object from a lambda list and list of forms.
  */
 
-CompiledFunction processFunctionDefinition (Value[] lambdaList, Value[] forms, string docString = null) {
+CompiledFunction processFunctionDefinition (string name, Value[] lambdaList, Value[] forms, string docString = null) {
     Value[] oldLambdaList = lambdaList[];
     Parameter[] optional = extractKeywordArguments(lambdaList, "&OPTIONAL");
     Parameter[] keyword = extractKeywordArguments(lambdaList, "&KEY");
@@ -261,10 +285,10 @@ CompiledFunction processFunctionDefinition (Value[] lambdaList, Value[] forms, s
     }
 
     if (rest.isNull) {
-		return new CompiledFunction(lispFunctions.length, docString, oldLambdaList,
+		return new CompiledFunction(lispFunctions.length, name, docString, oldLambdaList,
 									Parameters(required, optional, keyword, auxiliary), forms);
 	} else {
-		return new CompiledFunction(lispFunctions.length, docString, oldLambdaList,
+		return new CompiledFunction(lispFunctions.length, name, docString, oldLambdaList,
 									Parameters(required, optional, keyword, auxiliary, rest), forms);
 	}
 }
@@ -273,21 +297,88 @@ CompiledFunction processFunctionDefinition (Value[] lambdaList, Value[] forms, s
 ///////////////////////////////////////////////////////////////////////////////
 
 void addFunction (string name, Value[] lambdaList, Value[] forms, string docString = null) {
-    lispFunctions[name] = processFunctionDefinition(lambdaList, forms, docString);
+    CompiledFunction fun = processFunctionDefinition(name, lambdaList, forms, docString);
+	lispFunctions[name] = fun;
+	compiledTable[fun.id] = fun;
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Evaluable[] bindParametersList (string name, Parameters parameters, Value[] arguments, bool evaluateArguments = true) {
+    Evaluable[] newScope = new Evaluable[0];
+
+    // extract and bind required arguments
+    foreach (Parameter requiredParam; parameters.required) {
+        if (arguments.length == 0) {
+            throw new Exception("Too few arguments given to " ~ name);
+        }
+
+        newScope ~= new Evaluable(requiredParam.evaluate, arguments[0]);
+        arguments = remove(arguments, 0);
+    }
+
+    // extract and bind optional arguments
+    foreach (Parameter optArg; parameters.optional) {
+        Value value;
+        if (arguments.length == 0) {
+			continue; // don't emit code for this parameter
+        } else {
+            // otherwise use and remove the next one
+            value = arguments[0];
+            arguments = remove(arguments, 0);
+        }
+
+		newScope ~= new Evaluable(false, new Value(new IdentifierToken(":" ~ optArg.name)));
+		newScope ~= new Evaluable(optArg.evaluate, value);
+    }
+
+    // extract and bind keyword arguments
+    foreach (Parameter kwArg; parameters.keyword) {
+		std.stdio.writeln(arguments[0].toString());
+		std.stdio.writeln(arguments[1].toString());
+		std.stdio.writeln(arguments[0].token.type);
+
+		int kwIndex = -1;
+		for (kwIndex = 0; kwIndex < arguments.length; kwIndex++) {
+			TokenType type = arguments[kwIndex].token.type;
+			string constantName = type == TokenType.constant ? (cast(ConstantToken)arguments[kwIndex].token).stringValue : "";
+			string param = kwArg.name[1..$];
+
+			std.stdio.writef("'%s'\n", type);
+			if (arguments[kwIndex].token.type == TokenType.constant)
+				std.stdio.writef("'%s'\n", constantName);
+			std.stdio.writef("'%s'\n", param);
+			if (type == TokenType.constant &&
+				constantName == param) {
+				break;
+			}
+		}
+
+        Value value;
+        if (kwIndex == -1 || kwIndex >= arguments.length - 1) {
+            // not found, or doesn't have a value after it
+            if (kwArg.defaultValue is null && arguments.length == 0) {
+                // no default value
+                throw new Exception("Missing keyword argument " ~ kwArg.name);
+            } else {
+				continue; // don't emit code for this parameter
+            }
+        } else {
+            // grab value following keyword argument and remove both
+            value = arguments[kwIndex + 1];
+            arguments = remove(arguments, kwIndex, kwIndex + 1);
+        }
+
+		newScope ~= new Evaluable(false, new Value(new IdentifierToken(kwArg.name)));
+		newScope ~= new Evaluable(kwArg.evaluate, value);
+    }
+
+    return newScope;
+}
+
 Value[string] bindParameters (string name, Parameters parameters, Value[] arguments, bool evaluateArguments = true) {
     Value[string] newScope;
-
-    /* if (evaluateArguments) {
-        // evaluate all arguments
-        for (int i = 0; i < arguments.length; i++) {
-            arguments[i] = evaluateOnce(arguments[i]);
-        }
-    } */
 
     // extract and bind required arguments
     foreach (Parameter requiredParam; parameters.required) {
@@ -335,12 +426,21 @@ Value[string] bindParameters (string name, Parameters parameters, Value[] argume
 
     // extract and bind keyword arguments
     foreach (Parameter kwArg; parameters.keyword) {
-        // find matching keyword argument in arguments
-        int kwIndex =
-            countUntil!
-                (x => x.token.type == TokenType.constant &&
-                      (cast(ConstantToken)x.token).stringValue == kwArg.name)
-                (arguments);
+		int kwIndex = -1;
+		for (kwIndex = 0; kwIndex < arguments.length; kwIndex++) {
+			TokenType type = arguments[kwIndex].token.type;
+			string constantName = type == TokenType.constant ? (cast(ConstantToken)arguments[kwIndex].token).stringValue : "";
+			string param = kwArg.name[1..$];
+
+			std.stdio.writef("'%s'\n", type);
+			if (arguments[kwIndex].token.type == TokenType.constant)
+				std.stdio.writef("'%s'\n", constantName);
+			std.stdio.writef("'%s'\n", param);
+			if (type == TokenType.constant &&
+				constantName == param) {
+					break;
+				}
+		}
 
         Value value;
         if (kwIndex == -1 || kwIndex == arguments.length - 1) {
@@ -383,7 +483,7 @@ Value evaluateBuiltinFunction (string name, Value[] arguments) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Value evaluateDefinedFunction (CompiledFunction fun, Value[] parameters, string name = "lambda") {
+Value evaluateCompiledFunction (CompiledFunction fun, Value[] parameters, string name = "lambda") {
     Value[] forms = fun.forms;
     Value returnValue;
 
@@ -403,9 +503,9 @@ Value evaluateFunction (string name, Value[] arguments) {
     if (name in builtinFunctions) {
         return evaluateBuiltinFunction(name, arguments);
     } else if (name in lispFunctions) {
-        return evaluateDefinedFunction(lispFunctions[name], arguments, name);
+        return evaluateCompiledFunction(lispFunctions[name], arguments, name);
     }
-    throw new UndefinedFunctionException(name);
+    throw new UncompiledFunctionException(name);
 }
 
 
@@ -438,7 +538,7 @@ Value getFunction (string name) {
         return new Value(new BuiltinFunctionToken(name));
  
     } else if (name in lispFunctions) {
-        return new Value(new DefinedFunctionToken(name, lispFunctions[name]));
+        return new Value(new CompiledFunctionToken(name, lispFunctions[name]));
  
     } else {
         throw new Exception("Undefined function " ~ name);

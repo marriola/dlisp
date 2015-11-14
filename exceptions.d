@@ -76,7 +76,7 @@ class InvalidLambdaListElementException : Exception {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-class UndefinedFunctionException : Exception {
+class UncompiledFunctionException : Exception {
     this (string msg) {
         super(msg);
     }

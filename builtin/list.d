@@ -298,7 +298,7 @@ Value builtinMap (string name) {
     }
 
     // type check function argument
-    if (mapFunction.token.type != TokenType.definedFunction && mapFunction.token.type != TokenType.builtinFunction) {
+    if (mapFunction.token.type != TokenType.compiledFunction && mapFunction.token.type != TokenType.builtinFunction) {
         throw new TypeMismatchException(name, mapFunction.token, "function");
     }
 
@@ -311,7 +311,7 @@ Value builtinMap (string name) {
 Value builtinMapcar (string name) {
     Value mapFunction = getParameter("FUNCTION");
     Value[] sequences = toArray(getParameter("SEQUENCES"));
-    if (mapFunction.token.type != TokenType.definedFunction && mapFunction.token.type != TokenType.builtinFunction) {
+    if (mapFunction.token.type != TokenType.compiledFunction && mapFunction.token.type != TokenType.builtinFunction) {
         throw new TypeMismatchException(name, mapFunction.token, "function");
     }
     return map(TokenType.reference, mapFunction, sequences);
@@ -327,7 +327,7 @@ Value builtinRemoveIf (string name) {
     FunctionToken predicate;
     Value result = Value.nil();
 
-    if (predicateToken.token.type != TokenType.builtinFunction && predicateToken.token.type != TokenType.definedFunction) {
+    if (predicateToken.token.type != TokenType.builtinFunction && predicateToken.token.type != TokenType.compiledFunction) {
         throw new TypeMismatchException(name, predicateToken.token, "function");
     } else {
         predicate = cast(FunctionToken)predicateToken.token;
@@ -355,7 +355,7 @@ Value builtinRemoveIfNot (string name) {
     FunctionToken predicate;
     Value result = Value.nil();
 
-    if (predicateToken.token.type != TokenType.builtinFunction && predicateToken.token.type != TokenType.definedFunction) {
+    if (predicateToken.token.type != TokenType.builtinFunction && predicateToken.token.type != TokenType.compiledFunction) {
         throw new TypeMismatchException(name, predicateToken.token, "function");
     } else {
         predicate = cast(FunctionToken)predicateToken.token;

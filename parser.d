@@ -63,6 +63,129 @@ class LispParser {
         this.stream = stream;
     }
 
+    private void lexMacroSequence(ref char c, ref Token nextToken) {
+        c = getc(stream);
+        switch (c) {
+            case '\'':
+                // function
+                string functionName;
+                while (true) {
+                    c = getc(stream);
+                    if (isWhite(c)) {
+                        break;
+                    } else if (c == '(' || c == ')' || c == '[' || c == ']') {
+                        ungetc(c, stream);
+                        break;
+                    }
+                    functionName ~= c;
+                }
+
+                nextToken = getFunction(std.string.toUpper(functionName)).token;
+
+            case '\\':
+                // character
+                string characterDescriptor = "";
+                while (true) {
+                    c = getc(stream);
+                    if (isWhite(c)) {
+                        break;
+                    } else if (c == '(' || c == ')' || c == '[' || c == ']') {
+                        ungetc(c, stream);
+                        break;
+                    }
+                    characterDescriptor ~= c;
+                }
+
+                char character;
+                if (std.string.toLower(characterDescriptor) == "newline") {
+                    character = '\n';
+
+                } else {
+                    character = characterDescriptor[0];
+                }
+
+                nextToken =  new CharacterToken(character);
+
+            default:
+                throw new Exception("#" ~ c ~ " is an invalid macro sequence");
+        }
+    }
+
+    private void lexQuote(ref char c, ref Token nextToken) {
+        // Encapsulate the next token in a quote.
+        // We grab the next token, and throw it in a new list with the identifier QUOTE as the first item, and it as the second.
+        getToken();
+
+        Value quotedItem;
+        if (nextToken.isLexicalToken()) {
+            if (nextToken.type != TokenType.leftParen) {
+                throw new SyntaxErrorException("Expected non-lexical token or left paren, got " ~ nextToken.toString());
+            } else {
+                quotedItem = parseList(false);
+            }
+        } else {
+            quotedItem = new Value(nextToken);
+        }
+
+        nextToken =  Token.makeReference(new Value(new IdentifierToken("QUOTE")), Token.makeReference(quotedItem)).token;
+    }
+
+    private bool lexNumber(ref char c, ref Token nextToken) {
+        bool giveUp = false;
+
+        // is this a negative number or an identifier starting with a hyphen?
+        if (c == '-') {
+            // get the next character and put it back
+            char next = getc(stream);
+            ungetc(next, stream);
+
+            if (!isDigit(next)) {
+                // if not a digit, this is an identifier. skip the next block.
+                return false;
+            }
+        }
+
+        bool isFloat = false;
+        string literal;
+
+        do {
+            literal ~= c;
+            c = getc(stream);
+
+            if (c == '.' || c == 'e' || c == 'E') {
+                isFloat = true;
+
+            } else if (c == '(' || c == ')' || c == '[' || c == ']') {
+                ungetc(c, stream);
+                break;
+            }
+        } while (!isWhite(c));
+
+        try {
+            if (isFloat) {
+                nextToken = new FloatToken(to!double(literal));
+            } else {
+                nextToken = new IntegerToken(to!long(literal));
+            }
+        } catch (ConvException e) {
+            nextToken = new IdentifierToken(literal);
+        }
+
+		return true;
+    }
+
+    private void lexString(ref char c, ref Token nextToken) {
+        string stringValue;
+        c = getc(stream);
+
+        while (c != '\"') {
+            stringValue ~= c;
+            c = getc(stream);
+        }
+
+        nextToken = new StringToken(stringValue);;   
+    }
+
     /**
      * Reads a token from the input stream. The token is placed in member variable nextToken.
      */
@@ -109,134 +232,23 @@ class LispParser {
             return;
 
         } else if (c == '#') {
-            // Macro character
-
-            c = getc(stream);
-            switch (c) {
-                case '\'':
-                    // function
-                    string functionName;
-                    while (true) {
-                        c = getc(stream);
-                        if (isWhite(c)) {
-                            break;
-                        } else if (c == '(' || c == ')' || c == '[' || c == ']') {
-                            ungetc(c, stream);
-                            break;
-                        }
-                        functionName ~= c;
-                    }
-
-                    nextToken = getFunction(std.string.toUpper(functionName)).token;
-                    break;
-
-                case '\\':
-                    // character
-                    string characterDescriptor = "";
-                    while (true) {
-                        c = getc(stream);
-                        if (isWhite(c)) {
-                            break;
-                        } else if (c == '(' || c == ')' || c == '[' || c == ']') {
-                            ungetc(c, stream);
-                            break;
-                        }
-                        characterDescriptor ~= c;
-                    }
-
-                    char character;
-                    if (std.string.toLower(characterDescriptor) == "newline") {
-                        character = '\n';
-
-                    } else {
-                        character = characterDescriptor[0];
-                    }
-
-                    nextToken = new CharacterToken(character);
-                    break;
-
-                default:
-                    throw new Exception("#" ~ c ~ " is an invalid macro sequence");
-            }
+            lexMacroSequence(c, nextToken);
             return;
 
         } else if (c == '\'') {
-            // Encapsulate the next token in a quote.
-            // We grab the next token, and throw it in a new list with the identifier QUOTE as the first item, and it as the second.
-            getToken();
-
-            Value quotedItem;
-            if (nextToken.isLexicalToken()) {
-                if (nextToken.type != TokenType.leftParen) {
-                    throw new SyntaxErrorException("Expected non-lexical token or left paren, got " ~ nextToken.toString());
-                } else {
-                    quotedItem = parseList(false);
-                }
-            } else {
-                quotedItem = new Value(nextToken);
-            }
-
-            nextToken = Token.makeReference(new Value(new IdentifierToken("QUOTE")), Token.makeReference(quotedItem)).token;
+            lexQuote(c, nextToken);
             return;
 
         } else if (isDigit(c) || c == '-') {
-            bool giveUp = false;
-
-            // is this a negative number or an identifier starting with a hyphen?
-            if (c == '-') {
-                // get the next character and put it back
-                char next = getc(stream);
-                ungetc(next, stream);
-
-                if (!isDigit(next)) {
-                    // if not a digit, this is an identifier. skip the next block.
-                    giveUp = true;
-                }
-            }
-
-            if (!giveUp) {
-                bool isFloat = false;
-                string literal;
-
-                do {
-                    literal ~= c;
-                    c = getc(stream);
-
-                    if (c == '.' || c == 'e' || c == 'E') {
-                        isFloat = true;
-
-                    } else if (c == '(' || c == ')' || c == '[' || c == ']') {
-                        ungetc(c, stream);
-                        break;
-                    }
-                } while (!isWhite(c));
-
-                try {
-                    if (isFloat) {
-                        nextToken = new FloatToken(to!double(literal));
-                    } else {
-                        nextToken = new IntegerToken(to!long(literal));
-                    }
-                } catch (ConvException e) {
-                    nextToken = new IdentifierToken(literal);
-                }
-                return;
-            }
+            if (lexNumber(c, nextToken))
+				return;
 
         } else if (c == '\"') {
-            string stringValue;
-            c = getc(stream);
-
-            while (c != '\"') {
-                stringValue ~= c;
-                c = getc(stream);
-            }
-
-            nextToken = new StringToken(stringValue);
+            lexString(c, nextToken);
             return;
-       }
+        }
 
-       {
+        {
             string stringValue;
 
             do {

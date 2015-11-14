@@ -14,7 +14,7 @@ import std.string;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-enum TokenType { leftParen, rightParen, leftBrack, rightBrack, dot, boolean, reference, integer, floating, identifier, character, string, constant, fileStream, vector, builtinFunction, definedFunction };
+enum TokenType { leftParen, rightParen, leftBrack, rightBrack, dot, boolean, reference, integer, floating, identifier, character, string, constant, fileStream, vector, builtinFunction, compiledFunction };
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -83,6 +83,7 @@ class Value {
     }
 
     void add (Value addend) {
+
         if (token.type != TokenType.integer && token.type != TokenType.floating) {
             throw new UnsupportedOperationException(token, "Addition");
         } else if (addend.token.type != TokenType.integer && addend.token.type != TokenType.floating) {
@@ -90,7 +91,7 @@ class Value {
         }
 
         if (token.type == TokenType.floating) {
-            (cast(FloatToken)token).floatValue += addend.token.type == TokenType.integer ? (cast(IntegerToken)addend.token).intValue : (cast(FloatToken)addend.token).floatValue;
+			(cast(FloatToken)token).floatValue += addend.token.type == TokenType.integer ? (cast(IntegerToken)addend.token).intValue : (cast(FloatToken)addend.token).floatValue;
         } else if (addend.token.type == TokenType.floating) {
             token = new FloatToken((cast(IntegerToken)token).intValue + (cast(FloatToken)addend.token).floatValue);
         } else {
@@ -602,32 +603,32 @@ class BuiltinFunctionToken : FunctionToken {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-class DefinedFunctionToken : FunctionToken {
+class CompiledFunctionToken : FunctionToken {
     string name;
     CompiledFunction fun;
 
     // Constructor for a lambda function
     this (Value[] lambdaList, Value[] forms, string docString = null) {
-        this.type = TokenType.definedFunction;
+        this.type = TokenType.compiledFunction;
         this.name = null;
-        this.fun = processFunctionDefinition(lambdaList, forms, docString);
+        this.fun = processFunctionDefinition("<lambda>", lambdaList, forms, docString);
     }
 
     this (string name, CompiledFunction fun) {
-        this.type = TokenType.definedFunction;
+        this.type = TokenType.compiledFunction;
         this.name = name;
         this.fun = fun;
     }
 
     this (string name) {
-        this.type = TokenType.definedFunction;
+        this.type = TokenType.compiledFunction;
         this.name = name;
     }
 
     override Value evaluate (Value[] args) {
         if (name is null) {
             // evaluate a lambda function
-            return evaluateDefinedFunction(fun, args, name);
+            return evaluateCompiledFunction(fun, args, name);
         } else {
             // evaluate a named defined function
             return evaluateFunction(name, args);
@@ -635,7 +636,7 @@ class DefinedFunctionToken : FunctionToken {
     }
 
     override Token copy () {
-        DefinedFunctionToken functionCopy = new DefinedFunctionToken(name);
+        CompiledFunctionToken functionCopy = new CompiledFunctionToken(name);
         functionCopy.fun = fun;
         return functionCopy;
     }

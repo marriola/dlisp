@@ -29,6 +29,7 @@ void main (string args[]) {
     initializeScopeTable();
     initializeBuiltins();
     initializeMacros();
+	initializeVm();
     LispParser lisp = new LispParser(input);
 
     while (true) {
@@ -41,7 +42,7 @@ void main (string args[]) {
             writef("%s\n\n", evaluate(tree));
         } catch (SyntaxErrorException e) {
             writef("Syntax error: %s\n\n", e.msg);
-        } catch (UndefinedFunctionException e) {
+        } catch (UncompiledFunctionException e) {
             writef("Undefined function: %s\n\n", e.msg);
         } catch (UndefinedVariableException e) {
             writef("Undefined variable: %s\n\n", e.msg);
