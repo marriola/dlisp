@@ -68,7 +68,10 @@ class Value {
     Value append (Value element) {
         if (token.type == TokenType.boolean && (cast(BooleanToken)token).boolValue == false) {
             token = element.token;
-            return getLast(element);
+			if (element.token.type == TokenType.reference)
+				return getLast(element);
+			else
+				return element;
 
         } else if (token.type == TokenType.reference) {
             return (cast(ReferenceToken)token).append(element);
@@ -137,6 +140,11 @@ class Value {
         } else if (divisor.token.type != TokenType.integer && divisor.token.type != TokenType.floating) {
             throw new UnsupportedOperationException(divisor.token, "Division");
         }
+
+		if (divisor.token.type == TokenType.floating && (cast(FloatToken)divisor.token).floatValue == 0 ||
+			divisor.token.type == TokenType.integer && (cast(IntegerToken)divisor.token).intValue == 0) {
+			throw new Exception("Division by zero");
+		}
 
         if (token.type == TokenType.floating) {
             // floating point dividend
@@ -292,10 +300,12 @@ class StringToken : Token {
 
 class IdentifierToken : Token {
     string stringValue;
+	bool barred;
 
-    this (string stringValue) {
+    this (string stringValue, bool barred = false) {
         type = TokenType.identifier;
-        this.stringValue = toUpper(stringValue);
+        this.stringValue = barred ? stringValue : toUpper(stringValue);
+		this.barred = barred;
     }
 
     override Token copy () {
@@ -303,7 +313,10 @@ class IdentifierToken : Token {
     }
 
     override string toString () {
-        return stringValue;
+		if (barred)
+			return "|" ~ stringValue ~ "|";
+		else
+			return stringValue;
     }
 }
 
@@ -628,7 +641,7 @@ class CompiledFunctionToken : FunctionToken {
     override Value evaluate (Value[] args) {
         if (name is null) {
             // evaluate a lambda function
-            return evaluateCompiledFunction(fun, args, name);
+            return evaluateCompiledFunction(fun, args, true, name);
         } else {
             // evaluate a named defined function
             return evaluateFunction(name, args);

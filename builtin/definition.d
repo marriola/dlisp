@@ -187,9 +187,9 @@ void addBuiltins () {
     addFunction("LET*", &builtinLetStar, [Parameter("BINDINGS")], null, null, null, Parameter("FORMS"));
     addFunction("SETF", &builtinSetf, [Parameter("PLACE"), Parameter("VALUE")]);
     addFunction("SETQ", &builtinSetq, [Parameter("IDENTIFIER", false), Parameter("VALUE")]);
-    addFunction("LAMBDA", &builtinLambda, [Parameter("LAMBDA-LIST", false)], null, null, null, Parameter("FORMS"));
+    addFunction("LAMBDA", &builtinLambda, [Parameter("LAMBDA-LIST", false)], null, null, null, Parameter("FORMS", false));
     addFunction("FUNCALL", &builtinFuncall, [Parameter("IDENTIFIER")], null, null, null, Parameter("ARGUMENTS"));
-    addFunction("DEFUN", &builtinDefun, [Parameter("IDENTIFIER"), Parameter("LAMBDA-LIST")], null, null, null, Parameter("FORMS"));
+    addFunction("DEFUN", &builtinDefun, [Parameter("IDENTIFIER", false), Parameter("LAMBDA-LIST", false)], null, null, null, Parameter("FORMS"));
     addFunction("FUNCTION", &builtinFunction, [Parameter("IDENTIFIER")]);
     addFunction("EVAL", &builtinEval, [Parameter("FORM")]);
 

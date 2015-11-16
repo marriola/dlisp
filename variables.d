@@ -28,6 +28,10 @@ void enterScope (Value[string] newScope) {
 ///////////////////////////////////////////////////////////////////////////////
 
 void leaveScope () {
+	if (scopeTable.empty()) {
+		std.stdio.writeln("SCOPE TABLE IS EMPTY");
+		return;
+	}
     scopeTable.removeBack();
 }
 

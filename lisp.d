@@ -9,6 +9,7 @@ import token;
 import variables;
 import vm.lispmacro;
 import vm.machine;
+import vm.opcode;
 
 void main (string args[]) {
     File input;
@@ -29,7 +30,7 @@ void main (string args[]) {
     initializeScopeTable();
     initializeBuiltins();
     initializeMacros();
-	initializeVm();
+	initializeOpcodeTable();
     LispParser lisp = new LispParser(input);
 
     while (true) {
@@ -42,10 +43,12 @@ void main (string args[]) {
             writef("%s\n\n", evaluate(tree));
         } catch (SyntaxErrorException e) {
             writef("Syntax error: %s\n\n", e.msg);
-        } catch (UncompiledFunctionException e) {
+        } catch (UndefinedFunctionException e) {
             writef("Undefined function: %s\n\n", e.msg);
         } catch (UndefinedVariableException e) {
             writef("Undefined variable: %s\n\n", e.msg);
+		} catch (CompilerException e) {
+			writef("Compiler error: %s\n\n", e.msg);
         } catch (VirtualMachineException e) {
             writef("Virtual machine error: %s\n\n", e.msg);
         } catch (Exception e) {

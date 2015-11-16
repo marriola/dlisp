@@ -136,7 +136,10 @@ string format (string formatString, Value[] args) {
                 case 'A':
                 case 'D':
                     Value param = args[0];
-                    directiveOut = param.toString();
+					if (param.token.type == TokenType.string)
+						directiveOut = (cast(StringToken)param.token).stringValue;
+					else
+						directiveOut = param.toString();
                     args = args[1 .. args.length];
                     break;
 

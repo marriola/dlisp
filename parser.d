@@ -81,6 +81,7 @@ class LispParser {
                 }
 
                 nextToken = getFunction(std.string.toUpper(functionName)).token;
+				break;
 
             case '\\':
                 // character
@@ -105,6 +106,7 @@ class LispParser {
                 }
 
                 nextToken =  new CharacterToken(character);
+				break;
 
             default:
                 throw new Exception("#" ~ c ~ " is an invalid macro sequence");
@@ -183,8 +185,24 @@ class LispParser {
             c = getc(stream);
         }
 
-        nextToken = new StringToken(stringValue);;   
+        nextToken = new StringToken(stringValue);  
     }
+
+	private void lexBarredIdentifier(ref char c, ref Token nextToken) {
+		string identifier;
+		c = getc(stream);
+
+		while (c != '|') {
+			identifier ~= c;
+			c = getc(stream);
+		}
+
+		if (identifier.length == 0) {
+			throw new SyntaxErrorException("Empty identifier");
+		}
+
+		nextToken = new IdentifierToken(identifier, true);
+	}
 
     /**
      * Reads a token from the input stream. The token is placed in member variable nextToken.
@@ -246,7 +264,11 @@ class LispParser {
         } else if (c == '\"') {
             lexString(c, nextToken);
             return;
-        }
+
+        } else if (c == '|') {
+			lexBarredIdentifier(c, nextToken);
+			return;
+		}
 
         {
             string stringValue;

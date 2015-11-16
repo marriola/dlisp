@@ -404,8 +404,8 @@ void addBuiltins () {
     addFunction("APPEND", &builtinAppend, null, null, null, null, Parameter("LISTS"));
     addFunction("CONCATENATE", &builtinConcatenate, [Parameter("RESULT-TYPE")], null, null, null, Parameter("SEQUENCES"));
     addFunction("STRING", &builtinString, [Parameter("CHARACTER")]);
-    addFunction("MAP", &builtinMap, [Parameter("RESULT-TYPE"), Parameter("FUNCTION"), Parameter("LIST")]);
-    addFunction("MAPCAR", &builtinMapcar, [Parameter("FUNCTION"), Parameter("LIST")]);
+    addFunction("MAP", &builtinMap, [Parameter("RESULT-TYPE"), Parameter("FUNCTION")], null, null, null, Parameter("SEQUENCES"));
+    addFunction("MAPCAR", &builtinMapcar, [Parameter("FUNCTION")], null, null, null, Parameter("SEQUENCES"));
     addFunction("REMOVE-IF", &builtinRemoveIf, [Parameter("PREDICATE"), Parameter("LIST")]);
     addFunction("REMOVE-IF-NOT", &builtinRemoveIfNot, [Parameter("PREDICATE"), Parameter("LIST")]);
 }

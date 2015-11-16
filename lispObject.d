@@ -187,6 +187,9 @@ Value map (TokenType type, Value mapFunction, Value[] lists) {
 
         Value mapResult = (cast(FunctionToken)mapFunction.token).evaluate(crossSection);
         if (type == TokenType.reference) {
+			if (mapResult.token.type != TokenType.reference) {
+				mapResult = Token.makeReference(mapResult);
+			}
             result.append(mapResult);
         } else if (type == TokenType.vector) {
             (cast(VectorToken)result.token).setItem(i, mapResult);

@@ -76,7 +76,7 @@ class InvalidLambdaListElementException : Exception {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-class UncompiledFunctionException : Exception {
+class UndefinedFunctionException : Exception {
     this (string msg) {
         super(msg);
     }
@@ -96,8 +96,17 @@ class UndefinedVariableException : Exception {
 
 class UnsupportedOperationException : Exception {
     this (Token token, string operation) {
-        super(operation ~ " operation is unsupported on " ~ tokenTypeName(token.type) ~ " token");
+        super(operation ~ " operation is not supported on " ~ tokenTypeName(token.type) ~ " token");
     }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+class CompilerException : Exception {
+	this (string message) {
+		super(message);
+	}
 }
 
 

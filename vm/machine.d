@@ -1,10 +1,13 @@
 module vm.machine;
 
+import core.vararg;
+
 import exceptions;
 import functions;
 import token;
 import variables;
 import vm.bytecode;
+import vm.opcode;
 import vm.compiler;
 
 import std.container.dlist : DList;
@@ -18,17 +21,68 @@ struct ConstantPair {
     Value constant;
 }
 
-struct BytecodeFunction {
+class BytecodeFunction {
     int entry;
     Value[] constants;
     Instruction[] code;
 
-    Value evaluate () {
+	public this() {
+		entry = 0;
+		constants = new Value[0];
+		code = new Instruction[0];
+	}
+
+	public this(int entry, Value[] constants, Instruction[] code) {
+		this.entry = entry;
+		this.constants = constants;
+		this.code = code;
+	}
+
+    public Value evaluate () {
         run(entry);
         Value result = dataStack.front();
         dataStack.removeFront();
         return result;
     }
+
+	public static BytecodeFunction concatenate (BytecodeFunction[] code) {
+		BytecodeFunction result = new BytecodeFunction();
+		int constantOffset = 0;
+		int codeOffset = 0;
+		result.constants = new Value[0];
+		result.code = new Instruction[0];
+
+		for (int i = 0; i < code.length; i++) {
+			BytecodeFunction fun = code[i];
+			result.constants ~= fun.constants;
+
+			for (int k = 0; k < fun.code.length; k++) {
+				Opcode opcode = fun.code[k].opcode;
+				result.code ~= fun.code[k];
+
+				switch (opcode) {
+					case Opcode.pushconst:
+					case Opcode.pushvalue:
+						result.code[result.code.length - 1].operands[0] += constantOffset;
+						break;
+
+					case Opcode.jump:
+					case Opcode.jumpif:
+					case Opcode.jumpifnot:
+						result.code[result.code.length - 1].operands[0] += codeOffset;
+						break;
+
+					default:
+						break;
+				}
+			}
+
+			constantOffset += fun.constants.length;
+			codeOffset += fun.code.length;
+		}
+
+		return result;
+	}
 }
 
 struct ProgramCounter {
@@ -57,7 +111,6 @@ void runFunction(Instruction instr, ref ProgramCounter pc, ref int level, ref bo
 	// Retrieve arguments from stack
 	Value[] arguments;
 	for (int i = 0; i < numParameters; i++) {
-		//                    std.stdio.writef("argument %s\n", dataStack.front());
 		if (dataStack.empty()) {
 			throw new Exception("Data stack is empty!");
 		}
@@ -77,98 +130,22 @@ void runFunction(Instruction instr, ref ProgramCounter pc, ref int level, ref bo
 	} else if (funID in compiledTable) {
 		fun = compiledTable[funID];
 	} else {
-		throw new Exception(std.conv.to!string(funID) ~ " is not a function");
+		throw new Exception(std.conv.to!string(funID) ~ " is not a registered function");
 	}
 
-	// Bind its parameters and execute the function.
-	enterScope(bindParameters(fun.name, fun.parameters, arguments, false));
-	std.stdio.writef("%s %x\n", fun.name, fun.id);
 	Value returnValue;
-	if (builtin)
+	if (builtin) {
+		// Bind its parameters and execute the function.
+		enterScope(bindParameters(fun.name, fun.parameters, arguments, false));
 		returnValue = (cast(BuiltinFunction)fun).hook(fun.name);
-	else
-		returnValue = evaluateCompiledFunction((cast(CompiledFunction)fun), arguments, fun.name);
+	} else {
+		returnValue = evaluateCompiledFunction((cast(CompiledFunction)fun), arguments, false, fun.name);
+	}
 
 	dataStack.insert(returnValue);
 	leaveScope();
 }
 
-void runPushnil1(Instruction instr, ref ProgramCounter pc, ref int level, ref bool returned) {
-	dataStack.insert(Value.nil());
-}
-
-void runPushnil(Instruction instr, ref ProgramCounter pc, ref int level, ref bool returned) {
-	for (int i = 0; i < instr.operands[0]; i++) {
-		dataStack.insert(Value.nil());
-	}
-}
-
-void runPushconst(Instruction instr, ref ProgramCounter pc, ref int level, ref bool returned) {
-	BytecodeFunction fun = dictionary[pc.entry];
-	Value[] constants = fun.constants;
-	int operand = instr.operands[0];
-	dataStack.insert(constants[operand].copy());
-}
-
-void runPushvalue(Instruction instr, ref ProgramCounter pc, ref int level, ref bool returned) {
-	Value constant = dictionary[pc.entry].constants[instr.operands[0]];
-	if (constant.token.type != TokenType.identifier) {
-		throw new VirtualMachineException(constant.toString() ~ " is not an identifier");
-	} else {
-		dataStack.insert(getVariable((cast(IdentifierToken)constant.token).stringValue));
-	}
-}
-
-void runJump(Instruction instr, ref ProgramCounter pc, ref int level, ref bool returned) {
-	pc.pc = instr.operands[0] - 1;
-	std.stdio.writef("jump to %x\n", pc.pc);
-}
-
-void runJumpif(Instruction instr, ref ProgramCounter pc, ref int level, ref bool returned) {
-	Value value = dataStack.front();
-	dataStack.removeFront();
-	if (!value.isNil()) {
-		pc.pc = instr.operands[0] - 1;
-		std.stdio.writef("jumpif to %x\n", pc.pc);
-	}
-}
-
-void runJumpifnot(Instruction instr, ref ProgramCounter pc, ref int level, ref bool returned) {
-	Value value = dataStack.front();
-	dataStack.removeFront();
-	if (value.isNil()) {
-		pc.pc = instr.operands[0] - 1;
-		std.stdio.writef("jumpifnot to %x\n", pc.pc);
-	}
-}
-
-void runRet(Instruction instr, ref ProgramCounter pc, ref int level, ref bool returned) {
-	pc = callStack.front();
-	callStack.removeFront();
-	level--;
-	returned = true;
-}
-
-alias OpcodeFunction = void function(Instruction, ref ProgramCounter, ref int, ref bool);
-
-OpcodeFunction[ubyte] opcodeFunctions;
-
-void initializeVm() {
-	opcodeFunctions[Opcode.builtin0] = &runFunction;
-	opcodeFunctions[Opcode.builtin1] = &runFunction;
-	opcodeFunctions[Opcode.builtin] = &runFunction;
-	opcodeFunctions[Opcode.fun0] = &runFunction;
-	opcodeFunctions[Opcode.fun1] = &runFunction;
-	opcodeFunctions[Opcode.fun] = &runFunction;
-	opcodeFunctions[Opcode.pushnil1] = &runPushnil1;
-	opcodeFunctions[Opcode.pushnil] = &runPushnil;
-	opcodeFunctions[Opcode.pushconst] = &runPushconst;
-	opcodeFunctions[Opcode.pushvalue] = &runPushvalue;
-	opcodeFunctions[Opcode.jump] = &runJump;
-	opcodeFunctions[Opcode.jumpif] = &runJumpif;
-	opcodeFunctions[Opcode.jumpifnot] = &runJumpifnot;
-	opcodeFunctions[Opcode.ret] = &runRet;
-}
 
 /**
  * Executes the bytecodes in the given dictionary entry.
@@ -210,6 +187,11 @@ int addEntry (Value form) {
     return nextEntry++;
 }
 
+int addEntry (BytecodeFunction fun) {
+	dictionary[nextEntry] = fun;
+	return nextEntry++;
+}
+
 /**
  * Compiles a Lisp form, executes the resulting bytecode and returns its
  * result.
@@ -217,6 +199,18 @@ int addEntry (Value form) {
 Value evaluate (Value form) {
 	std.stdio.writeln(form.toString());
     run(addEntry(form));
+    Value result = dataStack.front();
+    dataStack.removeFront();
+    nextEntry--;
+    return result;
+}
+
+/**
+ * Executes precompiled bytecode and returns the result.
+ */
+Value run (BytecodeFunction fun) {
+	std.stdio.writeln(fun.code);
+	run(addEntry(fun));
     Value result = dataStack.front();
     dataStack.removeFront();
     nextEntry--;

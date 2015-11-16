@@ -40,7 +40,8 @@ void macroDefun (CodeEmitterVisitor visitor, string name, ref int nextConstant, 
     }
 
     string identifierString = (cast(IdentifierToken)identifier.token).stringValue;
-    addFunction(identifierString, toArray(lambdaList), forms, docString);
+	getDefined(identifierString).compile(forms);
+	//addFunction(identifierString, toArray(lambdaList), forms, docString, true);
 
 	uint funConstant;
 	ConstantPair* constant = identifierString in constants;
