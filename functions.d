@@ -38,13 +38,22 @@ alias FunctionHook = Value function(string);
 // code emitter pushes the argument on the stack verbatim, or emits code to
 // get its value at runtime.
 
-class Evaluable {
-	bool evaluate;
-	Value value;
+//class Evaluable {
+//    bool evaluate;
+//    Value value;
+//
+//    this (bool evaluate, Value value) {
+//        this.evaluate = evaluate;
+//        this.value = value;
+//    }
+//}
 
-	this (bool evaluate, Value value) {
+class Evaluable : Value {
+	bool evaluate;
+
+	this (bool evaluate, Token token) {
+		super(token);
 		this.evaluate = evaluate;
-		this.value = value;
 	}
 }
 
@@ -339,8 +348,8 @@ void addFunction (string name, Value[] lambdaList, Value[] forms = null, string 
 ///////////////////////////////////////////////////////////////////////////////
 
 /// Annotates a list of arguments to be fed into bindParameters by the VM.
-/// Each argument is packaged in an Evaluable object, which specified whether
-/// that argument is to be evaluated. Also, non-required arguments are preceded
+/// Each argument's token is repackaged in a subclass of Value, Evaluable, which
+/// says whether that argument gets evaluated.
 ///
 /// @param name			The name of the function whose parameters are being bound
 /// @param parameters	A Parameters object holding the lists of parameters to bind
@@ -358,7 +367,7 @@ Evaluable[] annotateArguments (string name, Parameters parameters, Value[] argum
             throw new Exception("Too few arguments given to " ~ name);
         }
 
-        newScope ~= new Evaluable(requiredParam.evaluate, arguments[0]);
+        newScope ~= new Evaluable(requiredParam.evaluate, arguments[0].token);
         arguments = remove(arguments, 0);
     }
 
@@ -373,7 +382,7 @@ Evaluable[] annotateArguments (string name, Parameters parameters, Value[] argum
             arguments = remove(arguments, 0);
         }
 
-		newScope ~= new Evaluable(optArg.evaluate, value);
+		newScope ~= new Evaluable(optArg.evaluate, value.token);
     }
 
     // extract and bind keyword arguments
@@ -404,13 +413,13 @@ Evaluable[] annotateArguments (string name, Parameters parameters, Value[] argum
             arguments = remove(arguments, kwIndex, kwIndex + 1);
         }
 
-		newScope ~= new Evaluable(false, new Value(new ConstantToken(kwArg.name[1..$])));
-		newScope ~= new Evaluable(kwArg.evaluate, value);
+		newScope ~= new Evaluable(false, new ConstantToken(kwArg.name[1..$]));
+		newScope ~= new Evaluable(kwArg.evaluate, value.token);
     }
 
 	if (parameters.hasRest) {
 		foreach (Value arg; arguments) {
-			newScope ~= new Evaluable(parameters.rest.evaluate, arguments[0]);
+			newScope ~= new Evaluable(parameters.rest.evaluate, arguments[0].token);
 			arguments = remove(arguments, 0);
 		}
 	}
