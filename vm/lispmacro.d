@@ -58,6 +58,20 @@ void macroDefun (CodeEmitterVisitor visitor, string name, ref int nextConstant, 
     code ~= Instruction(Opcode.pushconst, [cast(uint)funConstant]);
 }
 
+void macroLambda (CodeEmitterVisitor visitor, string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value argsValue, Value[] arguments) {
+	Value[] lambdaList = toArray(arguments[0]);
+	Value[] forms = toArray(arguments[1]);
+    string docString = null;
+
+    if (forms[0].token.type == TokenType.string && forms.length > 1) {
+        docString = (cast(StringToken)forms[0].token).stringValue;
+        forms = forms[1 .. forms.length];
+    }
+
+	Token lambda = new CompiledFunctionToken(lambdaList, forms, docString);
+	visitor.addConstantAndPush(new Value(lambda));
+}
+
 void macroIf (CodeEmitterVisitor visitor, string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value argsValue, Value[] arguments) {
     if (arguments.length < 2) {
         throw new NotEnoughArgumentsException("macroIf");
@@ -92,6 +106,7 @@ void addMacro (string name, MacroFunction fun) {
 
 void initializeMacros () {
     addMacro("DEFUN", &macroDefun);
+	//addMacro("LAMBDA", &macroLambda);
     addMacro("IF", &macroIf);
     addMacro("QUOTE", &macroQuote);
 }
