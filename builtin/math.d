@@ -168,6 +168,16 @@ Value builtinSqrt (string name) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value builtinExpt (string name) {
+	Value base = getParameter("BASE");
+	Value exponent = getParameter("EXPONENT");
+    float baseValue = (base.token.type == TokenType.floating) ? (cast(FloatToken)base.token).floatValue : (cast(IntegerToken)base.token).intValue;
+    float exponentValue = (exponent.token.type == TokenType.floating) ? (cast(FloatToken)exponent.token).floatValue : (cast(IntegerToken)exponent.token).intValue;
+    return new Value(new FloatToken(std.math.pow(baseValue, exponentValue)));
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 Value builtinMod (string name) {
     Value numberToken = getParameter("DIVIDEND");
     Value divisorToken = getParameter("DIVISOR");
@@ -251,6 +261,7 @@ void addBuiltins () {
     addFunction("INCF", &builtinIncf, [Parameter("PLACE")]);
     addFunction("DECF", &builtinDecf, [Parameter("PLACE")]);
     addFunction("SQRT", &builtinSqrt, [Parameter("NUMBER")]);
+	addFunction("EXPT", &builtinExpt, [Parameter("BASE"), Parameter("EXPONENT")]);
     addFunction("MOD", &builtinMod, [Parameter("DIVIDEND"), Parameter("DIVISOR")]);
     addFunction("EVEN", &builtinEven, [Parameter("NUMBER")]);
     addFunction("ODD", &builtinOdd, [Parameter("NUMBER")]);
