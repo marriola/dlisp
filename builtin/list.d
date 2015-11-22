@@ -1,5 +1,6 @@
 module builtin.list;
 
+import std.container.array;
 import std.array : array;
 import std.conv : to;
 
@@ -374,6 +375,19 @@ Value builtinRemoveIfNot (string name) {
 }
 
 
+Value builtinSerialize(string name) {
+	Value streamToken = getParameter("STREAM");
+	std.stdio.File stream = (cast(FileStreamToken)streamToken.token).stream;
+
+	Value form = getParameter("FORM");
+	vm.machine.BytecodeFunction code = vm.compiler.compile(form);
+	ubyte[] bytes = code.serialize();
+
+	stream.rawWrite(std.conv.to!(ubyte[])(bytes));
+
+	return Value.nil();
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 void addBuiltins () {
@@ -408,4 +422,5 @@ void addBuiltins () {
     addFunction("MAPCAR", &builtinMapcar, [Parameter("FUNCTION")], null, null, null, Parameter("SEQUENCES"));
     addFunction("REMOVE-IF", &builtinRemoveIf, [Parameter("PREDICATE"), Parameter("LIST")]);
     addFunction("REMOVE-IF-NOT", &builtinRemoveIfNot, [Parameter("PREDICATE"), Parameter("LIST")]);
+	addFunction("SERIALIZE", &builtinSerialize, [Parameter("STREAM"), Parameter("FORM", false)]);
 }

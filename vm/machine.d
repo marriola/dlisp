@@ -10,6 +10,7 @@ import vm.bytecode;
 import vm.opcode;
 import vm.compiler;
 
+import std.container.array : Array;
 import std.container.dlist : DList;
 import std.container.slist : SList;
 
@@ -82,6 +83,28 @@ class BytecodeFunction {
 		}
 
 		return result;
+	}
+
+	public ubyte[] serialize () {
+		auto output = new ubyte[0];
+
+		// Output constants table
+		foreach (Value constant; constants) {
+			auto tokenBytes = constant.token.serialize();
+			foreach (ubyte theByte; tokenBytes) {
+				output ~= theByte;
+			}
+		}
+		
+		// Output instructions
+		foreach (Instruction instruction; code) {
+			auto instrBytes = instruction.serialize();
+			foreach (ubyte theByte; instrBytes) {
+				output ~= theByte;
+			}
+		}
+
+		return output;
 	}
 }
 

@@ -1,6 +1,7 @@
 module vm.bytecode;
 
 import std.array;
+import std.container.array;
 import std.algorithm;
 import std.conv;
 import std.format;
@@ -21,4 +22,21 @@ struct Instruction {
     string toString () {
         return "<" ~ opcodeName[opcode] ~ (operands.length > 0 ? " " : "") ~ join(map!(x => format("%x", x))(operands), ", ") ~ ">";
     }
+
+	Array!ubyte serialize () {
+		auto output = Array!ubyte();
+		
+		output.insertBack(opcode);
+
+		foreach (uint operand; operands) {
+			uint upper = operand % 0x1000;
+			uint lower = operand / 0x1000;
+			output.insertBack(cast(ubyte)(lower % 0x100));
+			output.insertBack(cast(ubyte)(lower / 0x100));
+			output.insertBack(cast(ubyte)(upper % 0x100));
+			output.insertBack(cast(ubyte)(upper / 0x100));
+		}
+
+		return output;
+	}
 }

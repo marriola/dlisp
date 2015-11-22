@@ -6,6 +6,7 @@ import lispObject;
 import node;
 import vm.compiler;
 
+import std.container.array;
 import std.algorithm;
 import std.stdio;
 import std.conv;
@@ -203,6 +204,10 @@ abstract class Token {
     static bool isTrue (Value value) {
         return value.token.type == TokenType.boolean && (cast(BooleanToken)value.token).boolValue == true;
     }
+
+	ubyte[] serialize() {
+		throw new UnsupportedOperationException(this, "Serialize");
+	}
 }
 
 
@@ -249,6 +254,13 @@ class BooleanToken : Token {
     override string toString () {
         return boolValue ? "T" : "NIL";
     }
+
+	override ubyte[] serialize() {
+		auto output = new ubyte[0];
+		output ~= cast(ubyte)type;
+		output ~= cast(ubyte)(boolValue ? 1 : 0);
+		return output;
+	}
 }
 
 
@@ -273,6 +285,13 @@ class CharacterToken : Token {
             return "#\\" ~ charValue;
         }
     }
+
+	override ubyte[] serialize() {
+		auto output = new ubyte[0];
+		output ~= cast(ubyte)type;
+		output ~= cast(ubyte)charValue;
+		return output;
+	}
 }
 
 
@@ -293,6 +312,18 @@ class StringToken : Token {
     override string toString () {
         return "\"" ~ stringValue ~ "\"";
     }
+
+	override ubyte[] serialize() {
+		auto output = new ubyte[0];
+		output ~= cast(ubyte)type;
+
+		foreach (char c; stringValue) {
+			output ~= cast(ubyte)c;
+		}
+		output ~= 0;
+
+		return output;
+	}
 }
 
 
@@ -318,10 +349,37 @@ class IdentifierToken : Token {
 		else
 			return stringValue;
     }
+
+	override ubyte[] serialize() {
+		auto output = new ubyte[0];
+		output ~= cast(ubyte)type;
+
+		foreach (char c; stringValue) {
+			output ~= cast(ubyte)c;
+		}
+		output ~= 0;
+
+		return output;
+	}
 }
 
 
 ///////////////////////////////////////////////////////////////////////////////
+
+ubyte[] asBytes(T)(T value, int len) {
+	ubyte* p = cast(ubyte*)&value;
+	ubyte[] bytes = new ubyte[len];
+	for (int i = 0; i < len; i++) {
+		bytes[i] = p[i];
+	}
+	return bytes;
+}
+
+void insertAll(ref ubyte[] dest, ubyte[] src) {
+	foreach (ubyte theByte; src) {
+		dest ~= theByte;
+	}
+}
 
 class IntegerToken : Token {
     long intValue;
@@ -338,6 +396,13 @@ class IntegerToken : Token {
     override string toString () {
         return to!string(intValue);
     }
+
+	override ubyte[] serialize() {
+		auto output = new ubyte[0];
+		output ~= cast(ubyte)type;
+		insertAll(output, asBytes(intValue, 4));
+		return output;
+	}
 }
 
 
@@ -358,6 +423,18 @@ class ConstantToken : Token {
     override string toString () {
         return ":" ~ stringValue;
     }
+
+	override ubyte[] serialize() {
+		auto output = new ubyte[0];
+		output ~= cast(ubyte)type;
+
+		foreach (char c; stringValue) {
+			output ~= cast(ubyte)c;
+		}
+		output ~= 0;
+
+		return output;
+	}
 }
 
 
@@ -378,6 +455,13 @@ class FloatToken : Token {
     override string toString () {
         return to!string(floatValue);
     }
+
+	override ubyte[] serialize() {
+		auto output = new ubyte[0];
+		output ~= cast(ubyte)type;
+		insertAll(output, asBytes(floatValue, 8));
+		return output;
+	}
 }
 
 
@@ -421,6 +505,14 @@ class ReferenceToken : Token {
     override string toString () {
         return reference.toString();
     }
+
+	override ubyte[] serialize() {
+		auto output = new ubyte[0];
+		output ~= cast(ubyte)type;
+		insertAll(output, reference.car.token.serialize());
+		insertAll(output, reference.cdr.token.serialize());
+		return output;
+	}
 }
 
 
