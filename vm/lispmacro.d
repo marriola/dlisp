@@ -60,7 +60,7 @@ void macroDefun (CodeEmitterVisitor visitor, string name, ref int nextConstant, 
 
 void macroLambda (CodeEmitterVisitor visitor, string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value argsValue, Value[] arguments) {
 	Value[] lambdaList = toArray(arguments[0]);
-	Value[] forms = toArray(arguments[1]);
+	Value[] forms = arguments[1..$];
     string docString = null;
 
     if (forms[0].token.type == TokenType.string && forms.length > 1) {
@@ -94,6 +94,31 @@ void macroIf (CodeEmitterVisitor visitor, string name, ref int nextConstant, ref
     op.operands[0] = code.length;
 }
 
+void macroCond (CodeEmitterVisitor visitor, string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value argsValue, Value[] arguments) {
+	if (arguments.length < 1) {
+		throw new NotEnoughArgumentsException("macroCond");
+	}
+
+	foreach (Value branch; arguments) {
+		Value[] branchAsArray = toArray(branch);
+		Value test = branchAsArray[0];
+		Value[] forms = branchAsArray[1..$];
+
+		// Emit branch test and jump around if test is not satisfied.
+		test.accept(visitor);
+		Instruction *op = new Instruction(Opcode.jumpifnot, [0]);
+		code ~= *op;
+
+		// Emit the body of the branch
+		foreach (Value form; forms) {
+			form.accept(visitor);
+		}
+
+		// Substitute the position of the instruction just atfer the body for the parameter in the jmpifnot instruction above.
+		op.operands[0] = code.length;
+	}
+}
+
 void macroQuote (CodeEmitterVisitor visitor, string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value argsValue, Value[] arguments) {
 	visitor.pushConstant(arguments[0]);
 }
@@ -106,7 +131,8 @@ void addMacro (string name, MacroFunction fun) {
 
 void initializeMacros () {
     addMacro("DEFUN", &macroDefun);
-	//addMacro("LAMBDA", &macroLambda);
+	addMacro("LAMBDA", &macroLambda);
     addMacro("IF", &macroIf);
+	addMacro("COND", &macroCond);
     addMacro("QUOTE", &macroQuote);
 }

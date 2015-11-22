@@ -280,7 +280,7 @@ class ConstantsVisitor : LispVisitor {
  */
 class CodeEmitterVisitor : LispVisitor {
     alias LispVisitor.visit visit;
-    private ConstantPair[string] constants;
+    private ConstantPair[string]* constants;
     private Value form;
     private Instruction[] code;
     int nextConstant;
@@ -290,7 +290,7 @@ class CodeEmitterVisitor : LispVisitor {
 
     this (ConstantsVisitor constantsVisitor, Value form, CompiledFunction dummy = null) {
 		this.constantsVisitor = constantsVisitor;
-        this.constants = constantsVisitor.constants;
+        this.constants = &constantsVisitor.constants;
         this.form = form;
         this.nextConstant = constantsVisitor.nextConstant;
 		this.dummy = dummy;
@@ -313,8 +313,8 @@ class CodeEmitterVisitor : LispVisitor {
         } else {
             string asString = value.toString();
             std.stdio.writef("pushConstant %s %s\n", value.token.type, asString);
-            if (asString in constants) {
-				Instruction push = Instruction(evaluate ? Opcode.pushvalue : Opcode.pushconst, [constants[asString].index]);
+            if (asString in *constants) {
+				Instruction push = Instruction(evaluate ? Opcode.pushvalue : Opcode.pushconst, [(*constants)[asString].index]);
                 //Instruction push = Instruction(Opcode.pushconst, [constants[asString].index]);
                 //std.stdio.writef("%s\n", push);
                 code ~= push;
@@ -341,7 +341,7 @@ class CodeEmitterVisitor : LispVisitor {
 
 		if (name in compilerMacros) {
 			// macro looks like a function call
-            compilerMacros[name].evaluate(this, name, nextConstant, constants, code, arguments, argsArray);
+            compilerMacros[name].evaluate(this, name, nextConstant, *constants, code, arguments, argsArray);
             return;
         }
 
@@ -488,5 +488,7 @@ BytecodeFunction compile (Value form, CompiledFunction dummy = null) {
     results.code = codeEmitterVisitor.compile();
     std.stdio.writeln(results.code);
 
+	// Get constants from visitor again in case code emitter added new ones
+    results.constants = constantsVisitor.getConstants();
     return results;
 }    
