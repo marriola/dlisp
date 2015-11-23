@@ -13,6 +13,12 @@ import vm.lispmacro;
 import vm.machine;
 
 
+// Maintains the name of the function currently being compiled.
+// It is set by the DEFUN macro and is referred to when emitting
+// function calls so that recursive functions use the special
+// tail call opcodes.
+SList!string currentFunction = SList!string();
+
 ///////////////////////////////////////////////////////////////////////////////
 
 abstract class LispVisitor {
@@ -368,13 +374,15 @@ class CodeEmitterVisitor : LispVisitor {
 				fun = getDefined(name);
 			}
 
+			bool isRecursiveCall = !currentFunction.empty() && name == currentFunction.front();
+
             if (fun !is null) {
                 if (argCount == 0) {
-                    functionCall = Instruction(Opcode.fun0, [cast(uint)fun.id]);
+                    functionCall = Instruction(isRecursiveCall ? Opcode.tailcall0 : Opcode.fun0, [cast(uint)fun.id]);
                 } else if (argCount == 1) {
-                    functionCall = Instruction(Opcode.fun1, [cast(uint)fun.id]);
+                    functionCall = Instruction(isRecursiveCall ? Opcode.tailcall1 : Opcode.fun1, [cast(uint)fun.id]);
                 } else {
-                    functionCall = Instruction(Opcode.fun, [cast(uint)fun.id, cast(uint)argCount]);
+                    functionCall = Instruction(isRecursiveCall ? Opcode.tailcall : Opcode.fun, [cast(uint)fun.id, cast(uint)argCount]);
                 }
             } else {
                 throw new UndefinedFunctionException(name);

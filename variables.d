@@ -20,8 +20,15 @@ void enterScope () {
     scopeTable.insertBack(newScope);
 }
 
-void enterScope (Value[string] newScope) {
-    scopeTable.insertBack(newScope);
+void enterScope (Value[string] newScope, bool mergeScopes = false) {
+	if (mergeScopes) {
+		Value[string] currentScope = scopeTable.back();
+		foreach (string key; newScope.keys) {
+			currentScope[key] = newScope[key];
+		}
+	} else {
+		scopeTable.insertBack(newScope);
+	}
 }
 
 

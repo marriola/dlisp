@@ -555,7 +555,7 @@ Value evaluateCompiledFunction (CompiledFunction fun, Value[] arguments, bool ev
     Value[] forms = fun.forms;
     Value returnValue;
 
-	std.stdio.writeln("evaluateCompiledFunction:");
+	std.stdio.writeln("evaluateCompiledFunction: " ~ name);
     enterScope(bindParameters(name, fun.parameters, arguments.dup, evaluateArgs));
 	returnValue = run(fun.bytecode);
 	//foreach (BytecodeFunction form; fun.bytecode) {

@@ -121,54 +121,6 @@ int nextEntry = 0;
 SList!Value dataStack;
 SList!ProgramCounter callStack;
 
-void runFunction(Instruction instr, ref ProgramCounter pc, ref int level, ref bool returned) {
-	int numParameters;
-	if (instr.opcode == Opcode.builtin0 || instr.opcode == Opcode.fun0) {
-		numParameters = 0;
-	} else if (instr.opcode == Opcode.builtin1 || instr.opcode == Opcode.fun1) {
-		numParameters = 1;
-	} else {
-		numParameters = instr.operands[1];
-	}
-
-	// Retrieve arguments from stack
-	Value[] arguments;
-	for (int i = 0; i < numParameters; i++) {
-		if (dataStack.empty()) {
-			throw new Exception("Data stack is empty!");
-		}
-		arguments ~= dataStack.front();
-		dataStack.removeFront();
-	}
-
-	bool builtin = instr.opcode == Opcode.builtin0 ||
-				   instr.opcode == Opcode.builtin1 ||
-				   instr.opcode == Opcode.builtin;
-
-	// Get the function object for the specified function.
-	uint funID = instr.operands[0];
-	LispFunction fun;
-	if (funID in builtinTable) {
-		fun = builtinTable[funID];
-	} else if (funID in compiledTable) {
-		fun = compiledTable[funID];
-	} else {
-		throw new Exception(std.conv.to!string(funID) ~ " is not a registered function");
-	}
-
-	Value returnValue;
-	if (builtin) {
-		// Bind its parameters and execute the function.
-		enterScope(bindParameters(fun.name, fun.parameters, arguments, false));
-		returnValue = (cast(BuiltinFunction)fun).hook(fun.name);
-	} else {
-		returnValue = evaluateCompiledFunction((cast(CompiledFunction)fun), arguments, false, fun.name);
-	}
-
-	dataStack.insert(returnValue);
-	leaveScope();
-}
-
 
 /**
  * Executes the bytecodes in the given dictionary entry.

@@ -39,9 +39,11 @@ void macroDefun (CodeEmitterVisitor visitor, string name, ref int nextConstant, 
         throw new TypeMismatchException(name, lambdaList.token, "reference");
     }
 
+	currentFunction.insert((cast(IdentifierToken)identifier.token).stringValue);
     string identifierString = (cast(IdentifierToken)identifier.token).stringValue;
 	getDefined(identifierString).compile(forms);
 	//addFunction(identifierString, toArray(lambdaList), forms, docString, true);
+	currentFunction.removeFront();
 
 	uint funConstant;
 	ConstantPair* constant = identifierString in constants;
