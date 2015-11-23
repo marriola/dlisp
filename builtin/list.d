@@ -10,8 +10,10 @@ import functions;
 import lispObject;
 import node;
 import token;
+import util;
 import variables;
 
+import std.zlib;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -375,17 +377,61 @@ Value builtinRemoveIfNot (string name) {
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+
+Value builtinSerializeFunction(string name) {
+	Value streamToken = getParameter("STREAM");
+	std.stdio.File stream = (cast(FileStreamToken)streamToken.token).stream;
+
+	Value form = getParameter("FORM");
+	ubyte[] bytes = [cast(ubyte)'F'] ~ cast(ubyte[])compress((cast(CompiledFunctionToken)form.token).fun.bytecode.serialize());
+
+	stream.rawWrite(asBytes(bytes.length, 4));
+	stream.rawWrite(bytes);
+
+	return Value.nil();
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 Value builtinSerialize(string name) {
 	Value streamToken = getParameter("STREAM");
 	std.stdio.File stream = (cast(FileStreamToken)streamToken.token).stream;
 
 	Value form = getParameter("FORM");
-	vm.machine.BytecodeFunction code = vm.compiler.compile(form);
-	ubyte[] bytes = code.serialize();
+	ubyte[] bytes = [cast(ubyte)'T'] ~ cast(ubyte[])compress(Token.serialize(form.token));
 
-	stream.rawWrite(std.conv.to!(ubyte[])(bytes));
+	stream.rawWrite(asBytes(bytes.length, 4));
+	stream.rawWrite(bytes);
 
 	return Value.nil();
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Value builtinDeserialize(string name) {
+	Value streamToken = getParameter("STREAM");
+	std.stdio.File stream = (cast(FileStreamToken)streamToken.token).stream;
+	auto objectSize = fromBytes!uint(stream, 4);
+	auto bytes = new ubyte[objectSize];
+	stream.rawRead(bytes);
+	bytes = cast(ubyte[])uncompress(bytes);
+
+	auto type = cast(char)bytes[0];
+
+	switch (type) {
+		case 'T':
+			auto tokenType = fromBytes!TokenType(bytes[1..4]);
+			auto size = fromBytes!uint(bytes[5..8]);
+			bytes = bytes[9..$];
+			auto token = Token.deserialize(tokenType, bytes[0 .. size - 1]);
+			return new Value(token);
+
+		default:
+			throw new Exception("Invalid object type");
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -422,5 +468,7 @@ void addBuiltins () {
     addFunction("MAPCAR", &builtinMapcar, [Parameter("FUNCTION")], null, null, null, Parameter("SEQUENCES"));
     addFunction("REMOVE-IF", &builtinRemoveIf, [Parameter("PREDICATE"), Parameter("LIST")]);
     addFunction("REMOVE-IF-NOT", &builtinRemoveIfNot, [Parameter("PREDICATE"), Parameter("LIST")]);
+	addFunction("SERIALIZE-FUNCTION", &builtinSerializeFunction, [Parameter("STREAM"), Parameter("FORM")]);
 	addFunction("SERIALIZE", &builtinSerialize, [Parameter("STREAM"), Parameter("FORM", false)]);
+	addFunction("DESERIALIZE", &builtinDeserialize, [Parameter("STREAM")]);
 }

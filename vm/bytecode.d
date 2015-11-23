@@ -6,6 +6,7 @@ import std.algorithm;
 import std.conv;
 import std.format;
 
+import util;
 
 enum Opcode : ubyte { builtin0, builtin1, builtin, fun0, fun1, fun, tailcall0, tailcall1, tailcall, pushnil1, pushnil, pushconst, pushvalue, jump, jumpif, jumpifnot, ret };
 
@@ -23,20 +24,27 @@ struct Instruction {
         return "<" ~ opcodeName[opcode] ~ (operands.length > 0 ? " " : "") ~ join(map!(x => format("%x", x))(operands), ", ") ~ ">";
     }
 
-	Array!ubyte serialize () {
-		auto output = Array!ubyte();
+	ubyte[] serialize () {
+		auto output = new ubyte[0];
 		
-		output.insertBack(opcode);
+		output ~= opcode;
 
 		foreach (uint operand; operands) {
-			uint upper = operand % 0x1000;
-			uint lower = operand / 0x1000;
-			output.insertBack(cast(ubyte)(lower % 0x100));
-			output.insertBack(cast(ubyte)(lower / 0x100));
-			output.insertBack(cast(ubyte)(upper % 0x100));
-			output.insertBack(cast(ubyte)(upper / 0x100));
+			output ~= asBytes(operand, 4);
 		}
 
-		return output;
+		return asBytes(output.length, 4) ~ output;
+	}
+
+	static Instruction deserialize(ubyte[] bytes) {
+		auto instr = Instruction();
+		instr.opcode = cast(Opcode)bytes[0];
+		instr.operands = new uint[0];
+		
+		for (int i = 0; i < bytes.length; i += 4) {
+			instr.operands ~= fromBytes!uint(bytes[i .. i + 3]);
+		}
+
+		return instr;
 	}
 }

@@ -5,15 +5,16 @@ import core.vararg;
 import exceptions;
 import functions;
 import token;
+import util;
 import variables;
 import vm.bytecode;
 import vm.opcode;
 import vm.compiler;
 
+import std.stdio;
 import std.container.array : Array;
 import std.container.dlist : DList;
 import std.container.slist : SList;
-
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -88,13 +89,19 @@ class BytecodeFunction {
 	public ubyte[] serialize () {
 		auto output = new ubyte[0];
 
+		output ~= asBytes(constants.length, 4);
+
 		// Output constants table
 		foreach (Value constant; constants) {
 			auto tokenBytes = constant.token.serialize();
+			output ~= asBytes(constant.token.type, 4);
+			output ~= asBytes(tokenBytes.length, 4);
 			foreach (ubyte theByte; tokenBytes) {
 				output ~= theByte;
 			}
 		}
+
+		output ~= asBytes(code.length, 4);
 		
 		// Output instructions
 		foreach (Instruction instruction; code) {
@@ -105,6 +112,34 @@ class BytecodeFunction {
 		}
 
 		return output;
+	}
+
+	static BytecodeFunction deserialize(File file) {
+		auto result = new BytecodeFunction();
+		result.constants = new Value[0];
+		result.code = new Instruction[0];
+
+		int numConstants = fromBytes!int(file, 4);
+
+		for (int i = 0; i < numConstants; i++) {
+			TokenType type = fromBytes!TokenType(file, 4);
+
+			int size = fromBytes!int(file, 4);
+			auto bytes = new ubyte[size];
+			file.rawRead(bytes);
+
+			result.constants ~= new Value(Token.deserialize(type, bytes));
+		}
+
+		int numInstructions = fromBytes!int(file, 4);
+		for (int i = 0; i < numInstructions; i++) {
+			int size = fromBytes!int(file, 4);
+			auto bytes = new ubyte[size];
+			file.rawRead(bytes);
+			result.code ~= Instruction.deserialize(bytes);
+		}
+
+		return result;
 	}
 }
 

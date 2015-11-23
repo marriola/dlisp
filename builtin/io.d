@@ -106,6 +106,32 @@ Value builtinRead (string name) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+Value builtinReadBytes (string name) {
+	Value stream = getParameter("STREAM");
+	Value count = getParameter("COUNT");
+
+	if (stream.token.type != TokenType.fileStream) {
+		throw new TypeMismatchException(name, stream.token, "file stream");
+	} else if (count.token.type != TokenType.integer) {
+		throw new TypeMismatchException(name, count.token, "integer");
+	}
+
+	File file = (cast(FileStreamToken)stream.token).stream;
+	uint size = cast(uint)(cast(IntegerToken)count.token).intValue;
+	auto bytes = new ubyte[size];
+	file.rawRead(bytes);
+
+	auto vector = new VectorToken(size);
+	for (uint i = 0; i < size; i++) {
+		vector.array[i] = new Value(new CharacterToken(bytes[i]));
+	}
+
+	return new Value(vector);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
 string format (string formatString, Value[] args) {
     string outString = "";
 
@@ -202,6 +228,7 @@ void addBuiltins () {
     addFunction("OPEN", &builtinOpen, [Parameter("FILESPEC")], [Parameter("DIRECTION", new Value(new ConstantToken("INPUT")))]);
     addFunction("CLOSE", &builtinClose, [Parameter("STREAM")]);
     addFunction("READ", &builtinRead, null, [Parameter("STREAM", Value.nil())]);
+	addFunction("READ-BYTES", &builtinReadBytes, null, [Parameter("STREAM", Value.nil()), Parameter("COUNT")]);
     addFunction("PRINT", &builtinPrint, [Parameter("OBJECT")]);
     addFunction("FORMAT", &builtinFormat, [Parameter("DESTINATION"), Parameter("FORMAT-STRING")], null, null, null, Parameter("ARGS"));
 }
