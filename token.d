@@ -235,6 +235,10 @@ abstract class Token {
 				tokenBytes = (cast(FloatToken)token).serialize();
 				break;
 
+			case TokenType.reference:
+				tokenBytes = (cast(ReferenceToken)token).serialize();
+				break;
+
 			default:
 				throw new Exception("Invalid token type");
 		}
