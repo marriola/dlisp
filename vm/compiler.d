@@ -257,6 +257,7 @@ class ConstantsVisitor : LispVisitor {
 
         firstElement.removeFront();
         if (level == 1) {
+			// Stop quoting once
             quoted = false;
         }
         level--;
@@ -374,7 +375,8 @@ class CodeEmitterVisitor : LispVisitor {
 				fun = getDefined(name);
 			}
 
-			bool isRecursiveCall = !currentFunction.empty() && name == currentFunction.front();
+			bool isRecursiveCall = false; // !currentFunction.empty() && name == currentFunction.front();
+			//bool isTailCall = 
 
             if (fun !is null) {
                 if (argCount == 0) {
