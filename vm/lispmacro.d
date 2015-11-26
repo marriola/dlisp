@@ -125,6 +125,12 @@ void macroQuote (CodeEmitterVisitor visitor, string name, ref int nextConstant, 
 	visitor.pushConstant(arguments[0]);
 }
 
+void macroProgn (CodeEmitterVisitor visitor, string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value argsValue, Value[] arguments) {
+	foreach (Value form; arguments) {
+		form.accept(visitor);
+	}
+}
+
 CompilerMacro[string] compilerMacros;
 
 void addMacro (string name, MacroFunction fun) {
@@ -137,4 +143,5 @@ void initializeMacros () {
     addMacro("IF", &macroIf);
 	addMacro("COND", &macroCond);
     addMacro("QUOTE", &macroQuote);
+    addMacro("PROGN", &macroProgn);
 }
