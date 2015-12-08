@@ -10,7 +10,9 @@ import token;
 
 enum VariableType { lexical, dynamic };
 
-Array!(Value[string]) scopeTable;
+alias ScopeTable = Array!(Value[string]);
+
+ScopeTable scopeTable;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -77,9 +79,11 @@ Value getParameter (string name) {
 
 void addVariable (string name, Value token, int scopeLevel = -1) {
     if (scopeLevel >= 0) {
-        scopeTable[scopeLevel][name] = token;
+        auto table = scopeTable[scopeLevel];
+        table[name] = token;
     } else {
-        scopeTable.back()[name] = token;
+        auto table = scopeTable.back();
+        table[name] = token;
     }
 }
 
