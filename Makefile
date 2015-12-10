@@ -5,9 +5,9 @@ COMPILER := dmd -c
 CFLAGS   := -debug -gc -unittest
 LINKER   := dmd -v
 
-LISPCORE := lisp.obj exceptions.obj token.obj node.obj lispObject.obj parser.obj variables.obj evaluator.obj functions.obj
-LISPBUILTINS := builtin/definition.obj builtin/io.obj builtin/list.obj builtin/logic.obj builtin/loop.obj builtin/math.obj builtin/system.obj
-LISPVM := vm/bytecode.obj vm/machine.obj vm/lispmacro.obj vm/compiler.obj
+LISPCORE := lisp.o exceptions.o token.o node.o lispObject.o parser.o variables.o evaluator.o functions.o util.o
+LISPBUILTINS := builtin/definition.o builtin/io.o builtin/list.o builtin/logic.o builtin/loop.o builtin/math.o builtin/system.o
+LISPVM := vm/bytecode.o vm/machine.o vm/lispmacro.o vm/compiler.o vm/opcode.o
 OBJECT_FILES := $(LISPCORE) $(LISPBUILTINS) $(LISPVM)
 
 ########################################
@@ -17,10 +17,10 @@ lisp: $(OBJECT_FILES)
 
 all: lisp
 
-% : %.obj
+% : %.o
 	$(LINKER) $^ -of$@
 
-%.obj : %.d
+%.o : %.d
 	$(COMPILER) $(CFLAGS) $< -of$@
 
 ########################################
