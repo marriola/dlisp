@@ -40,7 +40,7 @@ void main (string args[]) {
         
         try {
             Value tree = lisp.read();
-            writef("%s\n\n", evaluate(tree));
+            writef("  => %s\n\n", evaluate(tree));
         } catch (SyntaxErrorException e) {
             writef("Syntax error: %s\n\n", e.msg);
         } catch (UndefinedFunctionException e) {
