@@ -14,7 +14,6 @@ import std.conv;
 import std.string;
 import std.format;
 
-
 ///////////////////////////////////////////////////////////////////////////////
 
 enum TokenType { leftParen, rightParen, leftBrack, rightBrack, dot, boolean, reference, integer, floating, identifier, character, string, constant, fileStream, vector, builtinFunction, compiledFunction };
@@ -914,4 +913,10 @@ FloatToken toFloat (Token token) {
 
 IdentifierToken toIdentifier (Token token) {
     return (cast(IdentifierToken)token);
+}
+
+class Nil : BooleanToken {
+  this() {
+    super(false);
+  }
 }

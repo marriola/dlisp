@@ -204,6 +204,7 @@ class LispParser {
 		nextToken = new IdentifierToken(identifier, true);
 	}
 
+
     /**
      * Reads a token from the input stream. The token is placed in member variable nextToken.
      */

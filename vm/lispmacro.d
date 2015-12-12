@@ -39,21 +39,21 @@ void macroDefun (CodeEmitterVisitor visitor, string name, ref int nextConstant, 
         throw new TypeMismatchException(name, lambdaList.token, "reference");
     }
 
-	currentFunction.insert((cast(IdentifierToken)identifier.token).stringValue);
+    currentFunction.insert((cast(IdentifierToken)identifier.token).stringValue);
     string identifierString = (cast(IdentifierToken)identifier.token).stringValue;
-	getDefined(identifierString).compile(forms);
-	//addFunction(identifierString, toArray(lambdaList), forms, docString, true);
-	currentFunction.removeFront();
+    getDefined(identifierString).compile(forms);
+    //addFunction(identifierString, toArray(lambdaList), forms, docString, true);
+    currentFunction.removeFront();
 
-	uint funConstant;
-	ConstantPair* constant = identifierString in constants;
-	if (constant is null) {
-		constants[identifierString] = ConstantPair(nextConstant, identifier);
-		funConstant = cast(uint)nextConstant;
-		nextConstant++;
-	} else {
-		funConstant = constant.index;
-	}
+    uint funConstant;
+    ConstantPair* constant = identifierString in constants;
+    if (constant is null) {
+	constants[identifierString] = ConstantPair(nextConstant, identifier);
+	funConstant = cast(uint)nextConstant;
+	nextConstant++;
+    } else {
+	funConstant = constant.index;
+    }
 
     //addEntry(formsReference);
 
@@ -61,8 +61,8 @@ void macroDefun (CodeEmitterVisitor visitor, string name, ref int nextConstant, 
 }
 
 void macroLambda (CodeEmitterVisitor visitor, string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value argsValue, Value[] arguments) {
-	Value[] lambdaList = toArray(arguments[0]);
-	Value[] forms = arguments[1..$];
+    Value[] lambdaList = toArray(arguments[0]);
+    Value[] forms = arguments[1..$];
     string docString = null;
 
     if (forms[0].token.type == TokenType.string && forms.length > 1) {
@@ -70,8 +70,8 @@ void macroLambda (CodeEmitterVisitor visitor, string name, ref int nextConstant,
         forms = forms[1 .. forms.length];
     }
 
-	Token lambda = new CompiledFunctionToken(lambdaList, forms, docString);
-	visitor.addConstantAndPush(new Value(lambda));
+    Token lambda = new CompiledFunctionToken(lambdaList, forms, docString);
+    visitor.addConstantAndPush(new Value(lambda));
 }
 
 void macroIf (CodeEmitterVisitor visitor, string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value argsValue, Value[] arguments) {
@@ -97,38 +97,58 @@ void macroIf (CodeEmitterVisitor visitor, string name, ref int nextConstant, ref
 }
 
 void macroCond (CodeEmitterVisitor visitor, string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value argsValue, Value[] arguments) {
-	if (arguments.length < 1) {
-		throw new NotEnoughArgumentsException("macroCond");
+    if (arguments.length < 1) {
+	throw new NotEnoughArgumentsException("macroCond");
+    }
+
+    foreach (Value branch; arguments) {
+	Value[] branchAsArray = toArray(branch);
+	Value test = branchAsArray[0];
+	Value[] forms = branchAsArray[1..$];
+
+	// Emit branch test and jump around if test is not satisfied.
+	test.accept(visitor);
+	Instruction *op = new Instruction(Opcode.jumpifnot, [0]);
+	code ~= *op;
+
+	// Emit the body of the branch
+	foreach (Value form; forms) {
+	    form.accept(visitor);
 	}
 
-	foreach (Value branch; arguments) {
-		Value[] branchAsArray = toArray(branch);
-		Value test = branchAsArray[0];
-		Value[] forms = branchAsArray[1..$];
-
-		// Emit branch test and jump around if test is not satisfied.
-		test.accept(visitor);
-		Instruction *op = new Instruction(Opcode.jumpifnot, [0]);
-		code ~= *op;
-
-		// Emit the body of the branch
-		foreach (Value form; forms) {
-			form.accept(visitor);
-		}
-
-		// Substitute the position of the instruction just atfer the body for the parameter in the jmpifnot instruction above.
-		op.operands[0] = code.length;
-	}
+	// Substitute the position of the instruction just atfer the body for the parameter in the jmpifnot instruction above.
+	op.operands[0] = code.length;
+    }
 }
 
 void macroQuote (CodeEmitterVisitor visitor, string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value argsValue, Value[] arguments) {
-	visitor.pushConstant(arguments[0]);
+    visitor.pushConstant(arguments[0]);
 }
 
 void macroProgn (CodeEmitterVisitor visitor, string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value argsValue, Value[] arguments) {
-	foreach (Value form; arguments) {
-		form.accept(visitor);
-	}
+    foreach (Value form; arguments) {
+	form.accept(visitor);
+    }
+}
+
+void macroSetq (CodeEmitterVisitor visitor, string name, ref int nextConstant, ref ConstantPair[string] constants, ref Instruction[] code, Value argsValue, Value[] arguments) {
+    Value identifierToken = arguments[0];
+    Value exprToken = arguments[1];
+    string identifier;
+    string expr = exprToken.toString();
+
+    if (identifierToken.token.type != TokenType.identifier) {
+	throw new TypeMismatchException("macroSetq", identifierToken.token, "identifier");
+    } else {
+	identifier = (cast(IdentifierToken)identifierToken.token).stringValue;
+    }
+
+    // Get value of expression
+    exprToken.accept(visitor);
+
+    // Get constant ID of identifier and store
+    uint identifierId = constants[identifier].index;
+    code ~= Instruction(Opcode.store, [identifierId]);
 }
 
 CompilerMacro[string] compilerMacros;
@@ -139,9 +159,10 @@ void addMacro (string name, MacroFunction fun) {
 
 void initializeMacros () {
     addMacro("DEFUN", &macroDefun);
-	addMacro("LAMBDA", &macroLambda);
+    addMacro("LAMBDA", &macroLambda);
     addMacro("IF", &macroIf);
-	addMacro("COND", &macroCond);
+    addMacro("COND", &macroCond);
     addMacro("QUOTE", &macroQuote);
     addMacro("PROGN", &macroProgn);
+    addMacro("SETQ", &macroSetq);
 }

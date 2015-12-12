@@ -207,7 +207,7 @@ int addEntry (BytecodeFunction fun) {
  * result.
  */
 Value evaluate (Value form) {
-	std.stdio.writeln(form.toString());
+    std.stdio.writeln(form.toString());
     run(addEntry(form));
     Value result = dataStack.front();
     dataStack.removeFront();

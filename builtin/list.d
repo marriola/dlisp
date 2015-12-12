@@ -397,7 +397,14 @@ Value builtinSerializeFunction(string name) {
 
 Value builtinSerialize(string name) {
 	Value streamToken = getParameter("STREAM");
-	std.stdio.File stream = (cast(FileStreamToken)streamToken.token).stream;
+	std.stdio.File stream;
+
+	if (streamToken.token.type == TokenType.boolean && (cast(BooleanToken)streamToken.token).boolValue) {
+		stream = std.stdio.stdout;
+	} else {
+		stream = (cast(FileStreamToken)streamToken.token).stream;
+	}
+
 
 	Value form = getParameter("FORM");
 	ubyte[] bytes = [cast(ubyte)'T'] ~ cast(ubyte[])compress(Token.serialize(form.token));
