@@ -468,7 +468,7 @@ void addBuiltins () {
     addFunction("MAPCAR", &builtinMapcar, [Parameter("FUNCTION")], null, null, null, Parameter("SEQUENCES"));
     addFunction("REMOVE-IF", &builtinRemoveIf, [Parameter("PREDICATE"), Parameter("LIST")]);
     addFunction("REMOVE-IF-NOT", &builtinRemoveIfNot, [Parameter("PREDICATE"), Parameter("LIST")]);
-	addFunction("SERIALIZE-FUNCTION", &builtinSerializeFunction, [Parameter("STREAM"), Parameter("FORM")]);
-	addFunction("SERIALIZE", &builtinSerialize, [Parameter("STREAM"), Parameter("FORM", false)]);
-	addFunction("DESERIALIZE", &builtinDeserialize, [Parameter("STREAM")]);
+    addFunction("SERIALIZE-FUNCTION", &builtinSerializeFunction, [Parameter("STREAM"), Parameter("FORM")]);
+    addFunction("SERIALIZE", &builtinSerialize, [Parameter("STREAM"), Parameter("FORM", false)]);
+    addFunction("DESERIALIZE", &builtinDeserialize, [Parameter("STREAM")]);
 }
