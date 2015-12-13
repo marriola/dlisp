@@ -23,7 +23,7 @@ enum TokenType { leftParen, rightParen, leftBrack, rightBrack, dot, boolean, ref
 
 
 string tokenTypeName (TokenType type) {
-    static string typeNames[] = [ "left paren", "right paren", "left bracket", "right bracket", "dot", "boolean", "reference", "integer", "floating point", "identifier", "character", "string", "constant", "file stream", "vector", "builtin function", "function" ];
+    static string typeNames[] = [ "left paren", "right paren", "left bracket", "right bracket", "dot", "boolean", "reference", "integer", "floating point", "identifier", "character", "string", "constant", "file stream", "vector", "builtin function", "compiled function" ];
     return typeNames[cast(int)type];
 }
 
