@@ -16,17 +16,23 @@ Value builtinDotimes (string name) {
         throw new NotEnoughArgumentsException(name);
     }
 
-    Value loopVariable = loopSpec[0];
     Value count = loopSpec[1];
-    Value result = loopSpec[2];
-    Value[] loopBody = toArray(getParameter("FORMS"));
-
     if (count.token.type != TokenType.integer) {
         throw new TypeMismatchException(name, count.token, "integer");
     }
 
+    Value loopVariable = loopSpec[0];
+    if (loopVariable.token.type != TokenType.identifier) {
+	throw new TypeMismatchException(name, loopVariable.token, "identifier");
+    }
+    string loopIdentifier = (cast(IdentifierToken)loopVariable.token).stringValue;
+
+    Value result = loopSpec[2];
+    Value[] loopBody = toArray(getParameter("FORMS"));
+
     long n = (cast(IntegerToken)count.token).intValue;
     for (long i = 0; i < n; i++) {
+	addVariable(loopIdentifier, new Value(new IntegerToken(i)));
         foreach (Value form; loopBody) {
             evaluate(form);
         }
@@ -39,5 +45,5 @@ Value builtinDotimes (string name) {
 ///////////////////////////////////////////////////////////////////////////////
 
 void addBuiltins () {
-    addFunction("DOTIMES", &builtinDotimes, [Parameter("LOOPSPEC")], null, null, null, Parameter("FORMS"));
+    addFunction("DOTIMES", &builtinDotimes, [Parameter("LOOPSPEC", false)], null, null, null, Parameter("FORMS", false));
 }
