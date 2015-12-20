@@ -49,29 +49,29 @@ alias FunctionHook = Value function(string);
 //}
 
 class Evaluable : Value {
-	bool evaluate;
+    bool evaluate;
 
-	this (bool evaluate, Token token) {
-		super(token);
-		this.evaluate = evaluate;
-	}
+    this (bool evaluate, Token token) {
+	super(token);
+	this.evaluate = evaluate;
+    }
 }
 
 struct Parameter {
-	string name;
+    string name;
     Value defaultValue;
-	bool evaluate;
+    bool evaluate;
 
     this (string name, Value defaultValue, bool evaluate = true) {
         this.name = name;
         this.defaultValue = defaultValue;
-		this.evaluate = evaluate;
+	this.evaluate = evaluate;
     }
 
     this (string name, bool evaluate = true) {
         this.name = name;
         this.defaultValue = null;
-		this.evaluate = evaluate;
+	this.evaluate = evaluate;
     }
 }
 
@@ -81,7 +81,7 @@ struct Parameters {
     Parameter[] keyword;
     Parameter[] auxiliary;
     Parameter rest;
-	bool hasRest;
+    bool hasRest;
 
     this (Parameter[] required, Parameter[] optional, Parameter[] keyword, Parameter[] auxiliary, Parameter rest) {
         this.required = required;
@@ -89,7 +89,7 @@ struct Parameters {
         this.keyword = keyword;
         this.auxiliary = auxiliary;
         this.rest = rest;
-		this.hasRest = true;
+	this.hasRest = true;
     }
 
     this (Parameter[] required, Parameter[] optional = null, Parameter[] keyword = null, Parameter[] auxiliary = null) {
@@ -97,74 +97,75 @@ struct Parameters {
         this.optional = optional;
         this.keyword = keyword;
         this.auxiliary = auxiliary;
-		this.hasRest = false;
+	this.hasRest = false;
     }
 }
 
 class LispFunction {
-	uint id;
-	string name;
-	string docString;
-	Parameters parameters;
-	bool[] shouldBeEvaluated;
+    uint id;
+    string name;
+    string docString;
+    Parameters parameters;
+    bool[] shouldBeEvaluated;
 
-	this (uint id, string name, string docString, Parameters parameters) {
-		this.id = id;
-		this.name = name;
-		this.docString = docString;
-		this.parameters = parameters;
+    this (uint id, string name, string docString, Parameters parameters) {
+	this.id = id;
+	this.name = name;
+	this.docString = docString;
+	this.parameters = parameters;
 
-		foreach (Parameter param; parameters.required ~ parameters.optional ~ parameters.keyword ~ parameters.rest) {
-			shouldBeEvaluated ~= param.evaluate;
-		}
+	foreach (Parameter param; parameters.required ~ parameters.optional ~ parameters.keyword ~ parameters.rest) {
+	    shouldBeEvaluated ~= param.evaluate;
 	}
+    }
 
-	public bool isCompiled() {
-		return false;
-	}
+    public bool isCompiled() {
+	return false;
+    }
 }
 
 class BuiltinFunction : LispFunction {
     FunctionHook hook;
 
-	this (uint id, string name, FunctionHook hook, string docString, Parameters parameters) {
-		super(id, name, docString, parameters);
-		this.hook = hook;
-	}
+    this (uint id, string name, FunctionHook hook, string docString, Parameters parameters) {
+	super(id, name, docString, parameters);
+	this.hook = hook;
+    }
 
 }
 
 class CompiledFunction : LispFunction {
     Value[] lambdaList;
     Value[] forms;
-	BytecodeFunction bytecode;
+    BytecodeFunction bytecode;
 
-	this (uint id, string name, string docString, Value[] lambdaList, Parameters parameters) {
-		super(id, name, docString, parameters);
-		this.lambdaList = lambdaList;
+    this (uint id, string name, string docString, Value[] lambdaList, Parameters parameters) {
+	super(id, name, docString, parameters);
+	this.lambdaList = lambdaList;
+    }
+
+    this (uint id, string name, string docString, Value[] lambdaList, Parameters parameters, Value[] forms) {
+	super(id, name, docString, parameters);
+	this.lambdaList = lambdaList;
+	this.forms = forms;
+    }
+
+    public void compile(Value[] forms = null) {
+	if (forms !is null)
+	    this.forms = forms;
+
+	BytecodeFunction[] bytecode = new BytecodeFunction[0];
+	foreach (Value form; this.forms) {
+	    bytecode ~= vm.compiler.compile(form);
 	}
 
-	this (uint id, string name, string docString, Value[] lambdaList, Parameters parameters, Value[] forms) {
-		super(id, name, docString, parameters);
-		this.lambdaList = lambdaList;
-		this.forms = forms;
-	}
+	this.bytecode = BytecodeFunction.concatenate(bytecode);
+    }
 
-	public void compile(Value[] forms = null) {
-		if (forms !is null)
-			this.forms = forms;
-
-		BytecodeFunction[] bytecode = new BytecodeFunction[0];
-		foreach (Value form; this.forms) {
-			bytecode ~= vm.compiler.compile(form);
-		}
-
-		this.bytecode = BytecodeFunction.concatenate(bytecode);
-	}
-
-	public override bool isCompiled() {
-		return true;
-	}}
+    public override bool isCompiled() {
+	return true;
+    }
+}
 
 BuiltinFunction[int] builtinTable;
 BuiltinFunction[string] builtinFunctions;
@@ -189,7 +190,7 @@ void initializeBuiltins () {
 
 Nullable!Parameter extractRestArgument (ref Value[] lambdaList) {
     int firstArgument = -1;
-	Nullable!Parameter rest;
+    Nullable!Parameter rest;
 
     // look for the &key keyword, exit if not found
     foreach (int i, Value arg; lambdaList) {
@@ -202,7 +203,7 @@ Nullable!Parameter extractRestArgument (ref Value[] lambdaList) {
 
             rest = Parameter((cast(IdentifierToken)lambdaList[i + 1].token).stringValue);
             lambdaList = remove(lambdaList, i, i + 1);
-			break;
+	    break;
         }
     }
 
@@ -237,7 +238,7 @@ Parameter[] extractKeywordArguments (ref Value[] lambdaList, string keyword) {
         }
 
         if (arg.token.type == TokenType.reference) {
-			// if this parameter is a reference, it's a pair of parameter name and default value
+	    // if this parameter is a reference, it's a pair of parameter name and default value
             Value argumentName = getFirst(arg);
             Value argumentValue = vm.machine.evaluate(getFirst(getRest(arg)));
             if (argumentName.token.type != TokenType.identifier) {
@@ -313,24 +314,24 @@ CompiledFunction processFunctionDefinition (string name, Value[] lambdaList, Val
         required = null;
     }
 
-	Parameters parameters;
-	if (rest.isNull)
-		parameters = Parameters(required, optional, keyword, auxiliary);
-	else
-		parameters = Parameters(required, optional, keyword, auxiliary, rest);
+    Parameters parameters;
+    if (rest.isNull)
+	parameters = Parameters(required, optional, keyword, auxiliary);
+    else
+	parameters = Parameters(required, optional, keyword, auxiliary, rest);
 
-	CompiledFunction fun;
+    CompiledFunction fun;
 
     if (rest.isNull) {
-		fun = new CompiledFunction(lispFunctions.length, name, docString, oldLambdaList,
-									parameters, forms);
-	} else {
-		fun = new CompiledFunction(lispFunctions.length, name, docString, oldLambdaList,
-									parameters, forms);
-	}
+	fun = new CompiledFunction(lispFunctions.length, name, docString, oldLambdaList,
+				   parameters, forms);
+    } else {
+	fun = new CompiledFunction(lispFunctions.length, name, docString, oldLambdaList,
+				   parameters, forms);
+    }
 
-	fun.compile();
-	return fun;
+    fun.compile();
+    return fun;
 }
 
 
@@ -338,10 +339,10 @@ CompiledFunction processFunctionDefinition (string name, Value[] lambdaList, Val
 
 void addFunction (string name, Value[] lambdaList, Value[] forms = null, string docString = null, bool useDummy = false) {
     CompiledFunction fun = processFunctionDefinition(name, lambdaList, forms, docString);
-	lispFunctions[name] = fun;
-	compiledTable[fun.id] = fun;
-	if (forms != null)
-		fun.compile();
+    lispFunctions[name] = fun;
+    compiledTable[fun.id] = fun;
+    if (forms != null)
+	fun.compile();
 }
 
 
@@ -375,28 +376,28 @@ Evaluable[] annotateArguments (string name, Parameters parameters, Value[] argum
     foreach (Parameter optArg; parameters.optional) {
         Value value;
         if (arguments.length == 0) {
-			continue; // don't emit code for this parameter
+	    continue; // don't emit code for this parameter
         } else {
             // otherwise use and remove the next one
             value = arguments[0];
             arguments = remove(arguments, 0);
         }
 
-		newScope ~= new Evaluable(optArg.evaluate, value.token);
+	newScope ~= new Evaluable(optArg.evaluate, value.token);
     }
 
     // extract and bind keyword arguments
     foreach (Parameter kwArg; parameters.keyword) {
-		int kwIndex = -1;
-		for (kwIndex = 0; kwIndex < arguments.length; kwIndex++) {
-			TokenType type = arguments[kwIndex].token.type;
-			string constantName = type == TokenType.constant ? (cast(ConstantToken)arguments[kwIndex].token).stringValue : "";
-			string param = kwArg.name[1..$];
+	int kwIndex = -1;
+	for (kwIndex = 0; kwIndex < arguments.length; kwIndex++) {
+	    TokenType type = arguments[kwIndex].token.type;
+	    string constantName = type == TokenType.constant ? (cast(ConstantToken)arguments[kwIndex].token).stringValue : "";
+	    string param = kwArg.name[1..$];
 
-			if (type == TokenType.constant && constantName == param) {
-				break;
-			}
-		}
+	    if (type == TokenType.constant && constantName == param) {
+		break;
+	    }
+	}
 
         Value value;
         if (arguments.length == 0 || kwIndex == -1 || kwIndex >= arguments.length - 1) {
@@ -405,7 +406,7 @@ Evaluable[] annotateArguments (string name, Parameters parameters, Value[] argum
                 // no default value
                 throw new Exception("Missing keyword argument " ~ kwArg.name);
             } else {
-				continue; // don't emit code for this parameter
+		continue; // don't emit code for this parameter
             }
         } else if (arguments.length > 0) {
             // grab value following keyword argument and remove both
@@ -413,16 +414,16 @@ Evaluable[] annotateArguments (string name, Parameters parameters, Value[] argum
             arguments = remove(arguments, kwIndex, kwIndex + 1);
         }
 
-		newScope ~= new Evaluable(false, new ConstantToken(kwArg.name[1..$]));
-		newScope ~= new Evaluable(kwArg.evaluate, value.token);
+	newScope ~= new Evaluable(false, new ConstantToken(kwArg.name[1..$]));
+	newScope ~= new Evaluable(kwArg.evaluate, value.token);
     }
 
-	if (parameters.hasRest) {
-		foreach (Value arg; arguments) {
-			newScope ~= new Evaluable(parameters.rest.evaluate, arguments[0].token);
-			arguments = remove(arguments, 0);
-		}
+    if (parameters.hasRest) {
+	foreach (Value arg; arguments) {
+	    newScope ~= new Evaluable(parameters.rest.evaluate, arguments[0].token);
+	    arguments = remove(arguments, 0);
 	}
+    }
 
     return newScope;
 }
@@ -439,11 +440,11 @@ Evaluable[] annotateArguments (string name, Parameters parameters, Value[] argum
 Value[string] bindParameters (string name, Parameters parameters, Value[] arguments, bool evaluateArguments = true) {
     Value[string] newScope;
 
-	if (evaluateArguments) {
-		for (int i = 0; i < arguments.length; i++) {
-			arguments[i] = vm.machine.evaluate(arguments[i]);
-		}
+    if (evaluateArguments) {
+	for (int i = 0; i < arguments.length; i++) {
+	    arguments[i] = vm.machine.evaluate(arguments[i]);
 	}
+    }
 
     // extract and bind required arguments
     foreach (Parameter requiredParam; parameters.required) {
@@ -452,7 +453,7 @@ Value[string] bindParameters (string name, Parameters parameters, Value[] argume
         }
 
         std.stdio.writeln("required arg: " ~ arguments[0].toString());
-		newScope[requiredParam.name] = arguments[0];
+	newScope[requiredParam.name] = arguments[0];
         arguments = remove(arguments, 0);
     }
 
@@ -492,23 +493,23 @@ Value[string] bindParameters (string name, Parameters parameters, Value[] argume
 
     // extract and bind keyword arguments
     foreach (Parameter kwArg; parameters.keyword) {
-		string param = kwArg.name[1..$];
-		int kwIndex = -1;
-		for (kwIndex = 0; kwIndex < arguments.length; kwIndex++) {
-			TokenType type = arguments[kwIndex].token.type;
-			std.stdio.writeln(arguments[kwIndex].toString());
-			std.stdio.writeln(arguments[kwIndex].token.type);
-			string constantName = type == TokenType.constant ? (cast(ConstantToken)arguments[kwIndex].token).stringValue : "";
+	string param = kwArg.name[1..$];
+	int kwIndex = -1;
+	for (kwIndex = 0; kwIndex < arguments.length; kwIndex++) {
+	    TokenType type = arguments[kwIndex].token.type;
+	    std.stdio.writeln(arguments[kwIndex].toString());
+	    std.stdio.writeln(arguments[kwIndex].token.type);
+	    string constantName = type == TokenType.constant ? (cast(ConstantToken)arguments[kwIndex].token).stringValue : "";
 
-			std.stdio.writef("'%s'\n", type);
-			if (arguments[kwIndex].token.type == TokenType.constant)
-				std.stdio.writef("'%s'\n", constantName);
-			std.stdio.writef("'%s'\n", param);
-			if (type == TokenType.constant &&
-				constantName == param) {
-					break;
-				}
-		}
+	    std.stdio.writef("'%s'\n", type);
+	    if (arguments[kwIndex].token.type == TokenType.constant)
+		std.stdio.writef("'%s'\n", constantName);
+	    std.stdio.writef("'%s'\n", param);
+	    if (type == TokenType.constant &&
+		constantName == param) {
+		break;
+	    }
+	}
 
         Value value;
         if (arguments.length == 0 || kwIndex == -1 || kwIndex >= arguments.length - 1) {
@@ -555,15 +556,15 @@ Value evaluateCompiledFunction (CompiledFunction fun, Value[] arguments, bool ev
     Value[] forms = fun.forms;
     Value returnValue;
 
-	std.stdio.writeln("evaluateCompiledFunction: " ~ name);
+    std.stdio.writeln("evaluateCompiledFunction: " ~ name);
     enterScope(bindParameters(name, fun.parameters, arguments.dup, evaluateArgs));
-	returnValue = run(fun.bytecode);
-	//foreach (BytecodeFunction form; fun.bytecode) {
-	//    returnValue = run(form);
-	//}
-	//foreach (Value form; forms) {
-	//    returnValue = evaluate(form);
-	//}
+    returnValue = run(fun.bytecode);
+    //foreach (BytecodeFunction form; fun.bytecode) {
+    //    returnValue = run(form);
+    //}
+    //foreach (Value form; forms) {
+    //    returnValue = evaluate(form);
+    //}
     leaveScope();
 
     return returnValue;

@@ -70,10 +70,10 @@ class Value {
     Value append (Value element) {
         if (token.type == TokenType.boolean && (cast(BooleanToken)token).boolValue == false) {
             token = element.token;
-			if (element.token.type == TokenType.reference)
-				return getLast(element);
-			else
-				return element;
+	    if (element.token.type == TokenType.reference)
+		return getLast(element);
+	    else
+		return element;
 
         } else if (token.type == TokenType.reference) {
             return (cast(ReferenceToken)token).append(element);
@@ -96,7 +96,7 @@ class Value {
         }
 
         if (token.type == TokenType.floating) {
-			(cast(FloatToken)token).floatValue += addend.token.type == TokenType.integer ? (cast(IntegerToken)addend.token).intValue : (cast(FloatToken)addend.token).floatValue;
+	    (cast(FloatToken)token).floatValue += addend.token.type == TokenType.integer ? (cast(IntegerToken)addend.token).intValue : (cast(FloatToken)addend.token).floatValue;
         } else if (addend.token.type == TokenType.floating) {
             token = new FloatToken((cast(IntegerToken)token).intValue + (cast(FloatToken)addend.token).floatValue);
         } else {
@@ -143,10 +143,10 @@ class Value {
             throw new UnsupportedOperationException(divisor.token, "Division");
         }
 
-		if (divisor.token.type == TokenType.floating && (cast(FloatToken)divisor.token).floatValue == 0 ||
-			divisor.token.type == TokenType.integer && (cast(IntegerToken)divisor.token).intValue == 0) {
-			throw new Exception("Division by zero");
-		}
+	if (divisor.token.type == TokenType.floating && (cast(FloatToken)divisor.token).floatValue == 0 ||
+	    divisor.token.type == TokenType.integer && (cast(IntegerToken)divisor.token).intValue == 0) {
+	    throw new Exception("Division by zero");
+	}
 
         if (token.type == TokenType.floating) {
             // floating point dividend
@@ -206,78 +206,78 @@ abstract class Token {
         return value.token.type == TokenType.boolean && (cast(BooleanToken)value.token).boolValue == true;
     }
 
-	ubyte[] serialize() {
-		throw new UnsupportedOperationException(this, "deserialize");
+    ubyte[] serialize() {
+	throw new UnsupportedOperationException(this, "deserialize");
+    }
+
+    static ubyte[] serialize(Token token) {
+	ubyte[] tokenBytes;
+
+	switch (token.type) {
+	case TokenType.string:
+	    tokenBytes = (cast(StringToken)token).serialize();
+	    break;
+
+	case TokenType.constant:
+	    tokenBytes = (cast(ConstantToken)token).serialize();
+	    break;
+
+	case TokenType.boolean:
+	    tokenBytes = (cast(IdentifierToken)token).serialize();
+	    break;
+
+	case TokenType.integer:
+	    tokenBytes = (cast(IntegerToken)token).serialize();
+	    break;
+
+	case TokenType.floating:
+	    tokenBytes = (cast(FloatToken)token).serialize();
+	    break;
+
+	case TokenType.reference:
+	    tokenBytes = (cast(ReferenceToken)token).serialize();
+	    break;
+
+	default:
+	    throw new Exception("Invalid token type");
 	}
 
-	static ubyte[] serialize(Token token) {
-		ubyte[] tokenBytes;
+	auto bytes = new ubyte[0];
+	bytes ~= asBytes(token.type, 4);
+	bytes ~= asBytes(tokenBytes.length, 4);
+	bytes ~= tokenBytes;
 
-		switch (token.type) {
-			case TokenType.string:
-				tokenBytes = (cast(StringToken)token).serialize();
-				break;
+	return bytes;
+    }
 
-			case TokenType.constant:
-				tokenBytes = (cast(ConstantToken)token).serialize();
-				break;
+    static Token deserialize (TokenType type, ubyte[] bytes) {
+	Token token = null;
+	switch (type) {
+	case TokenType.string:
+	    token = StringToken.deserialize(bytes);
+	    break;
 
-			case TokenType.boolean:
-				tokenBytes = (cast(IdentifierToken)token).serialize();
-				break;
+	case TokenType.constant:
+	    token = ConstantToken.deserialize(bytes);
+	    break;
 
-			case TokenType.integer:
-				tokenBytes = (cast(IntegerToken)token).serialize();
-				break;
+	case TokenType.boolean:
+	    token = IdentifierToken.deserialize(bytes);
+	    break;
 
-			case TokenType.floating:
-				tokenBytes = (cast(FloatToken)token).serialize();
-				break;
+	case TokenType.integer:
+	    token = IntegerToken.deserialize(bytes);
+	    break;
 
-			case TokenType.reference:
-				tokenBytes = (cast(ReferenceToken)token).serialize();
-				break;
+	case TokenType.floating:
+	    token = FloatToken.deserialize(bytes);
+	    break;
 
-			default:
-				throw new Exception("Invalid token type");
-		}
-
-		auto bytes = new ubyte[0];
-		bytes ~= asBytes(token.type, 4);
-		bytes ~= asBytes(tokenBytes.length, 4);
-		bytes ~= tokenBytes;
-
-		return bytes;
+	default:
+	    throw new Exception("Invalid token type");
 	}
-
-	static Token deserialize (TokenType type, ubyte[] bytes) {
-		Token token = null;
-		switch (type) {
-			case TokenType.string:
-				token = StringToken.deserialize(bytes);
-				break;
-
-			case TokenType.constant:
-				token = ConstantToken.deserialize(bytes);
-				break;
-
-			case TokenType.boolean:
-				token = IdentifierToken.deserialize(bytes);
-				break;
-
-			case TokenType.integer:
-				token = IntegerToken.deserialize(bytes);
-				break;
-
-			case TokenType.floating:
-				token = FloatToken.deserialize(bytes);
-				break;
-
-			default:
-				throw new Exception("Invalid token type");
-		}
-		return token;
-	}
+	return token;
+    }
 }
 
 
@@ -325,16 +325,16 @@ class BooleanToken : Token {
         return boolValue ? "T" : "NIL";
     }
 
-	ubyte[] serialize() {
-		auto output = new ubyte[0];
+    ubyte[] serialize() {
+	auto output = new ubyte[0];
 
-		output ~= cast(ubyte)(boolValue ? 1 : 0);
-		return output;
-	}
+	output ~= cast(ubyte)(boolValue ? 1 : 0);
+	return output;
+    }
 
-	static Token deserialize (ubyte[] data) {
-		return new BooleanToken(data[0] == 1);
-	}
+    static Token deserialize (ubyte[] data) {
+	return new BooleanToken(data[0] == 1);
+    }
 }
 
 
@@ -355,31 +355,31 @@ class CharacterToken : Token {
     override string toString () {
         if (charValue == '\n') {
             return "#\\Newline";
-		} else if (charValue == '\r') {
-			return "#\\Return";
-		} else if (charValue == '\t') {
-			return "#\\Tab";
-		} else if (charValue == 32) {
-			return "#\\Space";
-		} else if (charValue == 0) {
-			return "#\\Null";
-		} else if (charValue < 32 || charValue >= 127) {
-			return "#\\x" ~ format("%x", charValue); 
+	} else if (charValue == '\r') {
+	    return "#\\Return";
+	} else if (charValue == '\t') {
+	    return "#\\Tab";
+	} else if (charValue == 32) {
+	    return "#\\Space";
+	} else if (charValue == 0) {
+	    return "#\\Null";
+	} else if (charValue < 32 || charValue >= 127) {
+	    return "#\\x" ~ format("%x", charValue); 
         } else {
             return "#\\" ~ charValue;
         }
     }
 
-	ubyte[] serialize() {
-		auto output = new ubyte[0];
+    ubyte[] serialize() {
+	auto output = new ubyte[0];
 
-		output ~= cast(ubyte)charValue;
-		return output;
-	}
+	output ~= cast(ubyte)charValue;
+	return output;
+    }
 
-	static Token deserialize (ubyte[] data) {
-		return new CharacterToken(cast(char)data[0]);
-	}
+    static Token deserialize (ubyte[] data) {
+	return new CharacterToken(cast(char)data[0]);
+    }
 }
 
 
@@ -401,23 +401,23 @@ class StringToken : Token {
         return "\"" ~ stringValue ~ "\"";
     }
 
-	ubyte[] serialize() {
-		auto output = new ubyte[0];
+    ubyte[] serialize() {
+	auto output = new ubyte[0];
 
-		foreach (char c; stringValue) {
-			output ~= cast(ubyte)c;
-		}
-
-		return output;
+	foreach (char c; stringValue) {
+	    output ~= cast(ubyte)c;
 	}
 
-	static Token deserialize (ubyte[] data) {
-		string value = "";
-		for (int i = 0; i < data.length; i++) {
-			value ~= cast(char)data[i];
-		}
-		return new StringToken(value);
+	return output;
+    }
+
+    static Token deserialize (ubyte[] data) {
+	string value = "";
+	for (int i = 0; i < data.length; i++) {
+	    value ~= cast(char)data[i];
 	}
+	return new StringToken(value);
+    }
 }
 
 
@@ -425,12 +425,12 @@ class StringToken : Token {
 
 class IdentifierToken : Token {
     string stringValue;
-	bool barred;
+    bool barred;
 
     this (string stringValue, bool barred = false) {
         type = TokenType.identifier;
         this.stringValue = barred ? stringValue : toUpper(stringValue);
-		this.barred = barred;
+	this.barred = barred;
     }
 
     override Token copy () {
@@ -438,30 +438,30 @@ class IdentifierToken : Token {
     }
 
     override string toString () {
-		if (barred)
-			return "|" ~ stringValue ~ "|";
-		else
-			return stringValue;
+	if (barred)
+	    return "|" ~ stringValue ~ "|";
+	else
+	    return stringValue;
     }
 
-	ubyte[] serialize() {
-		auto output = new ubyte[0];
+    ubyte[] serialize() {
+	auto output = new ubyte[0];
 
 
-		foreach (char c; stringValue) {
-			output ~= cast(ubyte)c;
-		}
-
-		return output;
+	foreach (char c; stringValue) {
+	    output ~= cast(ubyte)c;
 	}
 
-	static Token deserialize (ubyte[] data) {
-		string value = "";
-		for (int i = 0; i < data.length; i++) {
-			value ~= cast(char)data[i];
-		}
-		return new StringToken(value);
+	return output;
+    }
+
+    static Token deserialize (ubyte[] data) {
+	string value = "";
+	for (int i = 0; i < data.length; i++) {
+	    value ~= cast(char)data[i];
 	}
+	return new StringToken(value);
+    }
 }
 
 
@@ -483,15 +483,15 @@ class IntegerToken : Token {
         return to!string(intValue);
     }
 
-	ubyte[] serialize() {
-		auto output = new ubyte[0];
-		insertAll(output, asBytes(intValue, 8));
-		return output;
-	}
+    ubyte[] serialize() {
+	auto output = new ubyte[0];
+	insertAll(output, asBytes(intValue, 8));
+	return output;
+    }
 
-	static Token deserialize (ubyte[] data) {
-		return new IntegerToken(fromBytes!long(data));
-	}
+    static Token deserialize (ubyte[] data) {
+	return new IntegerToken(fromBytes!long(data));
+    }
 }
 
 
@@ -513,24 +513,24 @@ class ConstantToken : Token {
         return ":" ~ stringValue;
     }
 
-	ubyte[] serialize() {
-		auto output = new ubyte[0];
+    ubyte[] serialize() {
+	auto output = new ubyte[0];
 
 
-		foreach (char c; stringValue) {
-			output ~= cast(ubyte)c;
-		}
-
-		return output;
+	foreach (char c; stringValue) {
+	    output ~= cast(ubyte)c;
 	}
 
-	static Token deserialize (ubyte[] data) {
-		string value = "";
-		for (int i = 0; i < data.length; i++) {
-			value ~= cast(char)data[i];
-		}
-		return new StringToken(value);
+	return output;
+    }
+
+    static Token deserialize (ubyte[] data) {
+	string value = "";
+	for (int i = 0; i < data.length; i++) {
+	    value ~= cast(char)data[i];
 	}
+	return new StringToken(value);
+    }
 }
 
 
@@ -552,16 +552,16 @@ class FloatToken : Token {
         return to!string(floatValue);
     }
 
-	ubyte[] serialize() {
-		auto output = new ubyte[0];
+    ubyte[] serialize() {
+	auto output = new ubyte[0];
 
-		insertAll(output, asBytes(floatValue, 8));
-		return output;
-	}
+	insertAll(output, asBytes(floatValue, 8));
+	return output;
+    }
 
-	static Token deserialize (ubyte[] bytes) {
-		return new FloatToken(fromBytes!double(bytes));
-	}
+    static Token deserialize (ubyte[] bytes) {
+	return new FloatToken(fromBytes!double(bytes));
+    }
 }
 
 
@@ -575,9 +575,9 @@ class ReferenceToken : Token {
         this.reference = reference;
     }
 
-	private this () {
-		this.reference = new Node();
-	}
+    private this () {
+	this.reference = new Node();
+    }
 
     /**
      * Appends an element to a list
@@ -610,40 +610,40 @@ class ReferenceToken : Token {
         return reference.toString();
     }
 
-	ubyte[] serialize() {
-		auto output = new ubyte[0];
+    ubyte[] serialize() {
+	auto output = new ubyte[0];
 
-		auto carBytes = reference.car.token.serialize();
-		output ~= asBytes(reference.car.token.type, 4);
-		output ~= asBytes(carBytes.length, 4);
-		insertAll(output, carBytes);
+	auto carBytes = reference.car.token.serialize();
+	output ~= asBytes(reference.car.token.type, 4);
+	output ~= asBytes(carBytes.length, 4);
+	insertAll(output, carBytes);
 
-		auto cdrBytes = reference.cdr.token.serialize();
-		output ~= asBytes(reference.cdr.token.type, 4);
-		output ~= asBytes(cdrBytes.length, 4);
-		insertAll(output, cdrBytes);
+	auto cdrBytes = reference.cdr.token.serialize();
+	output ~= asBytes(reference.cdr.token.type, 4);
+	output ~= asBytes(cdrBytes.length, 4);
+	insertAll(output, cdrBytes);
 
-		return output;
-	}
+	return output;
+    }
 
-	private static Token deserializePart(ref ubyte[] bytes) {
-		TokenType type = fromBytes!TokenType(bytes[0..3]);
-		bytes = bytes[4..$];
+    private static Token deserializePart(ref ubyte[] bytes) {
+	TokenType type = fromBytes!TokenType(bytes[0..3]);
+	bytes = bytes[4..$];
 		
-		int size = fromBytes!uint(bytes[0..3]);
-		bytes = bytes[4..$];
+	int size = fromBytes!uint(bytes[0..3]);
+	bytes = bytes[4..$];
 
-		Token token = Token.deserialize(type, bytes[0 .. size - 1]);
-		bytes = bytes[size..$];
-		return token;
-	}
+	Token token = Token.deserialize(type, bytes[0 .. size - 1]);
+	bytes = bytes[size..$];
+	return token;
+    }
 
-	static Token deserialize(ubyte[] bytes) {
-		auto token = new ReferenceToken();
-		token.reference.car = new Value(ReferenceToken.deserializePart(bytes));
-		token.reference.cdr = new Value(ReferenceToken.deserializePart(bytes));
-		return token;
-	}
+    static Token deserialize(ubyte[] bytes) {
+	auto token = new ReferenceToken();
+	token.reference.car = new Value(ReferenceToken.deserializePart(bytes));
+	token.reference.cdr = new Value(ReferenceToken.deserializePart(bytes));
+	return token;
+    }
 }
 
 
@@ -750,7 +750,7 @@ class VectorToken : Token {
         return index;        
     }
 
-     /**
+    /**
      * Set item in one-dimensional vector.
      */
     void setItem (int index, Value element) {
@@ -879,11 +879,11 @@ class CompiledFunctionToken : FunctionToken {
 
     override string toString () {
         return "#<FUNCTION " ~
-               (name is null ? ":LAMBDA " : name ~ " ") ~
-               "(" ~ join(map!(x => x.toString())(fun.lambdaList), " ") ~ ") " ~
-               (fun.docString is null ? "" : "\"" ~ fun.docString ~ "\" ") ~
-               join(map!(x => x.toString())(fun.forms), " ") ~
-               ">";
+	    (name is null ? ":LAMBDA " : name ~ " ") ~
+	    "(" ~ join(map!(x => x.toString())(fun.lambdaList), " ") ~ ") " ~
+	    (fun.docString is null ? "" : "\"" ~ fun.docString ~ "\" ") ~
+	    join(map!(x => x.toString())(fun.forms), " ") ~
+	    ">";
     }
 }
 
@@ -913,10 +913,4 @@ FloatToken toFloat (Token token) {
 
 IdentifierToken toIdentifier (Token token) {
     return (cast(IdentifierToken)token);
-}
-
-class Nil : BooleanToken {
-  this() {
-    super(false);
-  }
 }
