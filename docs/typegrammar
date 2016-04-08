@@ -1,0 +1,137 @@
+integer
+
+an integer
+
+
+list
+
+a standard linked list of any size and containing items of any type
+
+
+list<integer>
+
+a list of integers of any size
+
+
+list[5]<integer>
+
+a list of 5 integers
+
+
+list<integer,float>
+
+indefinite type -- a list containing a mix of integers and floats
+
+
+list<integer;float>
+
+definite type -- a list containing exactly one integer and one float in that order
+
+
+list[100]<integer,float>
+
+a list of length 100 containing a mix of integers and floats
+
+
+list[100]<string;integer,float>
+
+syntax error -- can't disjunct (comma) types with length
+
+
+list<string;integer,float>
+
+a list containing a string followed by either an integer or a float
+
+
+list[100]<list<string;integer>,float>
+
+however, we can have a list of length 100 containing a mix of lists, each containing one string and one integer, and floats
+
+
+
+DefiniteSpec {
+    type: TokenType.list,
+    typespecs: [
+}
+
+class TypeSpec {
+    TokenType type;
+}
+
+class CompositeSpec : TypeSpec {
+    TypeSpec[] typespecs;
+}
+
+class IndefiniteSpec : TypeSpec {
+}
+
+class DefiniteSpec : TypeSpec {
+    int size;
+}
+
+ID		[a-zA-Z_][a-zA-Z0-9_]* | '_'
+TYPE		ID | COMPOSITETYPE | DISJUNCTYPE
+COMPOSITETYPE	('list' | 'vector') '[' TYPELIST ']'
+TYPELIST	TYPE [';' TYPE] | TYPE '*' [TYPE]
+DISJUNCTYPE	TYPE [',' TYPE]
+
+abstract class Type {
+    bool isDisjunct() { return false; }
+    bool isComposite() { return false; }
+}
+
+class SimpleType : Type {
+    string id;
+}
+
+enum ListType { list, vector };
+
+class CompositeType : Type {
+    ListType listType;
+    Type[] types;
+}
+
+class DisjunctType : Type {
+    override bool isDisjunct() { return true; }
+    Type[] types;
+}
+
+
+Types
+================================================================================
+
+boolean			A boolean type
+reference		A cons type, comprising a CAR and a CDR, each being a reference to another value.
+integer			64-bit signed integer
+float			A 64-bit IEEE floating point type
+character		A single character type
+identifier		A string. All caps by default. Any characters, including lowercase and unicode, but exclusing pipes ('|'), allowed when escaped by pipes.
+			AN-IDENTIFIER
+			|You can put anything in pipes!|
+constant		A static value similar to an identifier, distinguished by a leading colon. May not be escaped with pipes.
+			:CONSTANT_THE_1ST
+string			An array of characters
+			"This is 1 string."
+vector			A heterogeneous array of values (possibly including other vectors)
+fileStream		A file stream handle
+builtinFunction		A native code function compiled into the interpreter
+compiledFunction	A Lisp function compiled to bytecode  
+
+
+Examples
+================================================================================
+
+list[list[identifer;_]]
+A list containing a single list, which itself contains an identifer and a value of any type.
+
+list[list[identifier;_]*]
+
+A list of lists, each comprising an identifier and a value of any type.
+
+list[list[identifier;_*]*]
+
+A list of lists, each comprising an identifier and one or more values of any type.
+
+list[list[_*;identifier]*]
+
+A list of lists, each comprising one or more values of any type followed by an identifier.
