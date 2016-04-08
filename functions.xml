@@ -1,0 +1,395 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE functions>
+
+<functions>
+  <module name="definitions" file="builtin/definition.d">
+    <fun id="LET">
+      <required>
+	<param id="BINDINGS" type="list<list<identifier;*>>" />
+      </required>
+      <rest id="FORMS" type="reference" />
+    </fun>
+
+    <fun id="LET*">
+      <required>
+	<param id="BINDINGS" type="list<list<identifier;*>>" />
+      </required>
+      <rest id="FORMS" type="reference" />
+    </fun>
+
+    <fun id="SETF">
+      <required>
+	<param id="PLACE" />
+      </required>
+      <rest id="VALUE" />
+    </fun>
+
+    <fun id="SETQ">
+      <required>
+	<param id="IDENTIFIER" type="identifier" evaluate="false" />
+	<param id="VALUE" />
+      </required>
+    </fun>
+
+    <fun id="LAMBDA">
+      <required>
+	<param id="LAMBDA-LIST" type="reference" evaluate="false" />
+      </required>
+      <rest id="FORMS" evaluate="false" />
+    </fun>
+
+    <fun id="FUNCALL">
+      <required>
+	<param id="IDENTIFIER" type="builtin,compiled,identifier" />
+      </required>
+      <rest id="ARGUMENTS" type="reference" />
+    </fun>
+
+    <fun id="EVAL">
+      <required>
+	<param id="FORM" />
+      </required>
+    </fun>
+  </module>
+
+  <module name="io" file="builtin/io.d">
+    <fun id="LOAD">
+      <required>
+	<param id="FILESPEC" type="string,identifier,constant" />
+      </required>
+    </fun>
+
+    <fun id="OPEN">
+      <required>
+	<param id="FILESPEC" type="string,identifier,constant" />
+      </required>
+      <optional>
+	<param id="DIRECTION" type="constant" default="constant:INPUT" />
+      </optional>
+    </fun>
+
+    <fun id="CLOSE">
+      <required>
+	<param id="STREAM" type="stream" />
+      </required>
+    </fun>
+
+    <fun id="READ">
+      <optional>
+	<param id="STREAM" type="stream,boolean" />
+      </optional>
+    </fun>
+
+    <fun id="READ-BYTES">
+      <optional>
+	<param id="STREAM" type="stream,boolean" />
+	<param id="COUNT" type="integer" default="integer:1" />
+      </optional>
+    </fun>
+
+    <fun id="PRINT">
+      <required>
+	<param id="OBJECT" />
+      </required>
+    </fun>
+
+    <fun id="FORMAT">
+      <required>
+	<param id="DESTINATION" type="stream,boolean" />
+	<param id="FORMAT-STRING" type="string" />
+      </required>
+      <rest id="ARGS" type="reference" />
+    </fun>
+  </module>
+
+  <module name="list" file="builtin/list.d">
+    <fun id="MAKE-ARRAY">
+      <required>
+	<param id="SIZE" type="integer" />
+      </required>
+    </fun>
+
+    <fun id="MAKE-LIST">
+      <required>
+	<param id="SIZE" type="integer" />
+      </required>
+      <rest id="INITIAL-ELEMENT" default="boolean:NIL" />
+    </fun>
+
+    <fun id="COPY-LIST">
+      <required>
+	<param id="LIST" type="reference" />
+      </required>
+    </fun>
+
+    <fun id="LIST">
+      <rest id="OBJECTS" type="reference" />
+    </fun>
+
+    <fun id="LENGTH">
+      <required>
+	<param id="LIST" type="reference" />
+      </required>
+    </fun>
+
+    <fun id="PROGN">
+      <rest id="FORMS" type="reference" />
+    </fun>
+
+    <fun id="QUOTE">
+      <required>
+	<param id="OBJECT" evaluate="false" />
+      </required>
+    </fun>
+
+    <fun id="CONS">
+      <required>
+	<param id="CAR" />
+	<param id="CDR" />
+      </required>
+    </fun>
+
+    <fun id="CAR,FIRST">
+      <required>
+	<param id="LIST" type="reference" />
+      </required>
+    </fun>
+
+    <fun id="CDR,REST">
+      <required>
+	<param id="LIST" type="reference" />
+      </required>
+    </fun>
+
+    <fun id="CAAR,CADR,CDAR,CDDR,CAAAR,CAADR,CADAR,CADDR,CDAAR,CDADR,CDDAR,CDDDR,CAAAAR,CAAADR,CAADAR,CAADDR,CADAAR,CADADR,CADDAR,CADDDR,CDAAAR,CDAADR,CDADAR,CDADDR,CDDAAR,CDDADR,CDDDAR,CDDDDR">
+      <required>
+	<param id="LIST" type="reference" />
+      </required>
+    </fun>
+
+    <fun id="ELT">
+      <required>
+	<param id="LIST" type="reference" />
+	<param id="INDEX" type="integer" />
+      </required>
+    </fun>
+
+    <fun id="AREF">
+      <required>
+	<param id="ARRAY" type="vector" />
+	<param id="INDEX" type="integer" />
+      </required>
+    </fun>
+
+    <fun id="APPEND">
+      <rest id="LISTS" type="reference" />
+    </fun>
+
+    <fun id="CONCATENATE">
+      <required>
+	<param id="RESULT-TYPE" type="identifier" />
+      </required>
+      <rest id="SEQUENCES" type="reference" />
+    </fun>
+
+    <fun id="STRING">
+      <required>
+	<param id="CHARACTER" type="char" />
+      </required>
+    </fun>
+
+    <fun id="MAP">
+      <required>
+	<param id="RESULT-TYPE" type="identifier" />
+	<param id="FUNCTION" type="builtin,compiled" />
+      </required>
+      <rest id="SEQUENCES" type="reference" />
+    </fun>
+
+    <fun id="MAPCAR">
+      <required>
+	<param id="FUNCTION" type="builtin,compiled" />
+      </required>
+      <rest id="SEQUENCES" type="reference" />
+    </fun>
+
+    <fun id="REMOVE-IF">
+      <required>
+	<param id="PREDICATE" type="builtin,compiled" />
+	<param id="LIST" type="reference" />
+      </required>
+    </fun>
+
+    <fun id="REMOVE-IF-NOT">
+      <required>
+	<param id="PREDICATE" type="builtin,compiled" />
+	<param id="LIST" type="reference" />
+      </required>
+    </fun>
+
+    <fun id="SERIALIZE-FUNCTION">
+      <required>
+	<param id="STREAM" type="stream" />
+	<param id="FORM" />
+      </required>
+    </fun>
+
+    <fun id="SERIALIZE">
+      <required>
+	<param id="STREAM" type="stream" />
+	<param id="FORM" evaluate="false" />
+      </required>
+    </fun>
+
+    <fun id="DESERIALIZE">
+      <required>
+	<param id="STREAM" type="stream" />
+      </required>
+    </fun>
+  </module>
+
+  <module name="logic" file="builtin/logic.d">
+    <fun id="NULL">
+      <required>
+	<param id="OBJECT" />
+      </required>
+    </fun>
+
+    <fun id="ZEROP">
+      <required>
+	<param id="OBJECT" />
+      </required>
+    </fun>
+
+    <fun id="IF">
+      <required>
+	<param id="TEST" type="boolean" />
+	<param id="THEN" />
+	<param id="ELSE" />
+      </required>
+    </fun>
+
+    <fun id="COND">
+      <rest id="VARIANTS" type="reference" />
+    </fun>
+
+    <fun id="AND">
+      <rest id="FORMS" type="reference" />
+    </fun>
+
+    <fun id="OR">
+      <rest id="FORMS" type="reference" />
+    </fun>
+
+    <fun id="NOT">
+      <required>
+	<param id="FORM" />
+      </required>
+    </fun>
+
+    <fun id="EQ">
+      <required>
+	<param id="OBJ1" />
+	<param id="OBJ2" />
+      </required>
+    </fun>
+
+    <fun id="NEQ">
+      <required>
+	<param id="OBJ1" />
+	<param id="OBJ2" />
+      </required>
+    </fun>
+  </module>
+
+  <module name="loop" file="builtin/loop.d">
+    <fun id="DOTIMES">
+      <required>
+	<param id="LOOPSPEC" type="list<integer;identifier;reference>" />
+      </required>
+      <rest id="FORMS" type="reference" />
+    </fun>
+  </module>
+
+  <module name="math" file="builtin/math.d">
+    <fun id="&lt;=,&lt;,=,/=,&gt;,&gt;=">
+    <rest id="NUMBERS" type="list<integer,float>" />
+  </fun>
+
+  <fun id="+,-,*,/">
+    <rest id="NUMBERS" type="list<integer,float>" />
+  </fun>
+
+  <fun id="1+">
+    <required>
+      <param id="NUMBER" type="integer,float" />
+    </required>
+  </fun>
+
+  <fun id="1-">
+    <required>
+      <param id="NUMBER" type="integer,float" />
+    </required>
+  </fun>
+
+  <fun id="INCF">
+    <required>
+      <param id="PLACE" type="integer,float" />
+      <param id="DELTA" type="integer,float" />
+    </required>
+  </fun>
+
+  <fun id="DECF">
+    <required>
+      <param id="PLACE" type="integer,float" />
+      <param id="DELTA" type="integer,float" />
+    </required>
+  </fun>
+
+  <fun id="SQRT">
+    <required>
+      <param id="NUMBER" type="integer,float" />
+    </required>
+  </fun>
+
+  <fun id="EXPT">
+    <required>
+      <param id="BASE" type="integer,float" />
+      <param id="EXPONENT" type="integer,float" />
+    </required>
+  </fun>
+
+  <fun id="MOD">
+    <required>
+      <param id="DIVIDEND" type="integer,float" />
+      <param id="DIVISOR" type="integer,float" />
+    </required>
+  </fun>
+
+  <fun id="EVEN">
+    <required>
+      <param id="NUMBER" type="integer,float" />
+    </required>
+  </fun>
+
+  <fun id="ODD">
+    <required>
+      <param id="NUMBER" type="integer,float" />
+    </required>
+  </fun>
+
+  <fun id="RANDOM">
+    <required>
+      <param id="LIMIT" type="integer,float" />
+    </required>
+  </fun>
+  </module>
+
+  <module name="system" file="builtin/system.d">
+    <fun id="EXIT">
+      <optional>
+        <param id="EXIT-CODE" type="integer" default="integer:0" />
+      </optional>
+    </fun>
+  </module>
+</functions>
