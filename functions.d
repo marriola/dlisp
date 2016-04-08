@@ -11,6 +11,7 @@ import std.typecons;
 
 import evaluator;
 import exceptions;
+import funspec;
 import lispObject;
 import token;
 import variables;
@@ -183,6 +184,8 @@ void initializeBuiltins () {
     builtin.loop.addBuiltins();
     builtin.math.addBuiltins();
     builtin.system.addBuiltins();
+
+    auto modules = readFunspecFile("functions.xml");
 }
 
 

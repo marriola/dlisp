@@ -16,15 +16,60 @@ import std.format;
 
 ///////////////////////////////////////////////////////////////////////////////
 
-enum TokenType { leftParen, rightParen, leftBrack, rightBrack, dot, boolean, reference, integer, floating, identifier, character, string, constant, fileStream, vector, builtinFunction, compiledFunction };
+enum TokenType { any, leftParen, rightParen, leftBrack, rightBrack, dot, boolean, reference, integer, floating, identifier, character, string, constant, fileStream, vector, builtinFunction, compiledFunction };
 
+TokenType typeNames[string];
+
+string tokenTypeValues[TokenType];
+
+void initializeToken() {
+    typeNames["*"] = TokenType.any;
+    typeNames["boolean"] = TokenType.boolean;
+    typeNames["reference"] = TokenType.reference;
+    typeNames["integer"] = TokenType.integer;
+    typeNames["float"] = TokenType.floating;
+    typeNames["identifier"] = TokenType.identifier;
+    typeNames["char"] = TokenType.character;
+    typeNames["string"] = TokenType.string;
+    typeNames["constant"] = TokenType.constant;
+    typeNames["stream"] = TokenType.fileStream;
+    typeNames["vector"] = TokenType.vector;
+    typeNames["builtin"] = TokenType.builtinFunction;
+    typeNames["compiled"] = TokenType.compiledFunction;
+
+    tokenTypeValues[TokenType.any] = "*";
+    tokenTypeValues[TokenType.leftParen] = "left paren";
+    tokenTypeValues[TokenType.rightParen] = "right paren";
+    tokenTypeValues[TokenType.leftBrack] = "left bracket";
+    tokenTypeValues[TokenType.rightBrack] = "right bracket";
+    tokenTypeValues[TokenType.dot] = "dot";
+    tokenTypeValues[TokenType.boolean] = "bool";
+    tokenTypeValues[TokenType.reference] = "reference";
+    tokenTypeValues[TokenType.integer] = "integer";
+    tokenTypeValues[TokenType.floating] = "float";
+    tokenTypeValues[TokenType.identifier] = "identifier";
+    tokenTypeValues[TokenType.character] = "char";
+    tokenTypeValues[TokenType.string] = "string";
+    tokenTypeValues[TokenType.constant] = "constant";
+    tokenTypeValues[TokenType.fileStream] = "stream";
+    tokenTypeValues[TokenType.vector] = "vector";
+    tokenTypeValues[TokenType.builtinFunction] = "builtin";
+    tokenTypeValues[TokenType.compiledFunction] = "compiled";
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 
 
 string tokenTypeName (TokenType type) {
-    static string typeNames[] = [ "left paren", "right paren", "left bracket", "right bracket", "dot", "boolean", "reference", "integer", "floating point", "identifier", "character", "string", "constant", "file stream", "vector", "builtin function", "compiled function" ];
-    return typeNames[cast(int)type];
+    return type in tokenTypeValues ? tokenTypeValues[type] : "<unknown type>";
+}
+
+bool isValidTypeName (string name) {
+    return (name in typeNames) !is null;
+}
+
+TokenType tokenTypeValue (string name) {
+    return isValidTypeName(name) ? typeNames[name] : TokenType.leftBrack;
 }
 
 
@@ -325,7 +370,7 @@ class BooleanToken : Token {
         return boolValue ? "T" : "NIL";
     }
 
-    ubyte[] serialize() {
+    override ubyte[] serialize() {
 	auto output = new ubyte[0];
 
 	output ~= cast(ubyte)(boolValue ? 1 : 0);
@@ -370,7 +415,7 @@ class CharacterToken : Token {
         }
     }
 
-    ubyte[] serialize() {
+    override ubyte[] serialize() {
 	auto output = new ubyte[0];
 
 	output ~= cast(ubyte)charValue;
@@ -401,7 +446,7 @@ class StringToken : Token {
         return "\"" ~ stringValue ~ "\"";
     }
 
-    ubyte[] serialize() {
+    override ubyte[] serialize() {
 	auto output = new ubyte[0];
 
 	foreach (char c; stringValue) {
@@ -444,7 +489,7 @@ class IdentifierToken : Token {
 	    return stringValue;
     }
 
-    ubyte[] serialize() {
+    override ubyte[] serialize() {
 	auto output = new ubyte[0];
 
 
@@ -483,7 +528,7 @@ class IntegerToken : Token {
         return to!string(intValue);
     }
 
-    ubyte[] serialize() {
+    override ubyte[] serialize() {
 	auto output = new ubyte[0];
 	insertAll(output, asBytes(intValue, 8));
 	return output;
@@ -513,7 +558,7 @@ class ConstantToken : Token {
         return ":" ~ stringValue;
     }
 
-    ubyte[] serialize() {
+    override ubyte[] serialize() {
 	auto output = new ubyte[0];
 
 
@@ -552,7 +597,7 @@ class FloatToken : Token {
         return to!string(floatValue);
     }
 
-    ubyte[] serialize() {
+    override ubyte[] serialize() {
 	auto output = new ubyte[0];
 
 	insertAll(output, asBytes(floatValue, 8));
@@ -610,7 +655,7 @@ class ReferenceToken : Token {
         return reference.toString();
     }
 
-    ubyte[] serialize() {
+    override ubyte[] serialize() {
 	auto output = new ubyte[0];
 
 	auto carBytes = reference.car.token.serialize();
@@ -913,4 +958,22 @@ FloatToken toFloat (Token token) {
 
 IdentifierToken toIdentifier (Token token) {
     return (cast(IdentifierToken)token);
+}
+
+unittest {
+    initializeToken();
+
+    assert(isValidTypeName("*"));
+    assert(isValidTypeName("boolean"));
+    assert(isValidTypeName("reference"));
+    assert(isValidTypeName("integer"));
+    assert(isValidTypeName("float"));
+    assert(isValidTypeName("identifier"));
+    assert(isValidTypeName("char"));
+    assert(isValidTypeName("string"));
+    assert(isValidTypeName("constant"));
+    assert(isValidTypeName("stream"));
+    assert(isValidTypeName("vector"));
+    assert(isValidTypeName("builtin"));
+    assert(isValidTypeName("compiled"));
 }

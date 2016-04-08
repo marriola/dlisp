@@ -30,7 +30,8 @@ void main (string args[]) {
     initializeScopeTable();
     initializeBuiltins();
     initializeMacros();
-	initializeOpcodeTable();
+    initializeOpcodeTable();
+    initializeToken();
     LispParser lisp = new LispParser(input);
 
     while (true) {

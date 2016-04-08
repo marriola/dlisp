@@ -2,10 +2,10 @@
 # Variables
 
 COMPILER := dmd -c
-CFLAGS   := -debug -g
+CFLAGS   := -debug -g -unittest
 LINKER   := dmd -v
 
-LISPCORE := lisp.o exceptions.o token.o node.o lispObject.o parser.o variables.o evaluator.o functions.o util.o
+LISPCORE := lisp.o exceptions.o token.o node.o lispObject.o parser.o variables.o evaluator.o funspec.o typespec.o functions.o util.o
 LISPBUILTINS := builtin/definition.o builtin/io.o builtin/list.o builtin/logic.o builtin/loop.o builtin/math.o builtin/system.o
 LISPVM := vm/bytecode.o vm/machine.o vm/lispmacro.o vm/compiler.o vm/opcode.o
 OBJECT_FILES := $(LISPCORE) $(LISPBUILTINS) $(LISPVM)
