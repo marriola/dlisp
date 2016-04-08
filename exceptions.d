@@ -60,7 +60,7 @@ class OutOfBoundsException : Exception {
 
 class TypeMismatchException : Exception {
     this (string caller, Token token, string expectedType) {
-        super(caller ~ ": " ~ token.toString() ~ " is not " ~ expectedType);
+        super(caller ~ ": " ~ token.toString() ~ " is " ~ tokenTypeName(token.type) ~ ", not " ~ expectedType);
     }
 }
 

@@ -472,7 +472,7 @@ class CodeEmitterVisitor : LispVisitor {
     }
 
     public Instruction[] compile () {
-        std.stdio.writef("inner COMPILE %s\n", form);
+        std.stdio.writef("inner COMPILE %s %s\n", tokenTypeName(form.token.type), form);
         form.accept(this);
         return code;
     }
