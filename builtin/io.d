@@ -88,7 +88,7 @@ Value builtinRead (string name) {
     LispParser parser;
     Value stream = getParameter("STREAM");
 
-    if (stream.isNil()) {
+    if (!stream.isNil()) {
         if (stream.token.type != TokenType.fileStream) {
             throw new TypeMismatchException(name, stream.token, "file stream");
         } else if (!(cast(FileStreamToken)stream.token).isOpen) {
@@ -101,6 +101,30 @@ Value builtinRead (string name) {
     }
 
     return parser.read();
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+
+Value builtinReadLine (string name) {
+    Value streamToken = getParameter("STREAM");
+    File stream;
+
+    if (!streamToken.isNil()) {
+        if (streamToken.token.type != TokenType.fileStream) {
+            throw new TypeMismatchException(name, streamToken.token, "file stream");
+        } else if (!(cast(FileStreamToken)streamToken.token).isOpen) {
+            throw new BuiltinException(name, "Attempt to read from closed stream " ~ streamToken.toString());
+        }
+	stream = (cast(FileStreamToken)streamToken.token).stream;
+    } else {
+	stream = stdin;
+    }
+
+    stream.flush();
+    stream.readln();
+    string line = stream.readln();
+    return new Value(new StringToken(line[0..line.length - 1]));
 }
 
 
@@ -228,7 +252,8 @@ void addBuiltins () {
     addFunction("OPEN", &builtinOpen, [Parameter("FILESPEC")], [Parameter("DIRECTION", new Value(new ConstantToken("INPUT")))]);
     addFunction("CLOSE", &builtinClose, [Parameter("STREAM")]);
     addFunction("READ", &builtinRead, null, [Parameter("STREAM", Value.nil())]);
-	addFunction("READ-BYTES", &builtinReadBytes, null, [Parameter("STREAM", Value.nil()), Parameter("COUNT")]);
+    addFunction("READ-LINE", &builtinReadLine, null, [Parameter("STREAM", Value.nil())]);
+    addFunction("READ-BYTES", &builtinReadBytes, null, [Parameter("STREAM", Value.nil()), Parameter("COUNT")]);
     addFunction("PRINT", &builtinPrint, [Parameter("OBJECT")]);
     addFunction("FORMAT", &builtinFormat, [Parameter("DESTINATION"), Parameter("FORMAT-STRING")], null, null, null, Parameter("ARGS"));
 }
